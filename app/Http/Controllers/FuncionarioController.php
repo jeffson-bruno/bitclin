@@ -2,17 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Paciente;
 use Illuminate\Http\Request;
 
-class PacienteController extends Controller
+class FuncionarioController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        return inertia('Pacientes/Index');
+        //
     }
 
     /**
@@ -34,7 +33,7 @@ class PacienteController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Paciente $paciente)
+    public function show(string $id)
     {
         //
     }
@@ -42,7 +41,7 @@ class PacienteController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Paciente $paciente)
+    public function edit(string $id)
     {
         //
     }
@@ -50,7 +49,7 @@ class PacienteController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Paciente $paciente)
+    public function update(Request $request, string $id)
     {
         //
     }
@@ -58,7 +57,7 @@ class PacienteController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Paciente $paciente)
+    public function destroy(string $id)
     {
         //
     }

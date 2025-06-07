@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\RegisteredUserController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\PacienteController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -30,6 +31,17 @@ Route::middleware('guest')->group(function () {
     
     Route::get('login', [AuthenticatedSessionController::class, 'create'])->name('login');
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
+});
+
+Route::middleware(['auth'])->group(function () {
+    // Cadastro
+    Route::resource('pacientes', PacienteController::class);
+    Route::resource('funcionarios', FuncionarioController::class);
+    Route::resource('usuarios', UsuarioController::class);
+
+    // Agendamentos
+    Route::resource('consultas', ConsultaController::class);
+    Route::resource('exames', ExameController::class);
 });
 
 require __DIR__.'/auth.php';

@@ -30,16 +30,51 @@ const showingNavigationDropdown = ref(false);
                             </div>
 
                             <!-- Navigation Links -->
-                            <div
-                                class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex"
-                            >
+                            <!-- NAVBAR MENUS -->
+                            <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex items-center">
                                 <NavLink
                                     :href="route('dashboard')"
                                     :active="route().current('dashboard')"
                                 >
                                     Dashboard
                                 </NavLink>
+
+                                <!-- Cadastro Dropdown -->
+                                <Dropdown align="left" width="48">
+                                    <template #trigger>
+                                        <button type="button" class="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-700 focus:outline-none">
+                                            Cadastro
+                                            <svg class="ml-1 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                            </svg>
+                                        </button>
+                                    </template>
+                                    <template #content>
+                                        <DropdownLink :href="route('pacientes.index')">Pacientes</DropdownLink>
+                                        <DropdownLink :href="route('funcionarios.index')">Funcionários</DropdownLink>
+                                        <DropdownLink :href="route('usuarios.index')">Usuários</DropdownLink>
+                                    </template>
+                                </Dropdown>
+
+                                <!-- Agendamentos Dropdown -->
+                                <Dropdown align="left" width="56">
+                                    <template #trigger>
+                                        <button type="button" class="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-700 focus:outline-none">
+                                            Agendamentos
+                                            <svg class="ml-1 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                            </svg>
+                                        </button>
+                                    </template>
+                                    <template #content>
+                                        <DropdownLink :href="route('consultas.index')">Consultas</DropdownLink>
+                                        <DropdownLink :href="route('exames.index')">Exames</DropdownLink>
+                                    </template>
+                                </Dropdown>
+
+                                
                             </div>
+
                         </div>
 
                         <div class="hidden sm:ms-6 sm:flex sm:items-center">
