@@ -19,7 +19,7 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
-        'email',
+        'usuario', // novo campo
         'password',
     ];
 
@@ -44,5 +44,15 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Define o campo usado como login no sistema.
+     *
+     * @return string
+     */
+    public function username(): string
+    {
+        return 'usuario';
     }
 }
