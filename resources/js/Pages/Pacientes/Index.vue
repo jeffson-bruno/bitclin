@@ -95,4 +95,5 @@ console.log(pacientes);
 function goToPage(page) {
   router.get('/pacientes', { page }, { preserveState: true });
 }
+
 </script>

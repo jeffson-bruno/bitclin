@@ -19,6 +19,7 @@ class PacienteController extends Controller
             'pacientes' => $pacientes
     ]);
     }
+    
 
     // Exibe o formulário de criação (Create.vue)
     public function create()
