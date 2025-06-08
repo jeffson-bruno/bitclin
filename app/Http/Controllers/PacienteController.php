@@ -36,12 +36,12 @@ class PacienteController extends Controller
         'cpf' => 'nullable|string|max:14',
         'estado_civil' => 'required|string',
         'endereco' => 'nullable|string|max:255',
-        'procedimento' => 'nullable|string',
+        'procedimento' => 'required|string',
         'preco' => 'nullable|numeric',
-        'pago' => 'nullable|boolean',
+        'pago' => 'required|boolean',
         'forma_pagamento' => 'nullable|string',
         'data_pagamento' => 'nullable|date',
-        'data_nascimento' => 'nullable|string', // ← Temporário, pois vamos converter manualmente
+        'data_nascimento' => 'required|string', // ← Temporário, pois vamos converter manualmente
     ]);
 
     // ✅ Transforma data_nascimento de dd/mm/yyyy para yyyy-mm-dd

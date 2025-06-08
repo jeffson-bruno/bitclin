@@ -39,6 +39,7 @@
                   v-model="form.nome"
                   type="text"
                   class="mt-1 w-full rounded border-gray-300"
+                  required
                 />
               </div>
 
@@ -84,6 +85,7 @@
                     @input="form.data_nascimento = mascaraData(form.data_nascimento)"
                     placeholder="dd/mm/aaaa"
                     class="mt-1 w-full rounded border-gray-300"
+                    required
                 />
                 </div>
             </div>
@@ -117,6 +119,7 @@
                   v-model="form.procedimento"
                   @change="definirPreco"
                   class="mt-1 w-full rounded border-gray-300"
+                  required
                 >
                   <option disabled value="">Selecione</option>
                   <option value="consulta">Consulta</option>
@@ -131,6 +134,7 @@
                   type="number"
                   step="0.01"
                   class="mt-1 w-full rounded border-gray-300"
+                  required
                 />
               </div>
 
@@ -139,6 +143,7 @@
                 <select
                   v-model="form.pago"
                   class="mt-1 w-full rounded border-gray-300"
+                  required
                 >
                   <option :value="true">Sim</option>
                   <option :value="false">Não</option>
@@ -231,6 +236,23 @@ function submit() {
   const dadosParaEnviar = { ...form.value }
   dadosParaEnviar.cpf = dadosParaEnviar.cpf.replace(/\D/g, '')
   dadosParaEnviar.telefone = dadosParaEnviar.telefone.replace(/\D/g, '')
+
+  // Converte data_pagamento para yyyy-mm-dd
+    if (form.data_pagamento) {
+    const dp = form.data_pagamento.split('/');
+    if (dp.length === 3) {
+        form.data_pagamento = `${dp[2]}-${dp[1]}-${dp[0]}`;
+    }
+    }
+    // Converte data_nascimento para yyyy-mm-dd
+    if (form.data_nascimento) {
+    const dn = form.data_nascimento.split('/');
+    if (dn.length === 3) {
+        form.data_nascimento = `${dn[2]}-${dn[1]}-${dn[0]}`;
+    }
+    }
+
+
 
   router.post('/pacientes', dadosParaEnviar, {
     onSuccess: () => {
