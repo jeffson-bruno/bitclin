@@ -6,8 +6,19 @@ import DropdownLink from '@/Components/DropdownLink.vue';
 import NavLink from '@/Components/NavLink.vue';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
 import { Link } from '@inertiajs/vue3';
+import Toast from '@/Components/Toast.vue'
+import { onMounted } from 'vue'
 
 const showingNavigationDropdown = ref(false);
+
+const toastRef = ref(null)
+
+onMounted(() => {
+  window.$toast = (msg) => {
+    toastRef.value?.showToast(msg)
+  }
+})
+
 </script>
 
 <template>
@@ -230,4 +241,6 @@ const showingNavigationDropdown = ref(false);
             </main>
         </div>
     </div>
+    <!-- TOAST COMPONENT -->
+    <Toast ref="toastRef" />
 </template>
