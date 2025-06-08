@@ -26,7 +26,7 @@
         >
           Paciente Salvo com Sucesso!
         </div>
-        
+
 
         <!-- Formulário -->
         <form @submit.prevent="submit">
@@ -74,10 +74,43 @@
                   class="mt-1 w-full rounded border-gray-300"
                 />
               </div>
+
+              <!-- Data de Nascimento (novo campo) -->
+               <div>
+                <label class="block font-medium">Data de Nascimento</label>
+                <input
+                    type="text"
+                    v-model="form.data_nascimento"
+                    @input="form.data_nascimento = mascaraData(form.data_nascimento)"
+                    placeholder="dd/mm/aaaa"
+                    class="mt-1 w-full rounded border-gray-300"
+                />
+                </div>
             </div>
 
             <!-- Coluna Direita -->
+
+            
             <div class="space-y-4">
+
+                <!-- Estado Civil -->
+            <div>
+            <label class="block font-medium">Estado Civil</label>
+            <select
+                v-model="form.estado_civil"
+                class="mt-1 w-full rounded border-gray-300"
+                required
+            >
+                <option disabled value="">Selecione</option>
+                <option value="solteiro">Solteiro(a)</option>
+                <option value="casado">Casado(a)</option>
+                <option value="divorciado">Divorciado(a)</option>
+                <option value="viuvo">Viúvo(a)</option>
+                <option value="outro">Outro</option>
+            </select>
+            </div>
+
+            <!-- Procedimento -->
               <div>
                 <label class="block font-medium">Procedimento</label>
                 <select
@@ -153,6 +186,12 @@
 <script setup>
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
+import {
+  mascaraCPF,
+  mascaraTelefone,
+  mascaraData
+} from '@/utils/masks';
+
 
 const emit = defineEmits(['close'])
 const isVisible = ref(true)
@@ -162,6 +201,7 @@ const form = ref({
   nome: '',
   cpf: '',
   telefone: '',
+  estado_civil: '',
   endereco: '',
   procedimento: '',
   preco: '',
@@ -178,28 +218,6 @@ function definirPreco() {
   } else {
     form.value.preco = ''
   }
-}
-
-// Máscara para CPF
-function mascaraCPF(value) {
-  value = value.replace(/\D/g, '')
-  value = value.replace(/(\d{3})(\d)/, '$1.$2')
-  value = value.replace(/(\d{3})(\d)/, '$1.$2')
-  value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2')
-  return value
-}
-
-// Máscara para Telefone
-function mascaraTelefone(value) {
-  value = value.replace(/\D/g, '')
-  if (value.length <= 10) {
-    value = value.replace(/(\d{2})(\d)/, '($1) $2')
-    value = value.replace(/(\d{4})(\d)/, '$1-$2')
-  } else {
-    value = value.replace(/(\d{2})(\d)/, '($1) $2')
-    value = value.replace(/(\d{5})(\d)/, '$1-$2')
-  }
-  return value
 }
 
 function fecharModal() {

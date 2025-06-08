@@ -35,8 +35,8 @@
                             <tbody>
                                 <tr v-for="paciente in pacientes.data" :key="paciente.id">
                                     <td class="border px-4 py-2">{{ paciente.nome }}</td>
-                                    <td class="border px-4 py-2">{{ paciente.cpf }}</td>
-                                    <td class="border px-4 py-2">{{ paciente.telefone }}</td>
+                                    <td class="border px-4 py-2">{{ mascaraCPF(paciente.cpf) }}</td>
+                                    <td class="border px-4 py-2">{{ mascaraTelefone(paciente.telefone) }}</td>
                                     <td class="border px-4 py-2">
                                         <a :href="`/pacientes/${paciente.id}`" class="text-blue-500">Ver</a>
                                     </td>
@@ -44,30 +44,31 @@
                             </tbody>
                         </table>
                         <!-- Paginação -->
-                    <div
-                        v-if="pacientes.meta && pacientes.meta.total > pacientes.meta.per_page"
-                        class="mt-4 flex justify-end items-center space-x-2"
+                         <div
+                            v-if="pacientes.total > pacientes.per_page"
+                            class="mt-4 flex justify-end items-center space-x-2"
                         >
-                        <button
-                            @click="goToPage(pacientes.meta.current_page - 1)"
-                            :disabled="pacientes.meta.current_page === 1"
-                            class="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
-                        >
-                            Anterior
-                        </button>
+                            <button
+                                @click="goToPage(pacientes.current_page - 1)"
+                                :disabled="pacientes.current_page === 1"
+                                class="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+                            >
+                                Anterior
+                            </button>
 
-                        <span class="text-sm text-gray-700">
-                            Página {{ pacientes.meta.current_page }} de {{ pacientes.meta.last_page }}
-                        </span>
+                            <span class="text-sm text-gray-700">
+                                Página {{ pacientes.current_page }} de {{ pacientes.last_page }}
+                            </span>
 
-                        <button
-                            @click="goToPage(pacientes.meta.current_page + 1)"
-                            :disabled="pacientes.meta.current_page === pacientes.meta.last_page"
-                            class="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
-                        >
-                            Próxima
-                        </button>
-                    </div>
+                            <button
+                                @click="goToPage(pacientes.current_page + 1)"
+                                :disabled="pacientes.current_page === pacientes.last_page"
+                                class="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+                            >
+                                Próxima
+                            </button>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -87,13 +88,36 @@ import { usePage, router } from '@inertiajs/vue3';
 
 const { pacientes } = usePage().props;
 
-const mostrarModal = ref(false)
+console.log('Pacientes recebidoss', pacientes)
 
-console.log(pacientes);
+const mostrarModal = ref(false)
 
 
 function goToPage(page) {
-  router.get('/pacientes', { page }, { preserveState: true });
+  router.get('/pacientes', { page }, { replace: true });
 }
+
+function mascaraCPF(value) {
+  if (!value) return '';
+  value = value.replace(/\D/g, '');
+  value = value.replace(/(\d{3})(\d)/, '$1.$2');
+  value = value.replace(/(\d{3})(\d)/, '$1.$2');
+  value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+  return value;
+}
+
+function mascaraTelefone(value) {
+  if (!value) return '';
+  value = value.replace(/\D/g, '');
+  if (value.length <= 10) {
+    value = value.replace(/(\d{2})(\d)/, '($1) $2');
+    value = value.replace(/(\d{4})(\d)/, '$1-$2');
+  } else {
+    value = value.replace(/(\d{2})(\d)/, '($1) $2');
+    value = value.replace(/(\d{5})(\d)/, '$1-$2');
+  }
+  return value;
+}
+
 
 </script>

@@ -19,7 +19,7 @@ class PacienteController extends Controller
             'pacientes' => $pacientes
     ]);
     }
-    
+
 
     // Exibe o formulário de criação (Create.vue)
     public function create()
@@ -29,26 +29,35 @@ class PacienteController extends Controller
 
     // Armazena um novo paciente no banco
     public function store(Request $request)
-    {
-        $request->validate([
-            'nome' => 'required|string|max:255',
-            'telefone' => 'nullable|string|max:11',
-            'data_nascimento' => 'nullable|date',
-            'cpf' => 'nullable|string|max:11',
-            'endereco' => 'nullable|string|max:255',
-            'observacoes' => 'nullable|string',
-            'procedimento' => 'nullable|string',
-            'preco' => 'nullable|numeric',
-            'pago' => 'nullable|boolean',
-            'forma_pagamento' => 'nullable|string',
-            'data_pagamento' => 'nullable|date',
-        ]);
+{
+    $validated = $request->validate([
+        'nome' => 'required|string|max:255',
+        'telefone' => 'nullable|string|max:14',
+        'cpf' => 'nullable|string|max:14',
+        'estado_civil' => 'required|string',
+        'endereco' => 'nullable|string|max:255',
+        'procedimento' => 'nullable|string',
+        'preco' => 'nullable|numeric',
+        'pago' => 'nullable|boolean',
+        'forma_pagamento' => 'nullable|string',
+        'data_pagamento' => 'nullable|date',
+        'data_nascimento' => 'nullable|string', // ← Temporário, pois vamos converter manualmente
+    ]);
 
-        $paciente = Paciente::create($request->all());
-
-        return redirect()->route('pacientes.index')->with('success', 'Paciente cadastrado com sucesso!');
-
+    // ✅ Transforma data_nascimento de dd/mm/yyyy para yyyy-mm-dd
+    if (!empty($validated['data_nascimento'])) {
+        $data = explode('/', $validated['data_nascimento']);
+        if (count($data) === 3) {
+            $validated['data_nascimento'] = "{$data[2]}-{$data[1]}-{$data[0]}";
+        }
     }
+
+    // Agora usamos os dados validados e modificados
+    Paciente::create($validated);
+
+    return redirect()->route('pacientes.index')->with('success', 'Paciente cadastrado com sucesso!');
+}
+
 
     // Exibe detalhes de um paciente específico
     public function show(Paciente $paciente)
