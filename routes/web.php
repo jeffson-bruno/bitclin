@@ -8,6 +8,8 @@ use Inertia\Inertia;
 use App\Http\Controllers\PacienteController;
 use App\Http\Controllers\SenhaAtendimentoController;
 use App\Models\SenhaAtendimento;
+use App\Models\Paciente;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 
 Route::get('/', function () {
@@ -52,9 +54,30 @@ Route::middleware(['auth'])->group(function () {
         $senha = SenhaAtendimento::with('paciente')->findOrFail($id);
 
         return Inertia::render('Senhas/Imprimir', [
-            'senha' => $senha
+            'senha' => $senha,
+            'clinica' => [
+            'nome' => 'Clínica Santa Esperança', // <- aqui você pode futuramente puxar de settings/banco
+            'logo' => asset('images/logo-clinica.png') // <- (opcional)
+            ]
         ]);
     });
+
+    Route::get('/pacientes/imprimir-ficha/{id}', function ($id) {
+    $paciente = Paciente::findOrFail($id);
+
+    $dadosProcedimento = [
+        'procedimento' => 'Consulta Clínica Geral',
+        'valor' => 80.00,
+        'pago' => false,
+    ];
+
+    $pdf = Pdf::loadView('pacientes.ficha-pdf', [
+        'paciente' => $paciente,
+        'procedimento' => $dadosProcedimento
+    ]);
+
+    return $pdf->download('ficha-atendimento.pdf'); // ou ->stream() para abrir direto no navegador
+});
 });
 
 

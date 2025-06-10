@@ -48,7 +48,10 @@
                                             Gerar Senha
                                         </button>
 
-                                        <a :href="`/pacientes/${paciente.id}`" class="text-blue-500 underline text-sm">Ver</a>
+                                           <!-- Novo: Imprimir Ficha -->
+                                        <button @click="imprimirFicha(paciente.id)" title="Imprimir Ficha">
+                                            📝
+                                        </button>
                                     </div>
 
                                     </td>
@@ -178,5 +181,11 @@ async function confirmarGeracaoSenha(tipo) {
     console.error(error)
     alert('Erro ao gerar a senha.')
   }
+
+}
+
+function imprimirFicha(pacienteId) {
+  window.open(`/pacientes/imprimir-ficha/${pacienteId}`, '_blank')
+
 }
 </script>
