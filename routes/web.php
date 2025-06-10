@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\PacienteController;
 use App\Http\Controllers\SenhaAtendimentoController;
+use App\Models\SenhaAtendimento;
+
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -43,9 +45,19 @@ Route::middleware(['auth'])->group(function () {
     // Agendamentos
     Route::resource('consultas', ConsultaController::class);
     Route::resource('exames', ExameController::class);
+
+    Route::post('/senhas', [SenhaAtendimentoController::class, 'store']);
+
+    Route::get('/senhas/imprimir/{id}', function ($id) {
+        $senha = SenhaAtendimento::with('paciente')->findOrFail($id);
+
+        return Inertia::render('Senhas/Imprimir', [
+            'senha' => $senha
+        ]);
+    });
 });
 
 
-Route::post('/senhas', [SenhaAtendimentoController::class, 'store']);
+
 
 require __DIR__.'/auth.php';

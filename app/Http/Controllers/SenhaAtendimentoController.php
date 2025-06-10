@@ -84,4 +84,12 @@ class SenhaAtendimentoController extends Controller
 
         return $prefixo . str_pad($numeroNovo, 3, '0', STR_PAD_LEFT);
     }
+
+    public function imprimir($id)
+    {
+        $senha = SenhaAtendimento::with('paciente')->findOrFail($id);
+
+        return view('senhas.imprimir', compact('senha'));
+    }
+
 }

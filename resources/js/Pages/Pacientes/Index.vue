@@ -128,7 +128,7 @@ function goToPage(page) {
 }
 
 // Máscara de CPF
-function mascaraCPF(value) {
+const mascaraCPF = (value) => {
   if (!value) return ''
   value = value.replace(/\D/g, '')
   value = value.replace(/(\d{3})(\d)/, '$1.$2')
@@ -138,7 +138,7 @@ function mascaraCPF(value) {
 }
 
 // Máscara de telefone
-function mascaraTelefone(value) {
+const mascaraTelefone = (value) => {
   if (!value) return ''
   value = value.replace(/\D/g, '')
   if (value.length <= 10) {
@@ -169,7 +169,8 @@ async function confirmarGeracaoSenha(tipo) {
     })
 
     // Abrir nova aba com impressão da senha
-    window.open(`/senhas/imprimir/${response.data.id}`, '_blank')
+    window.open(`/senhas/imprimir/${response.data.senha.id}`, '_blank')
+
 
     // Fecha modal
     mostrarModalSenha.value = false
