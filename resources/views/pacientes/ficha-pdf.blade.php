@@ -11,13 +11,13 @@
         .cabecalho {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
+            align-items: center;
             border: 2px solid #000;
             padding: 10px;
         }
         .cabecalho-info {
             display: flex;
-            flex-direction: column;
+            text-align: right;
             justify-content: flex-start;
         }
         .titulo {
@@ -26,12 +26,12 @@
             margin-bottom: 5px;
         }
         .data-impressao {
-            font-size: 12px;
+            font-size: 13px;
             color: #555;
         }
         .logo {
-            width: 80px;
-            height: 80px;
+            width: 180px;
+            margin-bottom: 28px;
             object-fit: contain;
         }
         .tabela {
@@ -65,7 +65,7 @@
             <div class="titulo">Ficha de Atendimento</div>
             <div class="data-impressao">{{ \Carbon\Carbon::now()->format('d/m/Y') }}</div>
         </div>
-        <img src="{{ public_path('logo.png') }}" alt="Logo" class="logo">
+        <img src="{{ public_path('images/logo.jpg') }}" alt="Logo" class="logo">
     </div>
 
     <h3 class="subtitulo">Via do Paciente</h3>
@@ -81,6 +81,14 @@
     </table>
 
     <div class="divisoria">---------------- Corte Aqui ----------------</div>
+
+    <div class="cabecalho">
+        <div class="cabecalho-info">
+            <div class="titulo">Ficha de Atendimento</div>
+            <div class="data-impressao">{{ \Carbon\Carbon::now()->format('d/m/Y') }}</div>
+        </div>
+        <img src="{{ public_path('images/logo.jpg') }}" alt="Logo" class="logo">
+    </div>
 
     <h3 class="subtitulo">Via da Clínica</h3>
 
