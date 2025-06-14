@@ -7,104 +7,207 @@
         body {
             font-family: Arial, sans-serif;
             font-size: 12px;
+            margin: 0;
+            padding: 20px;
         }
+
+        .via {
+            position: relative;
+            margin-bottom: 90px;
+            padding: 40px;
+            border: 1px solid #000;
+        }
+
+        .marca-dagua-1 {
+            position: absolute;
+            top: 20%; /* Ajuste a porcentagem para mover mais para cima ou para baixo */
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0.1; /* Diminui a opacidade para ficar mais suave */
+            pointer-events: none;
+            z-index: 0;
+            width: 210px; /* Ajuste o tamanho da marca d'água conforme necessário */
+            height: auto;
+        }
+
+        .marca-dagua-2 {
+            position: absolute;
+            top: 20%; /* Ajuste a porcentagem para posicionar a marca d'água na segunda via */
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0.1; /* Opacidade mais suave */
+            pointer-events: none;
+            z-index: 0;
+            width: 210px; /* Ajuste o tamanho da marca d'água conforme necessário */
+            height: auto;
+        }
+
         .cabecalho {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border: 2px solid #000;
-            padding: 10px;
+            width: 100%;
+            margin-bottom: 20px;
         }
-        .cabecalho-info {
-            display: flex;
-            text-align: right;
-            justify-content: flex-start;
+
+        .cabecalho td {
+            vertical-align: top;
         }
+
+        .logo {
+            width: 130px;
+            height: auto;
+        }
+
         .titulo {
             font-size: 18px;
             font-weight: bold;
+            text-align: right;
+        }
+
+        .data-impressao {
+            font-size: 12px;
+            text-align: right;
+        }
+
+        .subtitulo {
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
             margin-bottom: 5px;
         }
-        .data-impressao {
-            font-size: 13px;
-            color: #555;
+
+        .espaco {
+            height: 15px;
         }
-        .logo {
-            width: 180px;
-            margin-bottom: 28px;
-            object-fit: contain;
+
+        .linha td {
+            padding: 5px 10px;
         }
-        .tabela {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
+
+        .procedimento {
+            background-color: #eee;
+            padding: 8px;
+            font-weight: bold;
+            border-left: 3px solid #000;
         }
-        .tabela th, .tabela td {
-            border: none;
-            padding: 6px 0;
-            text-align: left;
-        }
-        .subtitulo {
-            margin-top: 20px;
+
+        .rodape {
             text-align: center;
-            font-size: 16px;
+            font-size: 11px;
+            margin-top: 20px;
+            border-top: 1px solid #000;
+            padding-top: 5px;
         }
+
         .divisoria {
-            margin: 20px 0;
             text-align: center;
             font-size: 12px;
+            margin: 30px;
             border-top: 1px dashed #000;
-            padding-top: 10px;
         }
     </style>
 </head>
 <body>
 
-    <div class="cabecalho">
-        <div class="cabecalho-info">
-            <div class="titulo">Ficha de Atendimento</div>
-            <div class="data-impressao">{{ \Carbon\Carbon::now()->format('d/m/Y') }}</div>
-        </div>
-        <img src="{{ public_path('images/logo.jpg') }}" alt="Logo" class="logo">
-    </div>
+<!-- VIA DO PACIENTE -->
+<div class="via">
+    <img src="{{ public_path('images/marca-dagua.png') }}" class="marca-dagua-1" alt="Marca d'água">
 
-    <h3 class="subtitulo">Via do Paciente</h3>
-
-    <table class="tabela">
-        <tr><th>Nome</th><td>{{ $paciente->nome }}</td></tr>
-        <tr><th>Estado Civil</th><td>{{ $paciente->estado_civil }}</td></tr>
-        <tr><th>CPF</th><td>{{ $paciente->cpf }}</td></tr>
-        <tr><th>Telefone</th><td>{{ $paciente->telefone }}</td></tr>
-        <tr><th>Endereço</th><td>{{ $paciente->endereco }}</td></tr>
-        <tr><th>Data de Nascimento</th><td>{{ \Carbon\Carbon::parse($paciente->data_nascimento)->format('d/m/Y') }}</td></tr>
-        <tr><th>Procedimento</th><td>{{ $procedimento['procedimento'] }}</td></tr>
+    <table class="cabecalho">
+        <tr>
+            <td><img src="{{ public_path('images/logo.jpg') }}" class="logo" alt="Logo"></td>
+            <td>
+                <div class="titulo">Ficha de Atendimento</div>
+                <div class="data-impressao">{{ \Carbon\Carbon::now()->format('d/m/Y') }}</div>
+            </td>
+        </tr>
     </table>
 
-    <div class="divisoria">---------------- Corte Aqui ----------------</div>
+    <div class="subtitulo">Via do Paciente</div>
 
-    <div class="cabecalho">
-        <div class="cabecalho-info">
-            <div class="titulo">Ficha de Atendimento</div>
-            <div class="data-impressao">{{ \Carbon\Carbon::now()->format('d/m/Y') }}</div>
-        </div>
-        <img src="{{ public_path('images/logo.jpg') }}" alt="Logo" class="logo">
-    </div>
+    <table width="100%">
+        <tr class="linha">
+            <td><strong>Nome:</strong> {{ $paciente->nome }}</td>
+            <td><strong>CPF:</strong> {{ $paciente->cpf }}</td>
+            <td><strong>Data de Nascimento:</strong> {{ \Carbon\Carbon::parse($paciente->data_nascimento)->format('d/m/Y') }}</td>
+        </tr>
+        <tr class="linha espaco"><td colspan="3"></td></tr>
 
-    <h3 class="subtitulo">Via da Clínica</h3>
+        <tr class="linha">
+            <td><strong>Estado Civil:</strong> {{ $paciente->estado_civil }}</td>
+            <td><strong>Telefone:</strong> {{ $paciente->telefone }}</td>
+            <td></td>
+        </tr>
+        <tr class="linha espaco"><td colspan="3"></td></tr>
 
-    <table class="tabela">
-        <tr><th>Nome</th><td>{{ $paciente->nome }}</td></tr>
-        <tr><th>Estado Civil</th><td>{{ $paciente->estado_civil }}</td></tr>
-        <tr><th>CPF</th><td>{{ $paciente->cpf }}</td></tr>
-        <tr><th>Telefone</th><td>{{ $paciente->telefone }}</td></tr>
-        <tr><th>Endereço</th><td>{{ $paciente->endereco }}</td></tr>
-        <tr><th>Data de Nascimento</th><td>{{ \Carbon\Carbon::parse($paciente->data_nascimento)->format('d/m/Y') }}</td></tr>
-        <tr><th>Procedimento</th><td>{{ $procedimento['procedimento'] }}</td></tr>
-        <tr><th>Valor</th><td>R$ {{ number_format($procedimento['valor'], 2, ',', '.') }}</td></tr>
-        <tr><th>Status</th><td>{{ $procedimento['pago'] ? 'PAGO' : 'PENDENTE' }}</td></tr>
+        <tr class="linha">
+            <td colspan="3"><strong>Endereço:</strong> {{ $paciente->endereco }}</td>
+        </tr>
+        <tr class="linha espaco"><td colspan="3"></td></tr>
+
+        <tr class="linha">
+            <td colspan="3" class="procedimento">Procedimento: {{ $procedimento['procedimento'] }}</td>
+        </tr>
     </table>
+
+    <div class="rodape">
+        Rua das Clínicas, 123 - Bairro Saúde - São Paulo/SP - CEP: 01234-567<br>
+        (11) 91234-5678 | @clinica.exemplo
+    </div>
+</div>
+
+<div class="divisoria">---------------- Corte Aqui ----------------</div>
+
+<!-- VIA DA CLÍNICA -->
+<div class="via">
+    <img src="{{ public_path('images/marca-dagua.png') }}" class="marca-dagua-2" alt="Marca d'água">
+
+    <table class="cabecalho">
+        <tr>
+            <td><img src="{{ public_path('images/logo.jpg') }}" class="logo" alt="Logo"></td>
+            <td>
+                <div class="titulo">Ficha de Atendimento</div>
+                <div class="data-impressao">{{ \Carbon\Carbon::now()->format('d/m/Y') }}</div>
+            </td>
+        </tr>
+    </table>
+
+    <div class="subtitulo">Via da Clínica</div>
+
+    <table width="100%">
+        <tr class="linha">
+            <td><strong>Nome:</strong> {{ $paciente->nome }}</td>
+            <td><strong>CPF:</strong> {{ $paciente->cpf }}</td>
+            <td><strong>Data de Nascimento:</strong> {{ \Carbon\Carbon::parse($paciente->data_nascimento)->format('d/m/Y') }}</td>
+        </tr>
+        <tr class="linha espaco"><td colspan="3"></td></tr>
+
+        <tr class="linha">
+            <td><strong>Estado Civil:</strong> {{ $paciente->estado_civil }}</td>
+            <td><strong>Telefone:</strong> {{ $paciente->telefone }}</td>
+            <td></td>
+        </tr>
+        <tr class="linha espaco"><td colspan="3"></td></tr>
+
+        <tr class="linha">
+            <td colspan="3"><strong>Endereço:</strong> {{ $paciente->endereco }}</td>
+        </tr>
+        <tr class="linha espaco"><td colspan="3"></td></tr>
+
+        <tr class="linha">
+            <td colspan="3" class="procedimento">Procedimento: {{ $procedimento['procedimento'] }}</td>
+        </tr>
+        <tr class="linha">
+            <td colspan="3"><strong>Valor:</strong> R$ {{ number_format($procedimento['valor'], 2, ',', '.') }} - 
+                <strong>Status:</strong> {{ $procedimento['pago'] ? 'PAGO' : 'PENDENTE' }}
+            </td>
+        </tr>
+    </table>
+
+    <div class="rodape">
+        Rua das Clínicas, 123 - Bairro Saúde - São Paulo/SP - CEP: 01234-567<br>
+        (11) 91234-5678 | @clinica.exemplo
+    </div>
+</div>
 
 </body>
 </html>
-
 
