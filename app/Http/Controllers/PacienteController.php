@@ -9,10 +9,21 @@ use Inertia\Inertia;
 class PacienteController extends Controller
 {
     // Exibe a lista de pacientes (mais para frente podemos alterar para retornar via Inertia)
-    public function index()
+    public function index(Request $request)
     {
         //$pacientes = Paciente::paginate(10);  // Paginando a lista de pacientes com 10 por página
         $pacientes = Paciente::orderBy('created_at', 'desc')->paginate(10);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+            'data' => $pacientes->items(),  // só os dados paginados
+            'pagination' => [
+                'current_page' => $pacientes->currentPage(),
+                'last_page' => $pacientes->lastPage(),
+                'total' => $pacientes->total(),
+            ]
+        ]);
+}
 
     // Retorna a resposta com o componente Vue e envia os pacientes como dados
         return Inertia::render('Pacientes/Index', [
@@ -65,27 +76,29 @@ class PacienteController extends Controller
         return response()->json($paciente);
     }
 
-    // Atualiza um paciente existente
-    public function update(Request $request, Paciente $paciente)
-    {
-        $request->validate([
-            'nome' => 'required|string|max:255',
-            'telefone' => 'nullable|string|max:15',
-            'data_nascimento' => 'nullable|date',
-            'cpf' => 'nullable|string|max:14',
-            'endereco' => 'nullable|string|max:255',
-            'observacoes' => 'nullable|string',
-            'procedimento' => 'nullable|string',
-            'preco' => 'nullable|numeric',
-            'pago' => 'nullable|boolean',
-            'forma_pagamento' => 'nullable|string',
-            'data_pagamento' => 'nullable|date',
-        ]);
+        public function update(Request $request, $id)
+        {
+            $paciente = Paciente::findOrFail($id);
 
-        $paciente->update($request->all());
+            $validated = $request->validate([
+                'nome' => 'required|string|max:255',
+                'cpf' => 'required|string|max:14',
+                'telefone' => 'required|string|max:15',
+                'data_nascimento' => 'nullable|date',
+                'endereco' => 'nullable|string|max:255',
+                'estado_civil' => 'nullable|string|max:50',
+                'procedimento' => 'required|string|max:255',
+                'preco' => 'nullable|numeric',
+                'pago' => 'required|boolean',
+                'forma_pagamento' => 'nullable|required_if:pago,true|string|max:255',
+                'data_pagamento' => 'nullable|required_if:pago,true|date',
+            ]);
 
-        return response()->json($paciente);
-    }
+            $paciente->update($validated);
+
+            return response()->json(['message' => 'Paciente atualizado com sucesso!']);
+        }
+
 
     // Deleta um paciente
     public function destroy(Paciente $paciente)

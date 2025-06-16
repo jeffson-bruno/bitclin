@@ -78,9 +78,16 @@ Route::middleware(['auth'])->group(function () {
 
     return $pdf->download('ficha-atendimento.pdf'); // ou ->stream() para abrir direto no navegador
 });
+
+Route::get('/pacientes', [PacienteController::class, 'index'])->name('pacientes.index');
+
+
+Route::put('/pacientes/{id}', [PacienteController::class, 'update'])->name('pacientes.update');
+
+
+
+
+//Fechamento
 });
-
-
-
-
+// Authentication Routes
 require __DIR__.'/auth.php';
