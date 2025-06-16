@@ -61,6 +61,12 @@
                                                     d="M15.232 5.232l3.536 3.536M9 11l6.586-6.586a2 2 0 112.828 2.828L11.828 13.828a4 4 0 01-1.414.586l-4.243.707.707-4.243a4 4 0 01.586-1.414z" />
                                                 </svg>
                                             </button>
+                                        <!-- Fim Botão: Editar Paciente -->
+                                        <!--Botão Deletar-->
+                                                <svg @click="abrirModal(paciente)" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500 cursor-pointer hover:text-red-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3m-4 0h14" />
+                                                </svg>
+                                        <!--Fim Botão Deletar-->
                                     </div>
                                     <!--Fim  Ações-->
                                     </td>
@@ -116,6 +122,14 @@
     @close="mostrarModalEditar = false" 
     @atualizar-lista="buscarPacientes" />
 
+    <!-- Modal de confirmação de Deleção-->
+  <ConfirmDeleteModal
+    :show="modalAberta"
+    :item="pacienteSelecionado"
+    @cancel="modalAberta = false"
+    @confirm="deletarPaciente"
+  />
+
 
 </template>
 
@@ -128,6 +142,7 @@ import ModalSenha from '@/Components/ModalSenha.vue' // nova importação
 import { usePage, router } from '@inertiajs/vue3'
 import axios from 'axios' // para requisição de geração de senha
 import ModalEditarPaciente from '@/Components/ModalEditarPaciente.vue'
+import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal.vue' // Importando o componente de modal de confirmação
 
 const page = usePage()
 
@@ -227,16 +242,39 @@ function editarPaciente(id) {
 // Função para atualizar a lista de pacientes após edição
 async function buscarPacientes() {
   try {
-    const response = await axios.get('/pacientes')
+    const response = await axios.get('/pacientes', { headers: { Accept: 'application/json' } })
     pacientes.value = {
       data: response.data.data,
-      pagination: response.data.pagination
+      current_page: response.data.pagination.current_page,
+      last_page: response.data.pagination.last_page,
+      per_page: 10, // se for fixo, ou pode pegar do response
+      total: response.data.pagination.total
     }
   } catch (error) {
     console.error('Erro ao buscar pacientes:', error)
   }
 }
-
 // Chama a função para buscar pacientes ao carregar o componente
+
+//Abrir modal de confirmação de deleção
+const modalAberta = ref(false)
+
+function abrirModal(paciente) {
+  pacienteSelecionado.value = paciente
+  modalAberta.value = true
+}
+
+//Deletar paciente
+function deletarPaciente(paciente) {
+  router.delete(route('pacientes.destroy', paciente.id), {
+    onSuccess: () => {
+      modalAberta.value = false
+      buscarPacientes()  // Atualiza a lista após deletar
+    },
+    onError: () => {
+      alert('Erro ao deletar paciente.')
+    }
+  })
+}
 
 </script>

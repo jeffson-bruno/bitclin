@@ -105,6 +105,6 @@ class PacienteController extends Controller
     {
         $paciente->delete();
 
-        return response()->json(null, 204);
+        return redirect()->route('pacientes.index')->with('success', 'Paciente deletado com sucesso!');
     }
 }

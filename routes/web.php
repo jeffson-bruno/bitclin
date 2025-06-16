@@ -87,6 +87,7 @@ Route::put('/pacientes/{id}', [PacienteController::class, 'update'])->name('paci
 
 
 
+
 //Fechamento
 });
 // Authentication Routes
