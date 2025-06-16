@@ -129,13 +129,26 @@ watch(() => props.paciente, (novo) => {
 
 function formatDateToISO(dateStr) {
   if (!dateStr) return null
+
   // Se já estiver no formato ISO (yyyy-mm-dd), retorna direto
   if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr
 
   const parts = dateStr.split('/')
-  if (parts.length !== 3) return dateStr // Formato inesperado, retorna como está
-  return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`
+  
+  // Verificar se há 3 partes (dia, mês, ano)
+  if (parts.length !== 3) return null // Retorna null se o formato não for esperado
+
+  const [day, month, year] = parts
+
+  // Verificar se os componentes são numéricos e válidos
+  if (!/^\d{2}$/.test(day) || !/^\d{2}$/.test(month) || !/^\d{4}$/.test(year)) {
+    return null // Retorna null se algum componente não for numérico ou válido
+  }
+
+  // Converte a data para o formato ISO (yyyy-mm-dd)
+  return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
 }
+
 
 async function atualizarPaciente() {
   try {
