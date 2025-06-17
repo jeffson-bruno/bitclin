@@ -13,6 +13,11 @@
                 <div class="bg-white overflow-x-auto shadow-sm sm:rounded-lg">
                     <div class="p-6 text-gray-900">
 
+                        <!-- Barra de busca -->
+                        <div class="flex justify-end mb-4">
+                          <SearchBar @search="filtrarPacientes" />
+                        </div>
+
                         <!-- Botão para abrir a modal -->
                         <button @click="mostrarModal = true" class="px-4 py-2 bg-blue-500 text-white rounded mb-4">
                             Cadastrar Novo Paciente
@@ -33,14 +38,14 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="paciente in listaPacientes" :key="paciente.id">
+                                <tr v-for="paciente in listaPacientesFiltrada" :key="paciente.id">
                                     <td class="border px-4 py-2 w-1/4">{{ paciente.nome }}</td>
                                     <td class="border px-4 py-2 w-1/6">{{ mascaraCPF(paciente.cpf) }}</td>
                                     <td class="border px-4 py-2 w-1/6">{{ mascaraTelefone(paciente.telefone) }}</td>
                                     <td class="border px-4 py-2 w-1/4">
                                         <!--Ações-->
                                         <!--Imprimir Senha-->
-                                    <div class="space-x-2">
+                                    <div class="flex space-x-2 items-center">
                                         <button
                                             class="bg-green-500 text-white px-2 py-1 rounded text-sm"
                                             @click="abrirModalSenha(paciente)"
@@ -54,7 +59,7 @@
                                         </button>
 
                                         <!-- Botão: Editar Paciente -->
-                                            <button @click="editarPaciente(paciente.id)" class="hover:text-blue-700">
+                                            <button @click="editarPaciente(paciente.id)" class="hover:text-blue-700" title="Editar Paciente">
                                                 <!-- Ícone de lápis -->
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -143,6 +148,7 @@ import { usePage, router } from '@inertiajs/vue3'
 import axios from 'axios' // para requisição de geração de senha
 import ModalEditarPaciente from '@/Components/ModalEditarPaciente.vue'
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal.vue' // Importando o componente de modal de confirmação
+import SearchBar from '@/Components/SearchBar.vue'  // Importando o componente de busca
 
 const page = usePage()
 
@@ -151,7 +157,8 @@ const pacientes = ref(page.props.pacientes)
 
 const listaPacientes = computed(() => pacientes.value?.data ?? [])
 
-console.log('Pacientes recebidos', pacientes)
+const searchTerm = ref('')
+//console.log('Pacientes recebidos', pacientes)
 
 // Modal de cadastro
 const mostrarModal = ref(false)
@@ -276,5 +283,25 @@ function deletarPaciente(paciente) {
     }
   })
 }
+
+// Função para filtrar pacientes
+
+// Função para capturar o evento de busca do componente de busca
+const filtrarPacientes = (termo) => {
+  searchTerm.value = termo
+}
+// Computed para filtrar pacientes com base no termo de busca
+const listaPacientesFiltrada = computed(() => {
+  if (!searchTerm.value) {
+    return listaPacientes.value
+  }
+
+  const termo = searchTerm.value.toLowerCase()
+  return listaPacientes.value.filter(paciente => 
+    paciente.nome.toLowerCase().includes(termo) || paciente.cpf.includes(termo)
+  )
+})
+
+
 
 </script>
