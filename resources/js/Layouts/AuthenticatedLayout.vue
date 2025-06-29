@@ -63,7 +63,7 @@ onMounted(() => {
                                     </template>
                                     <template #content>
                                         <DropdownLink :href="route('pacientes.index')">Pacientes</DropdownLink>
-                                        <DropdownLink :href="route('funcionarios.index')">Funcionários</DropdownLink>
+                                        <!--<DropdownLink :href="route('funcionarios.index')">Funcionários</DropdownLink>-->
                                         <DropdownLink :href="route('usuarios.index')">Usuários</DropdownLink>
                                     </template>
                                 </Dropdown>
