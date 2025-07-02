@@ -34,19 +34,22 @@ class UsuarioController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name'     => 'required|string|max:255',
-            'usuario'  => 'required|string|unique:users,usuario',
-            'password' => 'required|string|confirmed|min:6',
-            'role'     => 'required|in:admin,receptionist,doctor',
-        ]);
+        'name'     => 'required|string|max:255',
+        'usuario'  => 'required|string|unique:users,usuario',
+        'password' => 'required|string|confirmed|min:6|max:6',
+        'role'     => 'required|in:admin,receptionist,doctor',
+    ]);
 
-        $validated['password'] = bcrypt($validated['password']);
+    $validated['password'] = bcrypt($validated['password']);
 
-        // email fica nulo
-        User::create($validated);
+    // Cria o usuário e armazena na variável
+    $user = User::create($validated);
 
-        return redirect()->route('usuarios.index')
-                         ->with('success', 'Usuário criado com sucesso.');
+    // Atribui o papel usando Spatie
+    $user->assignRole($validated['role']);
+
+    return redirect()->route('usuarios.index')
+                     ->with('success', 'Usuário criado com sucesso.');
     }
 
     /**
@@ -70,20 +73,29 @@ class UsuarioController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $validated = $request->validate([
-            'name'    => 'required|string|max:255',
-            'usuario' => 'required|string|unique:users,usuario,' . $id,
-            'role'    => 'required|in:admin,receptionist,doctor',
+        $user = User::findOrFail($id);
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'usuario' => 'required|string|unique:users,usuario,' . $user->id,
+            'role' => 'required|in:admin,receptionist,doctor',
+            'password' => 'nullable|string|confirmed|min:6|max:6',
         ]);
 
+        $user->name = $request->name;
+        $user->usuario = $request->usuario;
+        $user->role = $request->role;
+
         if ($request->filled('password')) {
-            $validated['password'] = bcrypt($request->password);
+            $user->password = bcrypt($request->password);
         }
 
-        User::findOrFail($id)->update($validated);
+        $user->save();
 
-        return redirect()->route('usuarios.index')
-                        ->with('success', 'Usuário atualizado com sucesso.');
+        // Remove papéis anteriores e aplica o novo
+        $user->syncRoles([$request->role]);
+
+        return redirect()->route('usuarios.index')->with('success', 'Usuário atualizado com sucesso.');
     }
 
     /**
@@ -96,4 +108,15 @@ class UsuarioController extends Controller
 
         return redirect()->route('usuarios.index')->with('success', 'Usuário excluído com sucesso.');
     }
+
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            if (auth()->user()->role !== 'admin') {
+                abort(403, 'Acesso não autorizado.');
+            }
+            return $next($request);
+        });
+    }
+
 }

@@ -136,172 +136,164 @@
     @confirm="deletarPaciente"
   />
 
+  <Toast ref="toastRef" :type="toastType" />
+
+
 
 </template>
 
 <script setup>
 import { Head } from '@inertiajs/vue3'
-import { ref,computed } from 'vue'
+import { ref, computed } from 'vue'
+import { usePage, router } from '@inertiajs/vue3'
+import axios from 'axios'
+
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import ModalCadastroPaciente from '@/Components/ModalCadastroPaciente.vue'
-import ModalSenha from '@/Components/ModalSenha.vue' // nova importação
-import { usePage, router } from '@inertiajs/vue3'
-import axios from 'axios' // para requisição de geração de senha
+import ModalSenha from '@/Components/ModalSenha.vue'
 import ModalEditarPaciente from '@/Components/ModalEditarPaciente.vue'
-import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal.vue' // Importando o componente de modal de confirmação
-import SearchBar from '@/Components/SearchBar.vue'  // Importando o componente de busca
+import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal.vue'
+import SearchBar from '@/Components/SearchBar.vue'
+import Toast from '@/Components/Toast.vue'
 
-const page = usePage()
+/* -------- Toast -------- */
+const toastRef  = ref(null)
+const toastType = ref('success')
+const showToast = (msg, type = 'success') => {
+  toastType.value = type
+  toastRef.value?.showToast(msg)
+}
 
-// Pacientes vindos da página
+/* -------- Dados vindos do laravel -------- */
+const page      = usePage()
 const pacientes = ref(page.props.pacientes)
 
+/* -------- Computeds -------- */
 const listaPacientes = computed(() => pacientes.value?.data ?? [])
 
+/* -------- Busca -------- */
 const searchTerm = ref('')
-//console.log('Pacientes recebidos', pacientes)
+const filtrarPacientes = (termo) => { searchTerm.value = termo }
+const listaPacientesFiltrada = computed(() => {
+  if (!searchTerm.value) return listaPacientes.value
+  const termo = searchTerm.value.toLowerCase()
+  return listaPacientes.value.filter(p =>
+    p.nome.toLowerCase().includes(termo) || p.cpf.includes(termo)
+  )
+})
 
-// Modal de cadastro
-const mostrarModal = ref(false)
+/* -------- Paginação -------- */
+function goToPage(pageNum) {
+  router.get('/pacientes', { page: pageNum }, { replace: true })
+}
 
-// Modal de senha
-const mostrarModalSenha = ref(false)
-const pacienteSelecionado = ref(null)
-const tipoSenha = ref('convencional')
+/* -------- Máscaras -------- */
+const mascaraCPF = v => !v ? '' : v.replace(/\D/g,'')
+  .replace(/(\d{3})(\d)/,'$1.$2')
+  .replace(/(\d{3})(\d)/,'$1.$2')
+  .replace(/(\d{3})(\d{1,2})$/,'$1-$2')
 
-//Abri e fechar modal (edição de paciente) e armazenar o paciente selecionado
+const mascaraTelefone = v => {
+  if (!v) return ''
+  v = v.replace(/\D/g,'')
+  return v.length <= 10
+    ? v.replace(/(\d{2})(\d)/,'($1) $2').replace(/(\d{4})(\d)/,'$1-$2')
+    : v.replace(/(\d{2})(\d)/,'($1) $2').replace(/(\d{5})(\d)/,'$1-$2')
+}
+
+/* -------- Estados de modal -------- */
+const mostrarModal       = ref(false)      // cadastro
+const mostrarModalSenha  = ref(false)
 const mostrarModalEditar = ref(false)
-const pacienteParaEditar = ref(null)
+const modalAberta        = ref(false)
 
+/* Paciente selecionado (senha e delete) */
+const pacienteSelecionado = ref(null)
 
-// Função para ir para uma página específica (paginação)
-function goToPage(page) {
-  router.get('/pacientes', { page }, { replace: true })
+/* Senha */
+const tipoSenha = ref('convencional')
+function abrirModalSenha(p) {
+  pacienteSelecionado.value = p
+  tipoSenha.value           = 'convencional'
+  mostrarModalSenha.value   = true
 }
 
-// Máscara de CPF
-const mascaraCPF = (value) => {
-  if (!value) return ''
-  value = value.replace(/\D/g, '')
-  value = value.replace(/(\d{3})(\d)/, '$1.$2')
-  value = value.replace(/(\d{3})(\d)/, '$1.$2')
-  value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2')
-  return value
-}
-
-// Máscara de telefone
-const mascaraTelefone = (value) => {
-  if (!value) return ''
-  value = value.replace(/\D/g, '')
-  if (value.length <= 10) {
-    value = value.replace(/(\d{2})(\d)/, '($1) $2')
-    value = value.replace(/(\d{4})(\d)/, '$1-$2')
-  } else {
-    value = value.replace(/(\d{2})(\d)/, '($1) $2')
-    value = value.replace(/(\d{5})(\d)/, '$1-$2')
-  }
-  return value
-}
-
-//Função para abrir a modal da senha e definir paciente atual
-function abrirModalSenha(paciente) {
-  pacienteSelecionado.value = paciente
-  tipoSenha.value = 'convencional'
-  mostrarModalSenha.value = true
-}
-
-//Função chamada ao confirmar tipo da senha
+/* Confirmar senha */
 async function confirmarGeracaoSenha(tipo) {
   tipoSenha.value = tipo
-
   try {
-    const response = await axios.post('/senhas', {
+    const { data } = await axios.post('/senhas', {
       paciente_id: pacienteSelecionado.value.id,
-      tipo: tipoSenha.value,
+      tipo:        tipoSenha.value
     })
-
-    // Abrir nova aba com impressão da senha
-    window.open(`/senhas/imprimir/${response.data.senha.id}`, '_blank')
-
-
-    // Fecha modal
+    window.open(`/senhas/imprimir/${data.senha.id}`, '_blank')
     mostrarModalSenha.value = false
-  } catch (error) {
-    console.error(error)
-    alert('Erro ao gerar a senha.')
+  } catch (e) {
+    showToast('Erro ao gerar senha.', 'error')
   }
-
 }
 
-function imprimirFicha(pacienteId) {
-  window.open(`/pacientes/imprimir-ficha/${pacienteId}`, '_blank')
+/* Imprimir Ficha */
+const imprimirFicha = id => window.open(`/pacientes/imprimir-ficha/${id}`, '_blank')
 
-}
-
-// Função para abrir a modal de edição de paciente
+/* -------- Edição -------- */
+const pacienteParaEditar = ref(null)
 function editarPaciente(id) {
-  const paciente = listaPacientes.value.find(p => p.id === id)
-  if (paciente) {
-    pacienteParaEditar.value = { ...paciente }
+  const pac = listaPacientes.value.find(p => p.id === id)
+  if (pac) {
+    pacienteParaEditar.value = { ...pac }
     mostrarModalEditar.value = true
   }
 }
 
-// Função para atualizar a lista de pacientes após edição
+/* Atualizar listagem */
 async function buscarPacientes() {
   try {
-    const response = await axios.get('/pacientes', { headers: { Accept: 'application/json' } })
+    const { data } = await axios.get('/pacientes', { headers:{Accept:'application/json'} })
     pacientes.value = {
-      data: response.data.data,
-      current_page: response.data.pagination.current_page,
-      last_page: response.data.pagination.last_page,
-      per_page: 10, // se for fixo, ou pode pegar do response
-      total: response.data.pagination.total
+      data:         data.data,
+      current_page: data.pagination.current_page,
+      last_page:    data.pagination.last_page,
+      per_page:     10,
+      total:        data.pagination.total
     }
-  } catch (error) {
-    console.error('Erro ao buscar pacientes:', error)
+  } catch (e) {
+    showToast('Erro ao buscar pacientes.', 'error')
   }
+}
+
+/* Recebe evento do modal de edição */
+const pacienteAtualizado = () => {
+  buscarPacientes()
+  showToast('Paciente atualizado com sucesso!', 'info')
+}
+
+/* Recebe evento do modal de cadastro */
+const pacienteCadastrado = () => {
+  buscarPacientes()
+  showToast('Paciente cadastrado com sucesso!', 'success')
+}
+
+/* -------- Deleção -------- */
+function abrirModal(p) {
+  pacienteSelecionado.value = p
+  modalAberta.value         = true
+}
+
+function deletarPaciente(pac) {
+  router.delete(route('pacientes.destroy', pac.id), {
+    onSuccess: () => {
+      modalAberta.value = false
+      buscarPacientes()
+      showToast('Paciente excluído com sucesso!', 'error')
+    },
+    onError: () => showToast('Erro ao excluir paciente.', 'error')
+  })
 }
 // Chama a função para buscar pacientes ao carregar o componente
 
 //Abrir modal de confirmação de deleção
-const modalAberta = ref(false)
-
-function abrirModal(paciente) {
-  pacienteSelecionado.value = paciente
-  modalAberta.value = true
-}
-
-//Deletar paciente
-function deletarPaciente(paciente) {
-  router.delete(route('pacientes.destroy', paciente.id), {
-    onSuccess: () => {
-      modalAberta.value = false
-      buscarPacientes()  // Atualiza a lista após deletar
-    },
-    onError: () => {
-      alert('Erro ao deletar paciente.')
-    }
-  })
-}
-
-// Função para filtrar pacientes
-
-// Função para capturar o evento de busca do componente de busca
-const filtrarPacientes = (termo) => {
-  searchTerm.value = termo
-}
-// Computed para filtrar pacientes com base no termo de busca
-const listaPacientesFiltrada = computed(() => {
-  if (!searchTerm.value) {
-    return listaPacientes.value
-  }
-
-  const termo = searchTerm.value.toLowerCase()
-  return listaPacientes.value.filter(paciente => 
-    paciente.nome.toLowerCase().includes(termo) || paciente.cpf.includes(termo)
-  )
-})
+//const modalAberta = ref(false)
 
 
 

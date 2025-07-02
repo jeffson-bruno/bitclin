@@ -2,7 +2,13 @@
   <transition name="fade">
     <div
       v-if="visible"
-      class="fixed top-6 right-6 bg-green-600 text-white px-4 py-2 rounded shadow-lg z-[9999]"
+      :class="[
+        'fixed top-6 right-6 text-white px-4 py-2 rounded shadow-lg z-[9999]',
+        type === 'success' ? 'bg-green-600' :
+        type === 'error' ? 'bg-red-600' :
+        type === 'info' ? 'bg-blue-600' :
+        'bg-gray-600'
+      ]"
     >
       {{ message }}
     </div>
@@ -10,8 +16,16 @@
 </template>
 
 
+
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
+
+const props = defineProps({
+  type: {
+    type: String,
+    default: 'success' // 'success', 'error', 'info'
+  }
+})
 
 const visible = ref(false)
 const message = ref('')

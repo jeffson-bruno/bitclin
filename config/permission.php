@@ -28,6 +28,8 @@ return [
 
     ],
 
+    'guard_name' => 'web',
+
     'table_names' => [
 
         /*

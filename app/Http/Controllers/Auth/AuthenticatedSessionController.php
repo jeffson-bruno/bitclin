@@ -33,6 +33,13 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        // Verifica o papel do usuário logado
+    $user = auth()->user();
+
+    if ($user->hasRole('receptionist')) {
+        return redirect()->route('recepcao.dashboard');
+    }
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

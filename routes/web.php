@@ -11,6 +11,8 @@ use App\Http\Controllers\SenhaAtendimentoController;
 use App\Models\SenhaAtendimento;
 use App\Models\Paciente;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Http\Controllers\RecepcaoController;
+use App\Http\Controllers\AgendaController;
 
 
 Route::get('/', function () {
@@ -84,6 +86,18 @@ Route::get('/pacientes', [PacienteController::class, 'index'])->name('pacientes.
 
 
 Route::put('/pacientes/{id}', [PacienteController::class, 'update'])->name('pacientes.update');
+
+//Recepção
+Route::middleware(['auth', 'role:receptionist'])->group(function () {
+    Route::get('/recepcao', [RecepcaoController::class, 'index'])->name('recepcao.dashboard');
+});
+
+//Agenda Inserir
+Route::middleware(['auth', 'role:receptionist'])->group(function () {
+    Route::get('/agenda/inserir', [AgendaController::class, 'create'])->name('agenda.inserir');
+});
+
+
 
 
 
