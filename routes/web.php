@@ -92,11 +92,6 @@ Route::middleware(['auth', 'role:receptionist'])->group(function () {
     Route::get('/recepcao', [RecepcaoController::class, 'index'])->name('recepcao.dashboard');
 });
 
-//Agenda Inserir
-Route::middleware(['auth', 'role:receptionist'])->group(function () {
-    Route::get('/agenda/inserir', [AgendaController::class, 'create'])->name('agenda.inserir');
-});
-
 
 
 

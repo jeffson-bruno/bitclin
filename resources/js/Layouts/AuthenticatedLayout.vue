@@ -95,15 +95,6 @@ const isDoctor       = computed(() => roles.includes('doctor'))
             </template>
             </Dropdown>
 
-            <!-- INSERIR (apenas para Recepcionista) -->
-            <NavLink
-            v-if="isReceptionist"
-            :href="route('agenda.inserir')"
-            :active="route().current('agenda.inserir')"
-            >
-            Inserir
-            </NavLink>
-
 
             <!-- MENU MÉDICO (exemplo) -->
             <NavLink
