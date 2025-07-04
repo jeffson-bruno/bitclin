@@ -23,11 +23,13 @@
           title="Fechar formulário">&times;</button>
 
         <form @submit.prevent="submit" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Nome -->
           <div>
             <label class="block mb-1 text-sm font-medium">Nome</label>
             <input v-model="form.name" type="text" class="w-full border rounded p-2" required />
           </div>
 
+          <!-- Usuário -->
           <div>
             <label class="block mb-1 text-sm font-medium">Usuário</label>
             <input v-model="form.usuario" type="text" class="w-full border rounded p-2" required />
@@ -42,19 +44,12 @@
               maxlength="6"
               class="w-full border rounded p-2 pr-10"
               :required="!editando" />
-            <button
-              type="button"
-              @click="showPassword = !showPassword"
-              class="absolute right-2 top-[35px] text-gray-500">
-              <svg v-if="showPassword" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                   viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                      d="M13.875 18.825A10.05 10.05 0 0112 19c-5.523 0-10-4.477-10-10 0-1.34.26-2.62.725-3.825M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            <button type="button" @click="showPassword = !showPassword" class="absolute right-2 top-[35px] text-gray-500">
+              <svg v-if="showPassword" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-5.523 0-10-4.477-10-10 0-1.34.26-2.62.725-3.825M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
               </svg>
-              <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                   viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+              <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
               </svg>
             </button>
           </div>
@@ -68,19 +63,12 @@
               maxlength="6"
               class="w-full border rounded p-2 pr-10"
               :required="!editando" />
-            <button
-              type="button"
-              @click="showConfirm = !showConfirm"
-              class="absolute right-2 top-[35px] text-gray-500">
-              <svg v-if="showConfirm" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                   viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                      d="M13.875 18.825A10.05 10.05 0 0112 19c-5.523 0-10-4.477-10-10 0-1.34.26-2.62.725-3.825M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            <button type="button" @click="showConfirm = !showConfirm" class="absolute right-2 top-[35px] text-gray-500">
+              <svg v-if="showConfirm" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-5.523 0-10-4.477-10-10 0-1.34.26-2.62.725-3.825M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
               </svg>
-              <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                   viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+              <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
               </svg>
             </button>
           </div>
@@ -96,6 +84,16 @@
             </select>
           </div>
 
+          <!-- Especialidade (somente para médicos) -->
+          <div v-if="form.role === 'doctor'" class="md:col-span-2">
+            <label class="block mb-1 text-sm font-medium mt-2">Especialidade</label>
+            <select v-model="form.especialidade_id" class="w-full border rounded p-2" required>
+              <option disabled value="">Selecione...</option>
+              <option v-for="esp in props.especialidades" :key="esp.id" :value="esp.id">{{ esp.nome }}</option>
+            </select>
+          </div>
+
+          <!-- Botão Salvar -->
           <div class="md:col-span-2 flex justify-end mt-2">
             <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
               Salvar
@@ -185,26 +183,28 @@ import { ref } from 'vue'
 import { useForm, router } from '@inertiajs/vue3'
 import Toast from '@/Components/Toast.vue'
 
-// Toast refs
+/* Props */
+const props = defineProps({
+  usuarios: Array,
+  especialidades: Array
+})
+
+/* Toast */
 const toastRef = ref(null)
 const toastType = ref('success')
-
 const showToast = (msg, type = 'success') => {
   toastType.value = type
   toastRef.value?.showToast(msg)
 }
 
-// Props
-defineProps({ usuarios: Array })
-
-// Form & UI states
+/* UI States */
 const showForm = ref(false)
 const editando = ref(false)
 const usuarioEditandoId = ref(null)
 const showPassword = ref(false)
 const showConfirm = ref(false)
 
-// Collapse toggle
+/* Collapse */
 const toggleForm = () => (showForm.value = !showForm.value)
 const fecharFormulario = () => {
   showForm.value = false
@@ -213,20 +213,21 @@ const fecharFormulario = () => {
   form.reset()
 }
 
-// Inertia form
+/* Form */
 const form = useForm({
   name: '',
   usuario: '',
   password: '',
   password_confirmation: '',
-  role: ''
+  role: '',
+  especialidade_id: null
 })
 
-// Visualizar usuário
+/* Visualizar usuário */
 const selectedUser = ref(null)
 const verUsuario = (user) => (selectedUser.value = user)
 
-// Enviar (criar ou atualizar)
+/* Submit */
 const submit = () => {
   if (editando.value && usuarioEditandoId.value) {
     form.put(route('usuarios.update', usuarioEditandoId.value), {
@@ -249,7 +250,7 @@ const submit = () => {
   }
 }
 
-// Excluir
+/* Delete */
 const deleteUser = (id) => {
   if (confirm('Tem certeza que deseja excluir este usuário?')) {
     router.delete(route('usuarios.destroy', id), {
@@ -260,7 +261,7 @@ const deleteUser = (id) => {
   }
 }
 
-// Editar
+/* Edit */
 const editarUsuario = (usuario) => {
   showForm.value = true
   editando.value = true
@@ -269,8 +270,8 @@ const editarUsuario = (usuario) => {
   form.name = usuario.name
   form.usuario = usuario.usuario
   form.role = usuario.role
+  form.especialidade_id = usuario.especialidade_id
   form.password = ''
   form.password_confirmation = ''
 }
 </script>
-

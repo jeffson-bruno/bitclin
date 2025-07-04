@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Exame;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class ExameController extends Controller
 {
@@ -11,7 +13,11 @@ class ExameController extends Controller
      */
     public function index()
     {
-        //
+        $exames = Exame::select('id', 'nome', 'valor', 'created_at')->latest()->get();
+
+        return Inertia::render('Exames/Index', [
+            'exames' => $exames,
+        ]);
     }
 
     /**
@@ -27,7 +33,14 @@ class ExameController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'nome'  => 'required|string|max:255',
+            'valor' => 'required|numeric|min:0',
+        ]);
+
+        Exame::create($request->only('nome', 'valor'));
+
+        return redirect()->back()->with('success', 'Exame cadastrado com sucesso.');
     }
 
     /**
@@ -49,16 +62,25 @@ class ExameController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Exame $exame)
     {
-        //
+        $request->validate([
+            'nome'  => 'required|string|max:255',
+            'valor' => 'required|numeric|min:0',
+        ]);
+
+        $exame->update($request->only('nome', 'valor'));
+
+        return redirect()->back()->with('success', 'Exame atualizado com sucesso.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Exame $exame)
     {
-        //
+        $exame->delete();
+
+        return redirect()->back()->with('success', 'Exame excluído com sucesso.');
     }
 }

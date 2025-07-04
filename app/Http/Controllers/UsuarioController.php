@@ -1,10 +1,11 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use App\Models\User;
-
-
 use Illuminate\Http\Request;
+use App\Models\Especialidade;
+
 
 class UsuarioController extends Controller
 {
@@ -13,10 +14,21 @@ class UsuarioController extends Controller
      */
     public function index()
     {
-        $usuarios = User::select('id', 'name', 'usuario', 'role', 'created_at')->get();
+        $usuarios = User::with('roles')->get()->map(function ($user) {
+            return [
+                'id'         => $user->id,
+                'name'       => $user->name,
+                'usuario'    => $user->usuario,
+                'role'       => $user->getRoleNames()->first(), // Pega o primeiro papel
+                'created_at' => $user->created_at,
+            ];
+        });
+
+        $especialidades = Especialidade::select('id', 'nome')->get();
 
         return inertia('Usuarios/Index', [
             'usuarios' => $usuarios,
+            'especialidades' => $especialidades,
         ]);
     }
 
@@ -34,22 +46,25 @@ class UsuarioController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-        'name'     => 'required|string|max:255',
-        'usuario'  => 'required|string|unique:users,usuario',
-        'password' => 'required|string|confirmed|min:6|max:6',
-        'role'     => 'required|in:admin,receptionist,doctor',
-    ]);
+            'name'     => 'required|string|max:255',
+            'usuario'  => 'required|string|unique:users,usuario',
+            'password' => 'required|string|confirmed|min:6|max:6',
+            'role'     => 'required|in:admin,receptionist,doctor',
+        ]);
 
-    $validated['password'] = bcrypt($validated['password']);
+        // Remover o role antes de salvar no banco (caso a tabela users não tenha essa coluna)
+        $role = $validated['role'];
+        unset($validated['role']);
 
-    // Cria o usuário e armazena na variável
-    $user = User::create($validated);
+        $validated['password'] = bcrypt($validated['password']);
 
-    // Atribui o papel usando Spatie
-    $user->assignRole($validated['role']);
+        $user = User::create($validated);
 
-    return redirect()->route('usuarios.index')
-                     ->with('success', 'Usuário criado com sucesso.');
+        // Atribuir corretamente o papel
+        $user->syncRoles([$role]);
+
+        return redirect()->route('usuarios.index')
+                        ->with('success', 'Usuário criado com sucesso.');
     }
 
     /**

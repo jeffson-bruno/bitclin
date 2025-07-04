@@ -90,8 +90,8 @@ const isDoctor       = computed(() => roles.includes('doctor'))
                 </button>
             </template>
             <template #content>
-                <DropdownLink :href="route('consultas.index')">Consultas</DropdownLink>
-                <DropdownLink :href="route('exames.index')">Exames</DropdownLink>
+                <!---<DropdownLink :href="route('consultas.index')">Consultas</DropdownLink>-->
+                <!---<DropdownLink :href="route('exames.index')">Exames</DropdownLink>-->
             </template>
             </Dropdown>
 

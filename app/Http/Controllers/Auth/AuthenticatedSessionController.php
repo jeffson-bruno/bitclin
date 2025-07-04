@@ -36,6 +36,11 @@ class AuthenticatedSessionController extends Controller
         // Verifica o papel do usuário logado
     $user = auth()->user();
 
+    // redireciono por papel
+    if ($user->hasRole('admin')) {
+        return redirect()->intended(route('admin.dashboard'));
+    }
+
     if ($user->hasRole('receptionist')) {
         return redirect()->route('recepcao.dashboard');
     }

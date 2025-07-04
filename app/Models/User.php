@@ -57,4 +57,10 @@ class User extends Authenticatable
     {
         return 'usuario';
     }
+
+    public function especialidade()
+    {
+        return $this->belongsTo(Especialidade::class);
+    }
+
 }

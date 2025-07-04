@@ -13,6 +13,9 @@ use App\Models\Paciente;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Http\Controllers\RecepcaoController;
 use App\Http\Controllers\AgendaController;
+use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\EspecialidadeController;
+use App\Http\Controllers\Medico\MedicoController;
 
 
 Route::get('/', function () {
@@ -24,9 +27,46 @@ Route::get('/', function () {
     ]);
 });
 
+//Rotas Essenciais
 Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
+    $user = auth()->user();
+
+    if ($user->hasRole('admin')) {
+        return redirect()->route('admin.dashboard');
+    }
+
+    if ($user->hasRole('receptionist')) {
+        return redirect()->route('recepcao.dashboard');
+    }
+
+    if ($user->hasRole('doctor')) {
+       return redirect()->route('medico.dashboard');
+   }
+
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+//Recepção
+Route::middleware(['auth', 'role:receptionist'])->group(function () {
+    Route::get('/recepcao', [RecepcaoController::class, 'index'])->name('recepcao.dashboard');
+});
+
+//Rotas do Admin
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
+
+    // Especialidades
+    Route::resource('especialidades', EspecialidadeController::class)
+        ->names('especialidades')
+        ->only(['index', 'store', 'update', 'destroy']);
+    //Exames
+    Route::resource('exames', \App\Http\Controllers\ExameController::class)->except(['show']);
+});
+
+// Painel do Médico
+Route::middleware(['auth', 'role:doctor'])->prefix('medico')->name('medico.')->group(function () {
+    Route::get('/dashboard', [MedicoController::class, 'index'])->name('dashboard');
+});
+
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -44,12 +84,11 @@ Route::middleware('guest')->group(function () {
 Route::middleware(['auth'])->group(function () {
     // Cadastro
     Route::resource('pacientes', PacienteController::class);
-    Route::resource('funcionarios', FuncionarioController::class);
     Route::resource('usuarios', UsuarioController::class);
 
     // Agendamentos
-    Route::resource('consultas', ConsultaController::class);
-    Route::resource('exames', ExameController::class);
+    //Route::resource('consultas', ConsultaController::class);
+    //Route::resource('exames', ExameController::class);
 
     Route::post('/senhas', [SenhaAtendimentoController::class, 'store']);
 
@@ -87,10 +126,6 @@ Route::get('/pacientes', [PacienteController::class, 'index'])->name('pacientes.
 
 Route::put('/pacientes/{id}', [PacienteController::class, 'update'])->name('pacientes.update');
 
-//Recepção
-Route::middleware(['auth', 'role:receptionist'])->group(function () {
-    Route::get('/recepcao', [RecepcaoController::class, 'index'])->name('recepcao.dashboard');
-});
 
 
 
