@@ -65,6 +65,12 @@ const openCadastro = ref(true)   // já vem aberto
             Exames
          </Link>
 
+         <Link
+          :href="route('admin.agenda-medica.index')"
+          :class="['block px-3 py-2 rounded', route().current('admin.agenda-medica.index') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100']">
+          Agenda Médica
+        </Link>
+
 <!---------------------------------------------------------------------------------------->
 
         </div>
