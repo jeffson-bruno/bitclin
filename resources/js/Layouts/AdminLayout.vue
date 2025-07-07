@@ -70,10 +70,15 @@ const openCadastro = ref(true)   // já vem aberto
           :class="['block px-3 py-2 rounded', route().current('admin.agenda-medica.index') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100']">
           Agenda Médica
         </Link>
-
 <!---------------------------------------------------------------------------------------->
-
         </div>
+<!------======================= FINANCEIRO =============================------------------>
+        <Link
+          :href="route('admin.financeiro.index')"
+          :class="['block px-3 py-2 rounded', route().current('admin.financeiro.index') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100']">
+          Financeiro
+        </Link>
+<!---------------------------------------------------------------------------------------->
       </nav>
 
       <!-- footer / usuário -->

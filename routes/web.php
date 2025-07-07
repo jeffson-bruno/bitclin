@@ -17,6 +17,8 @@ use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\EspecialidadeController;
 use App\Http\Controllers\Medico\MedicoController;
 use App\Http\Controllers\Admin\AgendaMedicaController;
+use App\Http\Controllers\Admin\FinanceiroController;
+
 
 
 Route::get('/', function () {
@@ -63,6 +65,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::resource('exames', \App\Http\Controllers\ExameController::class)->except(['show']);
     //Agenda
     Route::resource('agenda-medica', AgendaMedicaController::class)->except(['show']);
+    //Financeiro
+    Route::get('/financeiro', [App\Http\Controllers\Admin\FinanceiroController::class, 'index'])->name('financeiro.index');
+    Route::post('/financeiro/baixar/{id}', [FinanceiroController::class, 'baixarPagamento'])->name('financeiro.baixar');
+
+
+
 });
 
 // Painel do Médico

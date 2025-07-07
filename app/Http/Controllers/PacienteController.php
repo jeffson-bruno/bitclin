@@ -55,7 +55,11 @@ class PacienteController extends Controller
         'data_nascimento' => 'required|string', // ← Temporário, pois vamos converter manualmente
     ]);
 
-    // ✅ Transforma data_nascimento de dd/mm/yyyy para yyyy-mm-dd
+    // Se estiver pago e a data não foi preenchida, usar data atual
+    if ($validated['pago'] && empty($validated['data_pagamento'])) {
+        $validated['data_pagamento'] = now();
+    }
+    // Transforma data_nascimento de dd/mm/yyyy para yyyy-mm-dd
     if (!empty($validated['data_nascimento'])) {
         $data = explode('/', $validated['data_nascimento']);
         if (count($data) === 3) {
@@ -93,6 +97,7 @@ class PacienteController extends Controller
                 'forma_pagamento' => 'nullable|required_if:pago,true|string|max:255',
                 'data_pagamento' => 'nullable|required_if:pago,true|date',
             ]);
+
 
             $paciente->update($validated);
 
