@@ -69,6 +69,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/financeiro', [App\Http\Controllers\Admin\FinanceiroController::class, 'index'])->name('financeiro.index');
     Route::post('/financeiro/baixar/{id}', [FinanceiroController::class, 'baixarPagamento'])->name('financeiro.baixar');
 
+    //Despesas
+    Route::resource('despesas', \App\Http\Controllers\Admin\DespesaController::class)->names('despesas');
+    Route::post('despesas/{id}/baixar', [\App\Http\Controllers\Admin\DespesaController::class, 'baixar'])->name('despesas.baixar');
 
 
 });
