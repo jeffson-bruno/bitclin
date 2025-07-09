@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\EspecialidadeController;
 use App\Http\Controllers\Medico\MedicoController;
 use App\Http\Controllers\Admin\AgendaMedicaController;
 use App\Http\Controllers\Admin\FinanceiroController;
+use App\Http\Controllers\Admin\DespesaController;
 
 
 
@@ -71,7 +72,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
     //Despesas
     Route::resource('despesas', \App\Http\Controllers\Admin\DespesaController::class)->names('despesas');
-    Route::post('despesas/{id}/baixar', [\App\Http\Controllers\Admin\DespesaController::class, 'baixar'])->name('despesas.baixar');
+    Route::post('despesas/{id}/baixar', [DespesaController::class, 'baixar'])->name('despesas.baixar');
+
 
 
 });

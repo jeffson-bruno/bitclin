@@ -2,10 +2,13 @@
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Head, useForm } from '@inertiajs/vue3'
 import { ref } from 'vue'
+import { router } from '@inertiajs/vue3'
+
 
 defineProps({
   despesas: Array
 })
+
 
 const form = useForm({
   nome: '',
@@ -21,12 +24,19 @@ const submit = () => {
 }
 
 const darBaixa = (id) => {
-  if (confirm('Confirmar baixa da despesa?')) {
-    form.put(route('admin.despesas.baixar', id), {
-      preserveScroll: true,
+  if (confirm('Confirmar baixa desta despesa?')) {
+    router.post(route('admin.despesas.baixar', id), {}, {
+      onSuccess: () => {
+        // Aqui você pode adicionar um toast ou recarregar a lista de despesas
+        console.log('Despesa marcada como paga com sucesso.')
+      },
+      onError: () => {
+        alert('Erro ao dar baixa na despesa.')
+      }
     })
   }
 }
+
 </script>
 
 <template>
@@ -79,8 +89,11 @@ const darBaixa = (id) => {
                 </span>
               </td>
               <td class="p-2 border text-center">
-                <button v-if="!despesa.paga" @click="darBaixa(despesa.id)"
-                        class="bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700">
+                <button 
+                    v-if="!despesa.paga"
+                    @click="darBaixa(despesa.id)"
+                    class="bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700"
+                    >
                   Dar Baixa
                 </button>
               </td>
