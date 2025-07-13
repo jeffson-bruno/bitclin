@@ -7,7 +7,9 @@ const page = usePage()
 const user = page.props.auth.user
 
 /* controla submenu "Cadastro" */
-const openCadastro = ref(true)   // já vem aberto
+const openCadastro = ref(true) // já vem aberto
+
+const openFinanceiro = ref(true)
 </script>
 
 <template>
@@ -73,11 +75,27 @@ const openCadastro = ref(true)   // já vem aberto
 <!---------------------------------------------------------------------------------------->
         </div>
 <!------======================= FINANCEIRO =============================------------------>
-        <Link
-          :href="route('admin.financeiro.index')"
-          :class="['block px-3 py-2 rounded', route().current('admin.financeiro.index') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100']">
-          Financeiro
-        </Link>
+        <button
+          class="w-full flex items-center justify-between px-3 py-2 rounded text-gray-700 hover:bg-gray-100"
+          @click="openFinanceiro = !openFinanceiro">
+          <span class="font-medium">Painel Financeiro</span>
+          <svg :class="{'rotate-90': openFinanceiro}" class="h-4 w-4 transition-transform" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M6 6l6 4-6 4V6z" clip-rule="evenodd" />
+          </svg>
+        </button>
+        <div v-show="openFinanceiro" class="ml-4 space-y-1">
+          <Link
+            :href="route('admin.financeiro.index')"
+            :class="['block px-3 py-2 rounded', route().current('admin.financeiro.index') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100']">
+            Financeiro
+          </Link>
+
+          <Link 
+          :href="route('admin.despesas.index')" 
+          :class="['block px-3 py-2 rounded', route().current('admin.despesas.index') ? 'bg-gray-200 text-gray-900' : 'text-gray-700 hover:bg-gray-100']">
+            Despesas
+          </Link>
+        </div>
 <!---------------------------------------------------------------------------------------->
       </nav>
 

@@ -7,6 +7,7 @@ use App\Models\Despesa;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
+
 class DespesaController extends Controller
 {
     // Listar todas as despesas
@@ -15,7 +16,7 @@ class DespesaController extends Controller
         $despesas = Despesa::orderBy('data_pagamento')->get();
 
         return Inertia::render('Admin/Financeiro/Despesas', [
-            'despesas' => $despesas,
+            'despesas' => Despesa::orderBy('data_pagamento')->get(),
         ]);
     }
 
@@ -23,32 +24,36 @@ class DespesaController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'nome' => 'required|string|max:255',
-            'valor' => 'required|numeric',
+            'nome'           => 'required|string|max:255',
+            'valor'          => 'required|numeric',
             'data_pagamento' => 'required|date',
         ]);
 
-        Despesa::create([
-            'nome' => $request->nome,
-            'valor' => $request->valor,
-            'data_pagamento' => $request->data_pagamento,
-            'pago' => false,
-        ]);
+        Despesa::create($request->only('nome','valor','data_pagamento'));
 
-        return redirect()->back()->with('success', 'Despesa cadastrada com sucesso!');
+        // Inertia espera redirect back para recarregar props
+        return back()->with('success','Despesa cadastrada com sucesso.');
     }
 
     // Dar baixa na despesa
     public function baixar($id)
     {
         $despesa = Despesa::findOrFail($id);
+        $despesa->update(['pago' => true]);
 
-        $despesa->update([
-            'pago' => true,
-            'data_pagamento' => now(),
-        ]);
+        // Retorna resposta sem conteúdo para funcionar com Inertia/Vue
+        return response()->noContent();
 
-        return redirect()->back()->with('success', 'Despesa baixada com sucesso!');
+        
     }
+
+    public function destroy($id)
+    {
+        $despesa = Despesa::findOrFail($id);
+        $despesa->delete();
+
+        return response()->noContent(); // Ou redirect()->back() se quiser recarregar manualmente
+    }
+
 }
 

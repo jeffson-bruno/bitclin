@@ -29,12 +29,15 @@ const props = defineProps({
 
 const visible = ref(false)
 const message = ref('')
+const type = ref('success')
 
-function showToast(msg, duration = 3000) {
+function showToast(msg, duration = 3000, toastType = 'success') {
   message.value = msg
   visible.value = true
+  props.type = toastType
   setTimeout(() => (visible.value = false), duration)
 }
+
 
 defineExpose({ showToast })
 </script>
