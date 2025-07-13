@@ -19,6 +19,7 @@ use App\Http\Controllers\Medico\MedicoController;
 use App\Http\Controllers\Admin\AgendaMedicaController;
 use App\Http\Controllers\Admin\FinanceiroController;
 use App\Http\Controllers\Admin\DespesaController;
+use App\Http\Controllers\Admin\RelatorioController;
 
 
 
@@ -76,6 +77,15 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     ->only(['index','store','destroy']);
     Route::post('despesas/{id}/baixar', [DespesaController::class, 'baixar'])
     ->name('despesas.baixar');
+
+    // Relatórios Financeiros
+    Route::controller(App\Http\Controllers\Admin\RelatorioController::class)->prefix('relatorios')->name('relatorios.')->group(function () {
+        Route::get('/', 'index')->name('index'); // Página de seleção dos relatórios
+        Route::get('/dia', 'relatorioDia')->name('dia');
+        Route::get('/semana', 'relatorioSemana')->name('semana');
+        Route::get('/mes', 'relatorioMes')->name('mes');
+        Route::get('/anual', 'relatorioAnual')->name('anual');
+    });
 
 
 

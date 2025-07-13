@@ -107,9 +107,6 @@ const mesAtual = new Date().toLocaleString('pt-BR', { month: 'long' }).toUpperCa
       <div class="bg-white p-6 rounded shadow">
         <div class="flex justify-between items-center mb-4">
           <h2 class="text-lg font-semibold">Despesas - Mês de {{ mesAtual }}</h2>
-          <button type="button" class="text-blue-600 border border-blue-600 px-3 py-1 rounded hover:bg-blue-600 hover:text-white">
-            Imprimir Relatório
-          </button>
         </div>
 
         <table class="w-full border-collapse text-left text-sm">

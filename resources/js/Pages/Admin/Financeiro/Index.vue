@@ -5,8 +5,11 @@ import BarChart from '@/Components/Charts/BarChart.vue'
 import PieChart from '@/Components/Charts/PieChart.vue'
 import { computed } from 'vue'
 import { usePage } from '@inertiajs/vue3'
+import { ref } from 'vue'
 
 const csrf = usePage().props.csrf_token
+
+const mostrandoRelatorios = ref(false)
 
 
 const props = defineProps({
@@ -72,6 +75,8 @@ const pieChartOptions = {
     title: { display: true, text: 'Distribuição por Forma de Pagamento' }
   }
 }
+
+
 </script>
 
 
@@ -97,6 +102,56 @@ const pieChartOptions = {
           <p class="text-xl font-semibold text-green-600">R$ {{ resumo.entradas_mes }}</p>
         </div>
       </div>
+      <!-- Button para Relatório -->
+    <div class="max-w-5xl mx-auto space-y-6">
+
+      <div class="bg-white p-6 rounded shadow">
+        <div class="flex items-center justify-between">
+          <h1 class="text-xl font-semibold">Relatórios Financeiros</h1>
+          <button
+            @click="mostrandoRelatorios = !mostrandoRelatorios"
+            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            Imprimir Relatório
+          </button>
+        </div>
+
+        <!-- Collapse de opções de relatório -->
+        <div v-if="mostrandoRelatorios" class="mt-4 border rounded p-4 space-y-3">
+          <h2 class="text-lg font-medium">Escolha o tipo de relatório:</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <a
+              href="/admin/relatorios/dia"
+              target="_blank"
+              class="bg-gray-100 hover:bg-blue-100 border border-blue-400 text-blue-700 px-4 py-2 rounded text-center"
+            >
+              Relatório do Dia
+            </a>
+            <a
+              href="/admin/relatorios/semana"
+              target="_blank"
+              class="bg-gray-100 hover:bg-blue-100 border border-blue-400 text-blue-700 px-4 py-2 rounded text-center"
+            >
+              Relatório da Semana
+            </a>
+            <a
+              href="/admin/relatorios/mes"
+              target="_blank"
+              class="bg-gray-100 hover:bg-blue-100 border border-blue-400 text-blue-700 px-4 py-2 rounded text-center"
+            >
+              Relatório do Mês
+            </a>
+            <a
+              href="/admin/relatorios/anual"
+              target="_blank"
+              class="bg-gray-100 hover:bg-blue-100 border border-blue-400 text-blue-700 px-4 py-2 rounded text-center"
+            >
+              Relatório Anual
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
 
       <!-- Card de Pendentes -->
         <div class="bg-red-100 p-4 rounded shadow">
