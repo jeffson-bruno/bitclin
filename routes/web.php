@@ -67,6 +67,17 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::resource('exames', \App\Http\Controllers\ExameController::class)->except(['show']);
     //Agenda
     Route::resource('agenda-medica', AgendaMedicaController::class)->except(['show']);
+    Route::get('agenda-medica/medico/{id}/dias', function ($id) {
+        $dias = \App\Models\AgendaMedica::where('medico_id', $id)
+            ->orderBy('data')
+            ->pluck('data')
+            ->unique()
+            ->map(fn($data) => \Carbon\Carbon::parse($data)->format('d/m/Y'))
+            ->values();
+
+        return response()->json($dias);
+    })->middleware(['auth', 'role:admin']);
+
     //Financeiro
     Route::get('/financeiro', [App\Http\Controllers\Admin\FinanceiroController::class, 'index'])->name('financeiro.index');
     Route::post('/financeiro/baixar/{id}', [FinanceiroController::class, 'baixarPagamento'])->name('financeiro.baixar');
@@ -86,6 +97,22 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::get('/mes', 'relatorioMes')->name('mes');
         Route::get('/anual', 'relatorioAnual')->name('anual');
     });
+
+    //Relatorio Pacientes para consultas do  dia
+    Route::get('relatorios/consultas-hoje', function () {
+        $hoje = \Carbon\Carbon::today();
+
+        $pacientes = \App\Models\Paciente::where('procedimento', 'consulta')
+            ->whereDate('created_at', $hoje)
+            ->get();
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdfs.relatorios.consultas_hoje', [
+            'pacientes' => $pacientes,
+            'hoje' => $hoje->format('d/m/Y'),
+        ]);
+
+        return $pdf->download("relatorio-consultas-$hoje.pdf");
+    })->name('relatorios.consultasHoje');
 
 
 

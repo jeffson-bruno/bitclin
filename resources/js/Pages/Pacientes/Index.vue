@@ -113,7 +113,12 @@
     </AuthenticatedLayout>
 
     <!-- Modal visível com base na variável mostrarModal -->
-    <ModalCadastroPaciente v-if="mostrarModal" @close="mostrarModal = false" />
+    <ModalCadastroPaciente
+      v-if="mostrarModal"
+      :medicos="page.props.medicos"
+      :exames="page.props.exames"
+      @close="mostrarModal = false"
+    />
 
     <ModalSenha
     :mostrar="mostrarModalSenha"

@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Models\Paciente;
+use App\Models\Exame;
+
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -13,6 +16,9 @@ class PacienteController extends Controller
     {
         //$pacientes = Paciente::paginate(10);  // Paginando a lista de pacientes com 10 por página
         $pacientes = Paciente::orderBy('created_at', 'desc')->paginate(10);
+
+        $medicos = User::where('role', 'doctor')->select('id', 'name')->get();
+        $exames = Exame::select('id', 'nome')->get();
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -27,7 +33,9 @@ class PacienteController extends Controller
 
     // Retorna a resposta com o componente Vue e envia os pacientes como dados
         return Inertia::render('Pacientes/Index', [
-            'pacientes' => $pacientes
+            'pacientes' => $pacientes,
+            'medicos' => $medicos,
+            'exames' => $exames
     ]);
     }
 

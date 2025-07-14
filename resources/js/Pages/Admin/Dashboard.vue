@@ -3,10 +3,17 @@ import AdminLayout from '@/Layouts/AdminLayout.vue'
 
 defineProps({
   title: String,
-  consultasHoje: Number,
   pacientesTotal: Number,
   consultasNoMes: Number,
-  despesasHoje: Array
+  despesasHoje: {
+    type: Array,
+    default: () => []
+  },
+  medicosHoje: {
+    type: Array,
+    default: () => [] 
+  },
+  pacientesConsultaHoje: Number
 })
 </script>
 
@@ -33,18 +40,40 @@ defineProps({
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <!-- Card 1 -->
+      <!-- Card 1 CONSULTAS HOJE -->
       <div class="bg-white p-6 rounded shadow text-center">
-        <h3 class="text-gray-500 text-sm uppercase">Consultas Hoje</h3>
-        <p class="text-3xl font-bold text-blue-600 mt-2">{{ consultasHoje }}</p>
+      <h3 class="text-gray-500 text-sm uppercase mb-2">Consultas Hoje</h3>
+
+      <div v-if="medicosHoje.length">
+        <ul class="space-y-1">
+          <li
+            v-for="(medico, index) in medicosHoje"
+            :key="index"
+            class="text-blue-700 font-semibold"
+          >
+            {{ medico }}
+          </li>
+        </ul>
       </div>
 
-      <!-- Card 2 -->
-      <div class="bg-white p-6 rounded shadow text-center">
-        <h3 class="text-gray-500 text-sm uppercase">Total de Pacientes</h3>
-        <p class="text-3xl font-bold text-green-600 mt-2">{{ pacientesTotal }}</p>
-      </div>
+      <p v-else class="text-gray-400">Nenhum médico atendendo hoje.</p>
+    </div>
 
+
+
+      <!-- Card 2 - Pacientes Agendados Hoje (Consultas) -->
+      <div class="bg-white p-6 rounded shadow text-center">
+        <h3 class="text-gray-500 text-sm uppercase mb-2">Pacientes Agendados Hoje</h3>
+        <p class="text-3xl font-bold text-green-600 mt-2">{{ pacientesConsultaHoje }}</p>
+
+        <!-- Botão para relatório -->
+        <Link
+          :href="route('admin.relatorios.consultasHoje')"
+          class="inline-block mt-4 text-sm text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded"
+        >
+          Imprimir Relatório
+        </Link>
+      </div>
       <!-- Card 3 -->
       <div class="bg-white p-6 rounded shadow text-center">
         <h3 class="text-gray-500 text-sm uppercase">Consultas no Mês</h3>

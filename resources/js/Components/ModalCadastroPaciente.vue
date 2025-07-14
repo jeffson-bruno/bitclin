@@ -127,6 +127,41 @@
                 </select>
               </div>
 
+              <!-- Se for consulta -->
+              <div v-if="form.procedimento === 'consulta'" class="space-y-4">
+                <div>
+                  <label class="block font-medium">Médico</label>
+                  <select v-model="form.medico_id" class="mt-1 w-full rounded border-gray-300">
+                    <option disabled value="">Selecione um médico</option>
+                    <option v-for="medico in props.medicos" :key="medico.id" :value="medico.id">
+                      {{ medico.name }}
+                    </option>
+                  </select>
+                </div>
+
+                <div v-if="agendaDisponivel.length">
+                  <label class="block font-medium">Data da Consulta</label>
+                  <select v-model="form.data_consulta" class="mt-1 w-full rounded border-gray-300">
+                    <option disabled value="">Selecione a data</option>
+                    <option v-for="data in agendaDisponivel" :key="data">{{ data }}</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Se for exame -->
+              <div v-if="form.procedimento === 'exame'" class="space-y-4">
+                <div>
+                  <label class="block font-medium">Exame</label>
+                  <select v-model="form.exame_id" class="mt-1 w-full rounded border-gray-300">
+                    <option disabled value="">Selecione o exame</option>
+                    <option v-for="exame in props.exames" :key="exame.id" :value="exame.id">
+                      {{ exame.nome }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+
               <div>
                 <label class="block font-medium">Preço</label>
                 <input
@@ -189,7 +224,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import axios from 'axios';
+import { ref, watch} from 'vue'
 import { router } from '@inertiajs/vue3'
 import {
   mascaraCPF,
@@ -197,6 +233,20 @@ import {
   mascaraData
 } from '@/utils/masks';
 
+const props = defineProps({
+  medicos: {
+    type: Array,
+    default: () => [],
+  },
+  exames: {
+    type: Array,
+    default: () => [],
+  },
+})
+
+
+
+const agendaDisponivel = ref([])
 
 const emit = defineEmits(['close'])
 const isVisible = ref(true)
@@ -208,12 +258,25 @@ const form = ref({
   telefone: '',
   estado_civil: '',
   endereco: '',
+  data_nascimento: '',
   procedimento: '',
   preco: '',
   pago: false,
   forma_pagamento: '',
   data_pagamento: '',
+  medico_id: null,
+  data_consulta: '',
+  exame_id: null,
 })
+
+watch(() => form.value.medico_id, (medicoId) => {
+  if (form.value.procedimento === 'consulta' && medicoId) {
+    axios.get(`/admin/agenda-medica/medico/${medicoId}/dias`).then(response => {
+      agendaDisponivel.value = response.data
+    })
+  }
+})
+
 
 function definirPreco() {
   if (form.value.procedimento === 'consulta') {

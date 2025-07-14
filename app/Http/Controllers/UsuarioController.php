@@ -54,7 +54,8 @@ class UsuarioController extends Controller
 
         // Remover o role antes de salvar no banco (caso a tabela users não tenha essa coluna)
         $role = $validated['role'];
-        unset($validated['role']);
+        $validated['role'] = $role;
+
 
         $validated['password'] = bcrypt($validated['password']);
 
