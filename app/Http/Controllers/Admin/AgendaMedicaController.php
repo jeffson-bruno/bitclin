@@ -53,6 +53,18 @@ class AgendaMedicaController extends Controller
         return redirect()->route('admin.agenda-medica.index')->with('success', 'Agenda cadastrada com sucesso!');
     }
 
+    public function buscarPreco($id)
+    {
+        $agenda = \App\Models\AgendaMedica::where('medico_id', $id)
+            ->orderByDesc('data')
+            ->first();
+
+        return response()->json([
+            'preco_consulta' => $agenda?->preco_consulta ?? 0,
+        ]);
+    }
+
+
     public function destroy($id)
     {
         $agenda = AgendaMedica::findOrFail($id);

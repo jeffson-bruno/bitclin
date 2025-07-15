@@ -78,6 +78,15 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         return response()->json($dias);
     })->middleware(['auth', 'role:admin']);
 
+    // Buscar valor da consulta do médico (última agenda cadastrada)
+    Route::get('agenda-medica/medico/{id}/preco', [\App\Http\Controllers\Admin\AgendaMedicaController::class, 'buscarPreco'])
+        ->name('agenda-medica.buscarPreco');
+    // Buscar valor do exame selecionado
+    Route::get('exames/{id}/preco', function ($id) {
+        $exame = \App\Models\Exame::findOrFail($id);
+        return response()->json(['preco' => $exame->valor ?? 0]);
+    })->name('exames.preco');
+
     //Financeiro
     Route::get('/financeiro', [App\Http\Controllers\Admin\FinanceiroController::class, 'index'])->name('financeiro.index');
     Route::post('/financeiro/baixar/{id}', [FinanceiroController::class, 'baixarPagamento'])->name('financeiro.baixar');
@@ -113,6 +122,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
         return $pdf->download("relatorio-consultas-$hoje.pdf");
     })->name('relatorios.consultasHoje');
+
+
 
 
 

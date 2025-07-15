@@ -117,7 +117,6 @@
                 <label class="block font-medium">Procedimento</label>
                 <select
                   v-model="form.procedimento"
-                  @change="definirPreco"
                   class="mt-1 w-full rounded border-gray-300"
                   required
                 >
@@ -274,19 +273,46 @@ watch(() => form.value.medico_id, (medicoId) => {
     axios.get(`/admin/agenda-medica/medico/${medicoId}/dias`).then(response => {
       agendaDisponivel.value = response.data
     })
+    buscarPrecoConsulta(medicoId)
+  }
+})
+watch(() => form.value.exame_id, (exameId) => {
+  if (form.value.procedimento === 'exame' && exameId) {
+    buscarPrecoExame(exameId)
   }
 })
 
-
-function definirPreco() {
-  if (form.value.procedimento === 'consulta') {
-    form.value.preco = 150.0
-  } else if (form.value.procedimento === 'exame') {
-    form.value.preco = 250.0
-  } else {
-    form.value.preco = ''
-  }
+function buscarPrecoConsulta(medicoId) {
+  axios.get(`/admin/agenda-medica/medico/${medicoId}/preco`)
+    .then(response => {
+      form.value.preco = response.data.preco_consulta
+    })
+    .catch(() => {
+      form.value.preco = ''
+    })
 }
+
+function buscarPrecoExame(exameId) {
+  axios.get(`/admin/exames/${exameId}/preco`)
+    .then(response => {
+      form.value.preco = response.data.preco
+    })
+    .catch(() => {
+      form.value.preco = ''
+    })
+}
+
+
+
+//function definirPreco() {
+  //if (form.value.procedimento === 'consulta') {
+    //form.value.preco = 150.0
+  //} else if (form.value.procedimento === 'exame') {
+    //form.value.preco = 250.0
+  //} else {
+    //form.value.preco = ''
+  //}
+//}
 
 function fecharModal() {
   isVisible.value = false
