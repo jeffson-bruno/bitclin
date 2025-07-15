@@ -14,7 +14,8 @@ const form = useForm({
   medico_id: '',
   dia: '', // antes era "data", que causava conflito
   hora_inicio: '',
-  hora_fim: ''
+  hora_fim: '',
+  preco_consulta: ''
 })
 
 // Submissão
@@ -75,6 +76,18 @@ const excluir = (id) => {
           <input type="time" v-model="form.hora_fim" class="w-full border rounded p-2" required />
         </div>
 
+        <!--Valor Da Consulta-->
+        <div>
+          <label class="block font-medium">Valor da Consulta (R$)</label>
+          <input
+            v-model="form.preco_consulta"
+            type="number"
+            step="0.01"
+            class="mt-1 w-full rounded border-gray-300"
+            required
+          />
+        </div>
+
         <!-- Botão -->
         <div class="md:col-span-2 text-right">
           <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-green-700">
@@ -93,6 +106,7 @@ const excluir = (id) => {
               <th class="p-2 border">Data</th>
               <th class="p-2 border">Início</th>
               <th class="p-2 border">Fim</th>
+              <th class="p-2 border">Valor (R$)</th>
               <th class="p-2 border text-center">Ações</th>
             </tr>
           </thead>
@@ -102,6 +116,9 @@ const excluir = (id) => {
               <td class="p-2 border">{{ agenda.data }}</td>
               <td class="p-2 border">{{ agenda.hora_inicio }}</td>
               <td class="p-2 border">{{ agenda.hora_fim }}</td>
+              <td class="p-2 border">
+                {{ typeof agenda.preco_consulta === 'number' ? 'R$ ' + agenda.preco_consulta.toFixed(2) : '—' }}
+              </td>
               <td class="p-2 border text-center">
                 <button @click="excluir(agenda.id)" class="text-red-600 hover:underline text-sm">
                   Excluir

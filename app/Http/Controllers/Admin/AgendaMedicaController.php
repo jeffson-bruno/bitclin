@@ -13,7 +13,17 @@ class AgendaMedicaController extends Controller
 {
     public function index()
     {
-        $agendas = AgendaMedica::with('medico')->orderBy('data')->get();
+        //$agendas = AgendaMedica::with('medico')->orderBy('data')->get();
+        $agendas = AgendaMedica::with('medico')->orderBy('data')->get()->map(function ($agenda) {
+            return [
+                'id' => $agenda->id,
+                'data' => $agenda->data,
+                'hora_inicio' => $agenda->hora_inicio,
+                'hora_fim' => $agenda->hora_fim,
+                'preco_consulta' => (float) $agenda->preco_consulta, // força conversão para número
+                'medico' => $agenda->medico ? ['name' => $agenda->medico->name] : null,
+            ]; 
+        });
         $medicos = User::role('doctor')->get(['id', 'name']);
 
         return Inertia::render('Admin/AgendaMedica/Index', [
@@ -29,6 +39,7 @@ class AgendaMedicaController extends Controller
         'dia'          => 'required|date',
         'hora_inicio'  => 'required',
         'hora_fim'     => 'required',
+        'preco_consulta' => 'required|numeric|min:0',
     ]);
 
     AgendaMedica::create([
@@ -36,6 +47,7 @@ class AgendaMedicaController extends Controller
         'data'        => $request->dia,
         'hora_inicio' => $request->hora_inicio,
         'hora_fim'    => $request->hora_fim,
+        'preco_consulta' => $request->preco_consulta,
     ]);
 
         return redirect()->route('admin.agenda-medica.index')->with('success', 'Agenda cadastrada com sucesso!');

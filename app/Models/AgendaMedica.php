@@ -9,7 +9,7 @@ class AgendaMedica extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['medico_id', 'data', 'hora_inicio', 'hora_fim'];
+    protected $fillable = ['medico_id', 'data', 'hora_inicio', 'hora_fim', 'preco_consulta'];
 
     public function medico()
     {
