@@ -70,7 +70,7 @@
                 <tr>
                     <td>{{ $e->nome ?? 'N/A' }}</td>
                     <td>{{ ucfirst($e->procedimento) }}</td>
-                    <td>R$ {{ number_format($e->valor, 2, ',', '.') }}</td>
+                    <td>R$ {{ number_format($e->preco, 2, ',', '.') }}</td>
                     <td>{{ $e->pago ? 'Sim' : 'Não' }}</td>
                     <td>{{ ucfirst($e->forma_pagamento) }}</td>
                     <td>{{ \Carbon\Carbon::parse($e->data_pagamento)->format('d/m/Y') }}</td>
@@ -96,7 +96,7 @@
             @foreach($despesas as $d)
                 <tr>
                     <td>{{ $d->nome }}</td>
-                    <td>R$ {{ number_format($d->valor, 2, ',', '.') }}</td>
+                    <td>R$ {{ number_format($d->preco, 2, ',', '.') }}</td>
                     <td>{{ \Carbon\Carbon::parse($d->data_pagamento)->format('d/m/Y') }}</td>
                 </tr>
             @endforeach
