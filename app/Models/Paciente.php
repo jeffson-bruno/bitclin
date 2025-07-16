@@ -18,6 +18,23 @@ class Paciente extends Model
     'pago',
     'forma_pagamento',
     'data_pagamento',
+    'medico_id',
+    'exame_id',
 ];
+public function medico()
+{
+    return $this->belongsTo(User::class, 'medico_id');
+}
+
+public function exame()
+{
+    return $this->belongsTo(Exame::class, 'exame_id');
+}
+
+public function especialidade()
+{
+    return $this->belongsTo(Especialidade::class, 'especialidade_id');
+}
+
 
 }

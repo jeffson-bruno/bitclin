@@ -18,27 +18,16 @@
             border: 1px solid #000;
         }
 
-        .marca-dagua-1 {
-            position: absolute;
-            top: 20%; /* Ajuste a porcentagem para mover mais para cima ou para baixo */
-            left: 50%;
-            transform: translate(-50%, -50%);
-            opacity: 0.1; /* Diminui a opacidade para ficar mais suave */
-            pointer-events: none;
-            z-index: 0;
-            width: 210px; /* Ajuste o tamanho da marca d'água conforme necessário */
-            height: auto;
-        }
-
+        .marca-dagua-1,
         .marca-dagua-2 {
             position: absolute;
-            top: 20%; /* Ajuste a porcentagem para posicionar a marca d'água na segunda via */
+            top: 20%;
             left: 50%;
             transform: translate(-50%, -50%);
-            opacity: 0.1; /* Opacidade mais suave */
+            opacity: 0.1;
             pointer-events: none;
             z-index: 0;
-            width: 210px; /* Ajuste o tamanho da marca d'água conforme necessário */
+            width: 210px;
             height: auto;
         }
 
@@ -107,6 +96,30 @@
 </head>
 <body>
 
+@php
+    $textoProcedimento = '';
+
+    if ($paciente->procedimento === 'consulta') {
+        $especialidade = $paciente->medico->especialidade->nome ?? 'Especialidade';
+        $textoProcedimento = 'Consulta com ' . $especialidade;
+    } elseif ($paciente->procedimento === 'exame') {
+        $exameNome = $paciente->exame->nome ?? 'não especificado';
+        $textoProcedimento = 'Exame / ' . $exameNome;
+    }
+
+    $status = 'Não pago';
+    if ($paciente->pago) {
+        if ($paciente->forma_pagamento === 'pix') {
+            $status = 'Pago via Pix';
+        } elseif ($paciente->forma_pagamento === 'cartao') {
+            $status = 'Pago com Cartão';
+        } elseif ($paciente->forma_pagamento === 'dinheiro') {
+            $status = 'Pagamento efetuado à vista';
+        }
+    }
+@endphp
+
+
 <!-- VIA DO PACIENTE -->
 <div class="via">
     <img src="{{ public_path('images/marca-dagua.png') }}" class="marca-dagua-1" alt="Marca d'água">
@@ -144,7 +157,7 @@
         <tr class="linha espaco"><td colspan="3"></td></tr>
 
         <tr class="linha">
-            <td colspan="3" class="procedimento">Procedimento: {{ $procedimento['procedimento'] }}</td>
+            <td colspan="3" class="procedimento">Procedimento: {{ $textoProcedimento }}</td>
         </tr>
     </table>
 
@@ -193,11 +206,12 @@
         <tr class="linha espaco"><td colspan="3"></td></tr>
 
         <tr class="linha">
-            <td colspan="3" class="procedimento">Procedimento: {{ $procedimento['procedimento'] }}</td>
+            <td colspan="3" class="procedimento">Procedimento: {{ $textoProcedimento }}</td>
         </tr>
         <tr class="linha">
-            <td colspan="3"><strong>Valor:</strong> R$ {{ number_format($procedimento['valor'], 2, ',', '.') }} - 
-                <strong>Status:</strong> {{ $procedimento['pago'] ? 'PAGO' : 'PENDENTE' }}
+            <td colspan="3">
+                <strong>Valor:</strong> R$ {{ number_format($paciente->preco, 2, ',', '.') }} - 
+                <strong>Status:</strong> {{ $status }}
             </td>
         </tr>
     </table>
@@ -210,4 +224,3 @@
 
 </body>
 </html>
-

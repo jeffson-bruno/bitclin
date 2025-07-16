@@ -20,6 +20,9 @@ use App\Http\Controllers\Admin\AgendaMedicaController;
 use App\Http\Controllers\Admin\FinanceiroController;
 use App\Http\Controllers\Admin\DespesaController;
 use App\Http\Controllers\Admin\RelatorioController;
+use App\Models\User;
+use App\Models\Exame;
+
 
 
 
@@ -170,22 +173,88 @@ Route::middleware(['auth'])->group(function () {
             ]
         ]);
     });
-
+    // Imprimir ficha do paciente (FICHA.VUE)
     Route::get('/pacientes/imprimir-ficha/{id}', function ($id) {
-    $paciente = Paciente::findOrFail($id);
+        $paciente = \App\Models\Paciente::with(['medico.especialidade', 'exame'])->findOrFail($id);
 
-    $dadosProcedimento = [
-        'procedimento' => 'Consulta Clínica Geral',
-        'valor' => 80.00,
-        'pago' => false,
-    ];
+        $descricaoProcedimento = 'Não informado';
 
-    $pdf = Pdf::loadView('pacientes.ficha-pdf', [
-        'paciente' => $paciente,
-        'procedimento' => $dadosProcedimento
-    ]);
+        if ($paciente->procedimento === 'consulta' && $paciente->medico) {
+            $especialidade = $paciente->medico->especialidade->nome ?? 'Especialidade não informada';
+            $descricaoProcedimento = "Consulta com $especialidade";
+        }
+
+        if ($paciente->procedimento === 'exame' && $paciente->exame) {
+            $descricaoProcedimento = "Exame / {$paciente->exame->nome}";
+        }
+
+        $statusPagamento = 'Não Pago';
+        if ($paciente->pago) {
+            $statusPagamento = match ($paciente->forma_pagamento) {
+                'pix' => 'Pago via Pix',
+                'cartao' => 'Pago com Cartão',
+                'dinheiro' => 'Pagamento efetuado à vista',
+                default => 'Pago'
+            };
+        }
+
+        $dadosProcedimento = [
+            'procedimento' => $descricaoProcedimento,
+            'valor' => $paciente->preco ?? 0,
+            'pago' => $statusPagamento
+        ];
+
+        return Inertia::render('Pacientes/Ficha', [
+            'paciente' => $paciente,
+            'procedimento' => $dadosProcedimento
+        ]);
+    });
+
+    // Imprimir ficha em PDF
+    Route::get('/pacientes/imprimir-ficha/{id}', function ($id) {
+        $paciente = \App\Models\Paciente::with(['medico.especialidade', 'exame'])->findOrFail($id);
+
+        // Montar descrição do procedimento
+        $descricaoProcedimento = 'Não informado';
+
+        if ($paciente->procedimento === 'consulta' && $paciente->medico_id) {
+            $medico = User::with('especialidade')->find($paciente->medico_id);
+            $especialidade = $medico?->especialidade?->nome ?? 'Especialidade não informada';
+            $descricaoProcedimento = "Consulta com $especialidade";
+        }
+
+        if ($paciente->procedimento === 'exame' && $paciente->exame_id) {
+            $exame = Exame::find($paciente->exame_id);
+            $descricaoProcedimento = $exame ? "Exame / {$exame->nome}" : 'Exame não identificado';
+        }
+
+        // Determinar forma de pagamento
+        $statusPagamento = 'Não Pago';
+        if ($paciente->pago) {
+            $statusPagamento = match ($paciente->forma_pagamento) {
+                'pix' => 'Pago via Pix',
+                'cartao' => 'Pago com Cartão',
+                'dinheiro' => 'Pagamento efetuado à vista',
+                default => 'Pago'
+            };
+        }
+
+        // Montar os dados
+        $dadosProcedimento = [
+            'procedimento' => $descricaoProcedimento,
+            'valor' => $paciente->preco ?? 0,
+            'pago' => $statusPagamento
+        ];
+
+        $pdf = Pdf::loadView('pacientes.ficha-pdf', [
+            'paciente' => $paciente,
+            'procedimento' => $dadosProcedimento
+        ])->setPaper('a4');
+    
 
     return $pdf->download('ficha-atendimento.pdf'); // ou ->stream() para abrir direto no navegador
+
+    
 });
 
 Route::get('/pacientes', [PacienteController::class, 'index'])->name('pacientes.index');

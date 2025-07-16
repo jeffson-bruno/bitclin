@@ -50,7 +50,15 @@ class UsuarioController extends Controller
             'usuario'  => 'required|string|unique:users,usuario',
             'password' => 'required|string|confirmed|min:6|max:6',
             'role'     => 'required|in:admin,receptionist,doctor',
+            'especialidade_id' => 'nullable|exists:especialidades,id',
         ]);
+
+        // Se for médico, garante que vai salvar a especialidade
+        if ($validated['role'] === 'doctor') {
+            $validated['especialidade_id'] = $request->especialidade_id;
+        } else {
+            $validated['especialidade_id'] = null;
+        }
 
         // Remover o role antes de salvar no banco (caso a tabela users não tenha essa coluna)
         $role = $validated['role'];

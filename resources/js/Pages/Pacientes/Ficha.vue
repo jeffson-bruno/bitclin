@@ -39,7 +39,7 @@
           <tr><th>Data de Nascimento</th><td>{{ formatarData(paciente.data_nascimento) }}</td></tr>
           <tr><th>Procedimento</th><td>{{ procedimento.procedimento }}</td></tr>
           <tr><th>Valor</th><td>R$ {{ procedimento.valor.toFixed(2) }}</td></tr>
-          <tr><th>Status</th><td>{{ procedimento.pago ? 'PAGO' : 'PENDENTE' }}</td></tr>
+          <tr><th>Status</th><td>{{ $procedimento['pago'] }}</td></tr>
         </tbody>
       </table>
     </section>
