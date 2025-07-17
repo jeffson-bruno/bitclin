@@ -1,11 +1,16 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import ModalPacientesConsultaHoje from '@/Components/ModalPacientesConsultaHoje.vue'
+import ModalPacientesExameSemana from '@/Components/ModalPacientesExameSemana.vue'
+
 import { ref } from 'vue'
 import axios from 'axios'
 
 const showModalConsultas = ref(false)
 const pacientesConsultaHojeList = ref([])
+
+const showModalExames = ref(false)
+const pacientesExamesSemanaList = ref([])
 
 defineProps({
   title: String,
@@ -32,6 +37,17 @@ function abrirModalConsulta() {
       console.error('Erro ao buscar pacientes:', err)
     })
 }
+function abrirModalExames() {
+  axios.get('/admin/pacientes/exames-semana')
+    .then(res => {
+      pacientesExamesSemanaList.value = res.data
+      showModalExames.value = true
+    })
+    .catch(err => {
+      console.error('Erro ao buscar exames da semana:', err)
+    })
+}
+
 
 </script>
 
@@ -92,8 +108,14 @@ function abrirModalConsulta() {
       </div>
       <!-- Card 3 -->
       <div class="bg-white p-6 rounded shadow text-center">
-        <h3 class="text-gray-500 text-sm uppercase">Consultas no Mês</h3>
-        <p class="text-3xl font-bold text-purple-600 mt-2">{{ consultasNoMes }}</p>
+        <h3 class="text-gray-500 text-sm uppercase">Exames da Semana</h3>
+        <p class="text-3xl font-bold text-purple-600 mt-2">{{ pacientesExamesSemanaList.length }}</p>
+        <Button 
+          @click="abrirModalExames"
+          class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow"
+        >
+          Visualizar Exames
+        </Button>
       </div>
     </div>
 
@@ -105,6 +127,12 @@ function abrirModalConsulta() {
       :pacientes="pacientesConsultaHojeList"
       @close="showModalConsultas = false"
     />
+    <!-- Modal Pacientes Exames Semana -->
+     <ModalPacientesExameSemana 
+        :show="showModalExames" 
+        :pacientes="pacientesExamesSemanaList" 
+        @close="showModalExames = false" 
+      />
 
  
 </template>

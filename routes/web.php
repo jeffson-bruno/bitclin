@@ -129,6 +129,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
     //Rota  para  Mostrar Pacientes com Consultas Hoje
     Route::get('/pacientes/consultas-hoje', [AdminController::class, 'pacientesConsultaHoje']);
+    //Rota para Pacientes com Exames na Semana
+    Route::get('/pacientes/exames-semana', [AdminController::class, 'pacientesExamesSemana']);
 
 
 
