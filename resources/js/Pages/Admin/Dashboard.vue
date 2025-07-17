@@ -1,5 +1,11 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue'
+import ModalPacientesConsultaHoje from '@/Components/ModalPacientesConsultaHoje.vue'
+import { ref } from 'vue'
+import axios from 'axios'
+
+const showModalConsultas = ref(false)
+const pacientesConsultaHojeList = ref([])
 
 defineProps({
   title: String,
@@ -13,8 +19,20 @@ defineProps({
     type: Array,
     default: () => [] 
   },
-  pacientesConsultaHoje: Number
+  pacientesConsultaHoje: Number,
 })
+
+function abrirModalConsulta() {
+  axios.get('/admin/pacientes/consultas-hoje')
+    .then(res => {
+      pacientesConsultaHojeList.value = res.data
+      showModalConsultas.value = true  // CORRETO!
+    })
+    .catch(err => {
+      console.error('Erro ao buscar pacientes:', err)
+    })
+}
+
 </script>
 
 <template>
@@ -65,14 +83,12 @@ defineProps({
       <div class="bg-white p-6 rounded shadow text-center">
         <h3 class="text-gray-500 text-sm uppercase mb-2">Pacientes Agendados Hoje</h3>
         <p class="text-3xl font-bold text-green-600 mt-2">{{ pacientesConsultaHoje }}</p>
-
-        <!-- Botão para relatório -->
-        <Link
-          :href="route('admin.relatorios.consultasHoje')"
-          class="inline-block mt-4 text-sm text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded"
+        <button
+          @click="abrirModalConsulta"
+          class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow"
         >
-          Imprimir Relatório
-        </Link>
+          Visualizar
+        </button>
       </div>
       <!-- Card 3 -->
       <div class="bg-white p-6 rounded shadow text-center">
@@ -80,6 +96,16 @@ defineProps({
         <p class="text-3xl font-bold text-purple-600 mt-2">{{ consultasNoMes }}</p>
       </div>
     </div>
+
   </AdminLayout>
+
+   <!-- Modal -->
+    <ModalPacientesConsultaHoje
+      :show="showModalConsultas"
+      :pacientes="pacientesConsultaHojeList"
+      @close="showModalConsultas = false"
+    />
+
+ 
 </template>
 

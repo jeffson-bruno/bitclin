@@ -7,6 +7,8 @@ use App\Models\Paciente;
 use App\Models\Despesa;
 use App\Models\AgendaMedica;
 use Illuminate\Support\Carbon;
+use Illuminate\Http\Request;
+
 
 use App\Http\Controllers\Controller;
 use Inertia\Inertia;
@@ -42,6 +44,11 @@ class AdminController extends Controller
         $pacientesConsultaHoje = Paciente::where('procedimento', 'consulta')
             ->whereDate('created_at', $hoje)
             ->count();
+        $listaPacientesConsultaHoje = Paciente::where('procedimento', 'consulta')
+            ->whereDate('created_at', $hoje)
+            ->with(['medico.especialidade'])
+            ->get();
+
 
         return inertia('Admin/Dashboard', [
             'title' => 'Painel do Administrador',
@@ -51,7 +58,30 @@ class AdminController extends Controller
             'despesasHoje' => $despesasHoje,
             'medicosHoje' => $medicosHoje,
             'pacientesConsultaHoje' => $pacientesConsultaHoje,
+            'pacientesConsultaHojeList' => $listaPacientesConsultaHoje,
+
         ]);
     }
+    public function pacientesConsultaHoje(Request $request)
+{
+    $hoje = Carbon::today()->toDateString();
+
+    $pacientes = Paciente::with(['medico.especialidade'])
+        ->where('procedimento', 'consulta')
+        ->whereDate('created_at', $hoje)
+        ->get()
+        ->map(function ($p) {
+            return [
+                'id' => $p->id,
+                'nome' => $p->nome,
+                'data_consulta' => $p->created_at->format('d/m/Y H:i'),
+                'telefone' => $p->telefone,
+                'medico' => $p->medico->name ?? 'Não informado',
+                'especialidade' => $p->medico?->especialidade?->nome ?? 'Não informada',
+            ];
+        });
+
+    return response()->json($pacientes);
+}
 }
 

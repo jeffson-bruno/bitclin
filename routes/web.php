@@ -22,6 +22,7 @@ use App\Http\Controllers\Admin\DespesaController;
 use App\Http\Controllers\Admin\RelatorioController;
 use App\Models\User;
 use App\Models\Exame;
+use App\Http\Controllers\DashboardController;
 
 
 
@@ -126,6 +127,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         return $pdf->download("relatorio-consultas-$hoje.pdf");
     })->name('relatorios.consultasHoje');
 
+    //Rota  para  Mostrar Pacientes com Consultas Hoje
+    Route::get('/pacientes/consultas-hoje', [AdminController::class, 'pacientesConsultaHoje']);
 
 
 

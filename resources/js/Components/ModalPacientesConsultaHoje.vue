@@ -4,7 +4,7 @@
       <!-- Título -->
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-2xl font-semibold">Pacientes Agendados para Hoje</h2>
-        <button @click="$emit('fechar')" class="text-gray-600 hover:text-red-600 text-2xl">&times;</button>
+        <button @click="$emit('close')" class="text-gray-600 hover:text-red-600 text-2xl">&times;</button>
       </div>
 
       <!-- Campo de busca -->
@@ -32,9 +32,9 @@
           <tbody>
             <tr v-for="p in pacientesFiltrados" :key="p.id" class="hover:bg-gray-50">
               <td class="px-4 py-2 border-b">{{ p.nome }}</td>
-              <td class="px-4 py-2 border-b">{{ formatarData(p.data_consulta) }}</td>
-              <td class="px-4 py-2 border-b">{{ p.medico?.name ?? 'Não informado' }}</td>
-              <td class="px-4 py-2 border-b">{{ p.medico?.especialidade?.nome ?? 'Não informado' }}</td>
+              <td class="px-4 py-2 border-b">{{ p.data_consulta }}</td>
+              <td class="px-4 py-2 border-b">{{ p.medico || 'Não informado' }}</td>
+              <td class="px-4 py-2 border-b">{{ p.especialidade || 'Não informada' }}</td>
               <td class="px-4 py-2 border-b">{{ p.telefone }}</td>
             </tr>
             <tr v-if="pacientesFiltrados.length === 0">
@@ -52,20 +52,44 @@ import { computed, defineProps, ref } from 'vue'
 
 const props = defineProps({
   show: Boolean,
-  pacientes: Array, // Espera receber todos os pacientes com consulta hoje (com médico/especialidade carregados)
+  pacientes: Array, // Espera receber pacientes do backend já com 'medico' e 'especialidade' prontos
 })
 
 const filtro = ref('')
 
 const pacientesFiltrados = computed(() => {
   return props.pacientes.filter(p => {
-    return p.nome.toLowerCase().includes(filtro.value.toLowerCase())
+    return p.nome?.toLowerCase().includes(filtro.value.toLowerCase())
   })
 })
 
 function formatarData(data) {
   if (!data) return 'Não informado'
-  const [ano, mes, dia] = data.split('-')
-  return `${dia}/${mes}/${ano}`
+
+  // Verifica se já está em formato completo tipo "2025-07-17T18:22:00"
+  if (data.includes('T')) {
+    const date = new Date(data)
+    if (isNaN(date)) return 'Data inválida'
+
+    const dia = String(date.getDate()).padStart(2, '0')
+    const mes = String(date.getMonth() + 1).padStart(2, '0')
+    const ano = date.getFullYear()
+    const hora = String(date.getHours()).padStart(2, '0')
+    const minutos = String(date.getMinutes()).padStart(2, '0')
+
+    return `${dia}/${mes}/${ano} ${hora}:${minutos}`
+  }
+
+  // Se estiver apenas como "YYYY-MM-DD" (sem hora)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(data)) {
+    const [ano, mes, dia] = data.split('-')
+    return `${dia}/${mes}/${ano}`
+  }
+
+  return 'Data inválida'
 }
+
+
+
+
 </script>
