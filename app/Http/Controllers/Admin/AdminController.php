@@ -63,25 +63,47 @@ class AdminController extends Controller
         ]);
     }
     public function pacientesConsultaHoje(Request $request)
-{
-    $hoje = Carbon::today()->toDateString();
+    {
+        $hoje = Carbon::today()->toDateString();
 
-    $pacientes = Paciente::with(['medico.especialidade'])
-        ->where('procedimento', 'consulta')
-        ->whereDate('created_at', $hoje)
-        ->get()
-        ->map(function ($p) {
-            return [
-                'id' => $p->id,
-                'nome' => $p->nome,
-                'data_consulta' => $p->created_at->format('d/m/Y H:i'),
-                'telefone' => $p->telefone,
-                'medico' => $p->medico->name ?? 'Não informado',
-                'especialidade' => $p->medico?->especialidade?->nome ?? 'Não informada',
-            ];
-        });
+        $pacientes = Paciente::with(['medico.especialidade'])
+            ->where('procedimento', 'consulta')
+            ->whereDate('created_at', $hoje)
+            ->get()
+            ->map(function ($p) {
+                return [
+                    'id' => $p->id,
+                    'nome' => $p->nome,
+                    'data_consulta' => $p->created_at->format('d/m/Y H:i'),
+                    'telefone' => $p->telefone,
+                    'medico' => $p->medico->name ?? 'Não informado',
+                    'especialidade' => $p->medico?->especialidade?->nome ?? 'Não informada',
+                ];
+            });
 
-    return response()->json($pacientes);
-}
+        return response()->json($pacientes);
+    }
+    public function pacientesExamesSemana(Request $request)
+    {
+        $inicioSemana = Carbon::now()->startOfWeek(); // Segunda
+        $fimSemana = Carbon::now()->endOfWeek();     // Domingo
+
+        $pacientes = Paciente::where('procedimento', 'exame')
+            ->whereBetween('created_at', [$inicioSemana, $fimSemana])
+            ->with('exame') // Assumindo que há relação com tabela de exames
+            ->get()
+            ->map(function ($p) {
+                return [
+                    'id' => $p->id,
+                    'nome' => $p->nome,
+                    'data_exame' => $p->created_at->format('d/m/Y H:i'),
+                    'telefone' => $p->telefone,
+                    'exame' => $p->exame->nome ?? 'Não informado',
+                ];
+            });
+
+        return response()->json($pacientes);
+    }
+
 }
 
