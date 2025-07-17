@@ -96,7 +96,7 @@
             @foreach($despesas as $d)
                 <tr>
                     <td>{{ $d->nome }}</td>
-                    <td>R$ {{ number_format($d->preco, 2, ',', '.') }}</td>
+                    <td>R$ {{ number_format($d->valor, 2, ',', '.') }}</td>
                     <td>{{ \Carbon\Carbon::parse($d->data_pagamento)->format('d/m/Y') }}</td>
                 </tr>
             @endforeach
