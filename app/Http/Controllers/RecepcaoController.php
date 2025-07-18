@@ -55,7 +55,10 @@ class RecepcaoController extends Controller
                 return [
                     'title' => 'Dr. ' . explode(' ', $agenda->medico->name)[0],
                     'start' => $agenda->data,
-                    'color' => 'orange',
+                    'allDay' => true,
+                    'color' => '#fde68a',
+                    'display' => 'background', // destaques no fundo
+                    'className' => 'evento-consulta-dia',
                 ];
             });
 
@@ -84,13 +87,15 @@ class RecepcaoController extends Controller
     public function consultasEAvisos(Request $request)
     {
         $agendas = AgendaMedica::with('medico')
-            ->whereDate('data', '>=', now()->toDateString())
-            ->get();
+        ->whereDate('data', '>=', now()->toDateString())
+        ->get();
 
         $consultas = $agendas->map(function ($agenda) {
+            $primeiroNome = explode(' ', $agenda->medico->name)[0];
             return [
-                'title' => 'Dr. ' . explode(' ', $agenda->medico->name)[0], // Primeiro nome do médico
+                'title' => 'Dr. ' . $primeiroNome,
                 'start' => $agenda->data . 'T' . $agenda->hora_inicio,
+                'allDay' => true, // garante que fique no topo do quadrado
             ];
         });
 

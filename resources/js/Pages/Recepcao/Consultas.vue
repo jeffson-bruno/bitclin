@@ -1,3 +1,13 @@
+<style>
+.fc-daygrid-day.fc-day.evento-consulta-dia {
+  background-color: #fff7ed !important; /* destaque suave */
+  border: 2px solid #fb923c !important; /* borda laranja */
+  border-radius: 6px;
+}
+</style>
+
+
+
 <template>
   <AuthenticatedLayout>
     <template #header>
@@ -56,33 +66,31 @@ const calendarOptions = {
   locale: 'pt-br',
   height: 500,
   eventClick: handleEventClick,
+  eventDisplay: 'background', // Apenas o fundo destacado
+  dayMaxEventRows: true,
   dateClick: async (info) => {
-  const data = info.dateStr // Ex: 2025-07-20
-  dataSelecionada.value = new Date(data).toLocaleDateString('pt-BR')
+    const data = info.dateStr
+    dataSelecionada.value = new Date(data).toLocaleDateString('pt-BR')
 
-  try {
-    const { data: result } = await axios.get('/recepcao/horarios-medicos', {
-      params: { data }
-    })
+    try {
+      const { data: result } = await axios.get('/recepcao/horarios-medicos', {
+        params: { data }
+      })
 
-    if (result.length > 0) {
       horariosDoDia.value = result
       mostrarModal.value = true
-    } else {
-      horariosDoDia.value = []
-      mostrarModal.value = true // Modal também abre para mostrar "nenhum horário"
+    } catch (error) {
+      console.error('Erro ao buscar horários:', error)
     }
-  } catch (error) {
-    console.error('Erro ao buscar horários:', error)
   }
 }
 
-}
 
 onMounted(async () => {
   try {
-    const { data } = await axios.get('/recepcao/consultas-e-agendamentos')
-    consultas.value = data.consultas
+    const response = await axios.get('/recepcao/consultas-e-agendamentos')
+    //console.log('🔍 Consultas carregadas:', response.data.consultas)
+    consultas.value = response.data.consultas
   } catch (e) {
     console.error('Erro ao carregar dados da recepção:', e)
   }
