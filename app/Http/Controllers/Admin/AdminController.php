@@ -36,9 +36,20 @@ class AdminController extends Controller
         $medicosHoje = AgendaMedica::whereDate('data', $hoje)
             ->with('medico')
             ->get()
-            ->pluck('medico.name') // pegar só o nome
-            ->unique()
-            ->values();
+            ->map(function ($agenda) {
+                return [
+                    'nome' => $agenda->medico->name ?? 'Não informado',
+                    'hora_inicio' => $agenda->hora_inicio,
+                    'hora_fim' => $agenda->hora_fim,
+                ];
+            });
+        // Definir início e fim da semana
+        $inicioSemana = Carbon::now()->startOfWeek(); // segunda-feira
+        $fimSemana = Carbon::now()->endOfWeek(); // domingo
+
+        $examesSemana = Paciente::where('procedimento', 'exame')
+            ->whereBetween('created_at', [$inicioSemana, $fimSemana])
+            ->count();
 
         // Pacientes para consulta cadastrados hoje
         $pacientesConsultaHoje = Paciente::where('procedimento', 'consulta')
@@ -59,6 +70,7 @@ class AdminController extends Controller
             'medicosHoje' => $medicosHoje,
             'pacientesConsultaHoje' => $pacientesConsultaHoje,
             'pacientesConsultaHojeList' => $listaPacientesConsultaHoje,
+            'examesSemana' => $examesSemana,
 
         ]);
     }
