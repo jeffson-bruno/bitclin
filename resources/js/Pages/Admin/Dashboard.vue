@@ -2,8 +2,10 @@
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import ModalPacientesConsultaHoje from '@/Components/ModalPacientesConsultaHoje.vue'
 import ModalPacientesExameSemana from '@/Components/ModalPacientesExameSemana.vue'
+import BarChart from '@/Components/Charts/BarChart.vue'
+import PieChart from '@/Components/Charts/PieChart.vue'
 
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import axios from 'axios'
 
 const showModalConsultas = ref(false)
@@ -12,7 +14,7 @@ const pacientesConsultaHojeList = ref([])
 const showModalExames = ref(false)
 const pacientesExamesSemanaList = ref([])
 
-defineProps({
+const props = defineProps({
   title: String,
   pacientesTotal: Number,
   consultasNoMes: Number,
@@ -26,6 +28,8 @@ defineProps({
     default: () => [] 
   },
   pacientesConsultaHoje: Number,
+  faturamentoDias: Array,
+  lucroVsDespesas: Object
 })
 
 function abrirModalConsulta() {
@@ -55,6 +59,24 @@ const formatarHorario = (horario) => {
   return `${hora}:${minuto}`
 }
 
+const barChartData = computed(() => {
+  return {
+    labels: props.faturamentoDias.map(d => d.data),
+    datasets: [{
+      label: 'Faturamento',
+      data: props.faturamentoDias.map(d => d.total),
+      backgroundColor: '#4ade80'
+    }]
+  }
+})
+
+const pieChartData = {
+  labels: ['Lucro', 'Despesas'],
+  datasets: [{
+    data: [props.lucroVsDespesas.entradas, props.lucroVsDespesas.despesas],
+    backgroundColor: ['#16a34a', '#f87171']
+  }]
+}
 
 
 </script>
@@ -127,6 +149,22 @@ const formatarHorario = (horario) => {
         </Button>
       </div>
     </div>
+
+    <!-- Gráficos -->
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10">
+      <div class="bg-white rounded-xl p-6 shadow">
+        <h2 class="text-xl font-semibold mb-4">Faturamento (últimos 7 dias)</h2>
+        <BarChart :chartData="barChartData" :chartOptions="barChartOptions" />
+      </div>
+
+      <div class="bg-white rounded-xl p-6 shadow">
+        <h2 class="text-xl font-semibold mb-4">Lucro vs Despesas (mês atual)</h2>
+        <PieChart :chartData="pieChartData" :chartOptions="pieChartOptions" />
+      </div>
+    </div>
+
+    
 
   </AdminLayout>
 

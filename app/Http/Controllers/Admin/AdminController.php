@@ -8,6 +8,7 @@ use App\Models\Despesa;
 use App\Models\AgendaMedica;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 
 use App\Http\Controllers\Controller;
@@ -59,6 +60,33 @@ class AdminController extends Controller
             ->whereDate('created_at', $hoje)
             ->with(['medico.especialidade'])
             ->get();
+        
+        // Faturamento dos últimos 7 dias
+        $hoje = now();
+        $seteDiasAtras = now()->subDays(6);
+
+        $faturamentoUltimos7Dias = DB::table('pacientes')
+            ->select(DB::raw('DATE(created_at) as data'), DB::raw('SUM(preco) as total'))
+            ->where('pago', 1)
+            ->whereBetween(DB::raw('DATE(created_at)'), [$seteDiasAtras, $hoje])
+            ->where('procedimento', 'consulta') // ou incluir exames se quiser
+            ->groupBy(DB::raw('DATE(created_at)'))
+            ->orderBy('data')
+            ->get();
+
+        // Lucro vs Despesas do mês atual
+        $inicioMes = now()->startOfMonth();
+        $fimMes = now()->endOfMonth();
+
+        $entradas = DB::table('pacientes')
+            ->where('pago', 1)
+            ->whereBetween('created_at', [$inicioMes, $fimMes])
+            ->sum('preco');
+
+        $despesas = DB::table('despesas')
+            ->where('pago', 1)
+            ->whereBetween('data_pagamento', [$inicioMes, $fimMes])
+            ->sum('valor');
 
 
         return inertia('Admin/Dashboard', [
@@ -71,6 +99,11 @@ class AdminController extends Controller
             'pacientesConsultaHoje' => $pacientesConsultaHoje,
             'pacientesConsultaHojeList' => $listaPacientesConsultaHoje,
             'examesSemana' => $examesSemana,
+            'faturamentoDias' => $faturamentoUltimos7Dias,
+                'lucroVsDespesas' => [
+                    'entradas' => $entradas,
+                    'despesas' => $despesas,
+                ],
 
         ]);
     }
