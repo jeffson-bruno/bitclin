@@ -7,8 +7,8 @@
       <div v-if="horarios.length > 0">
         <ul class="space-y-3">
           <li v-for="(item, index) in horarios" :key="index" class="border p-3 rounded shadow-sm">
-            <strong>Dr. {{ item.medico }}</strong><br />
-            <span>Horários: {{ item.horarios.join(', ') }}</span>
+            <strong>{{ item.medico }} <span class="text-sm text-gray-500">({{ item.especialidade }})</span></strong><br />
+            <span>Horário: {{ item.hora_inicio }} às {{ item.hora_fim }}</span>
           </li>
         </ul>
       </div>

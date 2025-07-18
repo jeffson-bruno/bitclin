@@ -57,6 +57,9 @@ Route::get('/dashboard', function () {
 //Recepção
 Route::middleware(['auth', 'role:receptionist'])->group(function () {
     Route::get('/recepcao', [RecepcaoController::class, 'index'])->name('recepcao.dashboard');
+    // 🔹 Página que mostra o calendário
+    Route::get('/recepcao/consultas', [RecepcaoController::class, 'consultas'])->name('recepcao.consultas');
+    Route::get('/recepcao/horarios-medicos', [RecepcaoController::class, 'horariosMedicos']);
 });
 
 //Rotas do Admin

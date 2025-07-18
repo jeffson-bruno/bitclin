@@ -7,16 +7,6 @@
       <div class="py-6 px-4">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           
-          <!-- Coluna da esquerda: Calendário -->
-          <div>
-            <h3 class="text-lg font-bold mb-4"> 📅 Datas de Consultas</h3>
-            <FullCalendar
-              :events="consultas"
-              :options="calendarOptions"
-              class="bg-white p-4 rounded shadow"
-            />
-          </div>
-
           <!-- Coluna da direita: Agendamentos -->
           <div class="bg-white p-4 rounded shadow h-full max-h-[500px] overflow-y-auto">
             <h3 class="text-md font-semibold mb-4">📋  Agendamentos Realizados</h3>
@@ -87,6 +77,7 @@ const agendamentosFiltrados = computed(() => {
     a.paciente.toLowerCase().includes(busca.value.toLowerCase())
   )
 })
+
 
 const calendarOptions = {
   plugins: [dayGridPlugin, interactionPlugin],
