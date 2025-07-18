@@ -57,8 +57,15 @@ Route::get('/dashboard', function () {
 //Recepção
 Route::middleware(['auth', 'role:receptionist'])->group(function () {
     Route::get('/recepcao', [RecepcaoController::class, 'index'])->name('recepcao.dashboard');
-    // 🔹 Página que mostra o calendário
+    
+    // Página com o calendário
     Route::get('/recepcao/consultas', [RecepcaoController::class, 'consultas'])->name('recepcao.consultas');
+
+    // Endpoint que retorna as consultas para o calendário (🔹 novo)
+    Route::get('/recepcao/consultas-e-agendamentos', [RecepcaoController::class, 'consultasEAgendamentos']);
+
+
+    // Endpoint que retorna horários de médicos para a modal (já existe)
     Route::get('/recepcao/horarios-medicos', [RecepcaoController::class, 'horariosMedicos']);
 });
 

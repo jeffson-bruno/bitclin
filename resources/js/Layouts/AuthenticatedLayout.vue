@@ -57,6 +57,14 @@ const isDoctor       = computed(() => roles.includes('doctor'))
             >
               Dashboard
             </NavLink>
+            <!-- NOVO LINK RECEPÇÃO -->
+            <NavLink
+              v-if="isReceptionist"
+              :href="route('recepcao.consultas')"
+              :active="route().current('recepcao.consultas')"
+            >
+              Datas de Consultas
+            </NavLink>
 
             <!-- CADASTRO -->
             <Dropdown v-if="isAdmin || isReceptionist" align="left" width="48">
@@ -162,6 +170,14 @@ const isDoctor       = computed(() => roles.includes('doctor'))
             :href="route('pacientes.index')"
           >
             Pacientes
+          </ResponsiveNavLink>
+
+          <ResponsiveNavLink
+            v-if="isReceptionist"
+            :href="route('recepcao.consultas')"
+            :active="route().current('recepcao.consultas')"
+          >
+            Datas de Consultas
           </ResponsiveNavLink>
 
           <ResponsiveNavLink

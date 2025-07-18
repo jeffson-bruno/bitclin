@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\AgendaMedica;
 use Carbon\Carbon;
+use App\Models\User;
+use App\Models\Paciente;
 
 
 class RecepcaoController extends Controller
@@ -37,6 +39,64 @@ class RecepcaoController extends Controller
             });
 
         return response()->json($horarios);
+    }
+
+    public function consultas()
+    {
+        return Inertia::render('Recepcao/Consultas');
+    }
+
+    public function consultasEAgendamentos()
+    {
+        $consultas = AgendaMedica::with('medico')
+            ->whereDate('data', '>=', now()->toDateString())
+            ->get()
+            ->map(function ($agenda) {
+                return [
+                    'title' => 'Dr. ' . explode(' ', $agenda->medico->name)[0],
+                    'start' => $agenda->data,
+                    'color' => 'orange',
+                ];
+            });
+
+        $agendamentos = \App\Models\Paciente::with(['medico', 'exame'])
+            ->orderBy('created_at', 'desc')
+            ->take(30)
+            ->get()
+            ->map(function ($p) {
+                return [
+                    'id' => $p->id,
+                    'paciente' => $p->nome,
+                    'tipo' => $p->procedimento === 'consulta' ? 'Consulta' : 'Exame',
+                    'data' => $p->procedimento === 'consulta' ? ($p->data_consulta ?? $p->created_at->format('Y-m-d')) : $p->created_at->format('Y-m-d'),
+                    'medico' => optional($p->medico)->name,
+                    'exame' => optional($p->exame)->nome,
+                ];
+            });
+
+        return response()->json([
+            'consultas' => $consultas,
+            'agendamentos' => $agendamentos,
+        ]);
+    }
+
+
+    public function consultasEAvisos(Request $request)
+    {
+        $agendas = AgendaMedica::with('medico')
+            ->whereDate('data', '>=', now()->toDateString())
+            ->get();
+
+        $consultas = $agendas->map(function ($agenda) {
+            return [
+                'title' => 'Dr. ' . explode(' ', $agenda->medico->name)[0], // Primeiro nome do médico
+                'start' => $agenda->data . 'T' . $agenda->hora_inicio,
+            ];
+        });
+
+        return response()->json([
+            'consultas' => $consultas
+        ]);
     }
 }
 
