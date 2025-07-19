@@ -1,6 +1,14 @@
 <template>
   <div v-if="show" class="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
     <div class="bg-white rounded-xl p-6 w-full max-w-lg shadow relative">
+    <!-- Botão de fechar -->
+      <button
+        @click="$emit('close')"
+        class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-xl"
+        title="Fechar"
+      >
+        &times;
+      </button>
       <h2 class="text-xl font-bold mb-4 text-center">Reagendar Paciente</h2>
 
       <div class="space-y-4">
