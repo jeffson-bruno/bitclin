@@ -10,7 +10,7 @@
         &times;
       </button>
 
-      <h2 class="text-lg font-semibold mb-4">Editar Paciente</h2>
+      <h2 class="text-lg font-semibold mb-4">Editar Paciente e Forma de Pagamento</h2>
 
     <form @submit.prevent="atualizarPaciente">
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -56,12 +56,12 @@
           />
         </div>
       </div>
-
+      <!--------------------------------------------------
       <div class="mt-4">
         <label class="block text-sm font-medium">Procedimento Realizado</label>
         <input v-model="form.procedimento" type="text" class="input-form" required />
       </div>
-
+      ----------------------------------------------------->
       <div class="mt-4">
         <label class="block text-sm font-medium">Já foi pago?</label>
         <select v-model="form.pago" class="input-form" required>
