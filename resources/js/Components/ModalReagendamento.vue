@@ -1,7 +1,7 @@
 <template>
   <div v-if="show" class="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
     <div class="bg-white rounded-xl p-6 w-full max-w-lg shadow relative">
-    <!-- Botão de fechar -->
+      <!-- Botão de fechar -->
       <button
         @click="$emit('close')"
         class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-xl"
@@ -9,6 +9,7 @@
       >
         &times;
       </button>
+
       <h2 class="text-xl font-bold mb-4 text-center">Reagendar Paciente</h2>
 
       <div class="space-y-4">
@@ -27,7 +28,7 @@
 
         <div v-if="procedimento === 'consulta'">
           <label class="font-medium">Médico</label>
-          <select v-model="medicoId" @change="buscarDatasDisponiveis" class="w-full border rounded p-2">
+          <select v-model="medicoId" @change="() => { buscarDatasDisponiveis(); buscarValorConsulta(); }" class="w-full border rounded p-2">
             <option v-for="medico in medicos" :key="medico.id" :value="medico.id">
               {{ medico.nome }}
             </option>
@@ -43,7 +44,7 @@
 
         <div v-if="procedimento === 'exame'">
           <label class="font-medium">Exame</label>
-          <select v-model="exameId" @change="atualizarValor" class="w-full border rounded p-2">
+          <select v-model="exameId" @change="atualizarValorExame" class="w-full border rounded p-2">
             <option v-for="exame in exames" :key="exame.id" :value="exame.id">
               {{ exame.nome }}
             </option>
@@ -62,7 +63,6 @@
       </div>
     </div>
   </div>
-  
 </template>
 
 <script setup>
@@ -88,7 +88,7 @@ const valor = ref('')
 // Buscar médicos e exames ao abrir modal
 watch(() => props.show, async (aberto) => {
   if (aberto) {
-    procedimento.value = props.paciente.procedimento.toLowerCase()
+    procedimento.value = props.paciente.procedimento?.toLowerCase() || 'consulta'
 
     try {
       const [respMedicos, respExames] = await Promise.all([
@@ -107,22 +107,42 @@ const buscarDatasDisponiveis = async () => {
   if (!medicoId.value) return
 
   try {
-    const { data } = await axios.get(`/api/agenda-medica/${medicoId.value}/datas`)
-    datasDisponiveis.value = data
+    const { data } = await axios.get(`/admin/agenda-medica/medico/${medicoId.value}/dias`)
+    datasDisponiveis.value = data.map(data => {
+      // Converter "dd/mm/yyyy" para "yyyy-mm-dd" para usar no input type=date se necessário
+      const [dia, mes, ano] = data.split('/')
+      return `${ano}-${mes}-${dia}`
+    })
   } catch (err) {
     console.error('Erro ao buscar datas disponíveis', err)
   }
 }
 
-const atualizarValor = () => {
-  const exameSelecionado = exames.value.find(e => e.id === exameId.value)
-  if (exameSelecionado) {
-    valor.value = exameSelecionado.valor
+const buscarValorConsulta = async () => {
+  if (!medicoId.value) return
+
+  try {
+    const { data } = await axios.get(`/admin/agenda-medica/medico/${medicoId.value}/preco`)
+    valor.value = data.preco
+  } catch (err) {
+    console.error('Erro ao buscar valor da consulta', err)
+  }
+}
+
+const atualizarValorExame = async () => {
+  if (!exameId.value) return
+
+  try {
+    const { data } = await axios.get(`/admin/exames/${exameId.value}/preco`)
+    valor.value = data.preco
+  } catch (err) {
+    console.error('Erro ao buscar valor do exame', err)
   }
 }
 
 const formatarData = (data) => {
-  return new Date(data).toLocaleDateString('pt-BR')
+  const d = new Date(data)
+  return d.toLocaleDateString('pt-BR')
 }
 
 const confirmarReagendamento = async () => {
@@ -131,13 +151,13 @@ const confirmarReagendamento = async () => {
       procedimento: procedimento.value,
       medico_id: procedimento.value === 'consulta' ? medicoId.value : null,
       exame_id: procedimento.value === 'exame' ? exameId.value : null,
-      data: novaData.value,
+      data_consulta: procedimento.value === 'consulta' ? novaData.value : null,
       valor: valor.value
     }
 
-    await axios.post(`/api/pacientes/${props.paciente.id}/reagendar`, payload)
+    await axios.put(`/pacientes/reagendar/${props.paciente.id}`, payload)
 
-    emit('reagendado') // para recarregar a listagem
+    emit('reagendado')
     emit('close')
   } catch (err) {
     console.error('Erro ao reagendar paciente', err)

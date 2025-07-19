@@ -275,11 +275,38 @@ Route::middleware(['auth'])->group(function () {
     
 });
 
+//Rotas de Pacientes
 Route::get('/pacientes', [PacienteController::class, 'index'])->name('pacientes.index');
-
-
+//UUppdate paciente
 Route::put('/pacientes/{id}', [PacienteController::class, 'update'])->name('pacientes.update');
+//Reagendar
+Route::put('/pacientes/reagendar/{id}', [PacienteController::class, 'reagendar'])->name('pacientes.reagendar');
 
+//Rotas Públicas que retornam dados Medicos e Exames e valores para o  Recepcionista
+Route::get('/api/medicos', function () {
+    return \App\Models\User::where('role', 'doctor')->select('id', 'name as nome')->get();
+});
+
+Route::get('/api/exames', function () {
+    return \App\Models\Exame::select('id', 'nome', 'valor')->get();
+});
+// Datas disponíveis para médico (usado no reagendamento)
+Route::get('/api/agenda-medica/{medico_id}/datas', function ($medico_id) {
+    return \App\Models\AgendaMedica::where('medico_id', $medico_id)
+        ->pluck('data');
+});
+
+// Valor da consulta para um médico
+Route::get('/api/agenda-medica/{medico_id}/valor', function ($medico_id) {
+    return \App\Models\AgendaMedica::where('medico_id', $medico_id)
+        ->value('valor');
+});
+
+// Valor do exame
+Route::get('/api/exames/{id}/valor', function ($id) {
+    return \App\Models\Exame::where('id', $id)
+        ->value('valor');
+});
 
 
 

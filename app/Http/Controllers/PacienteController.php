@@ -113,7 +113,38 @@ class PacienteController extends Controller
 
             return response()->json(['message' => 'Paciente atualizado com sucesso!']);
         }
+    // Reagendar um paciente
+    public function reagendar(Request $request, $id)
+    {
+        $request->validate([
+            'data_consulta' => 'nullable|date',
+            'exame_id' => 'nullable|exists:exames,id',
+            'medico_id' => 'nullable|exists:users,id',
+            'procedimento' => 'required|in:consulta,exame',
+        ]);
 
+        $paciente = Paciente::findOrFail($id);
+
+        $paciente->procedimento = $request->procedimento;
+        $paciente->data_consulta = $request->data_consulta;
+        $paciente->exame_id = $request->exame_id;
+        $paciente->medico_id = $request->medico_id;
+
+        // Se for consulta, zera o exame
+        if ($request->procedimento === 'consulta') {
+            $paciente->exame_id = null;
+        }
+
+        // Se for exame, zera os dados de consulta
+        if ($request->procedimento === 'exame') {
+            $paciente->medico_id = null;
+            $paciente->data_consulta = null;
+        }
+
+        $paciente->save();
+
+        return response()->json(['success' => true, 'mensagem' => 'Paciente reagendado com sucesso!']);
+    }
 
     // Deleta um paciente
     public function destroy(Paciente $paciente)
