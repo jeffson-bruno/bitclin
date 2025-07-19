@@ -103,5 +103,30 @@ class RecepcaoController extends Controller
             'consultas' => $consultas
         ]);
     }
+
+    public function agendamentosDaSemana()
+    {
+        $inicioSemana = Carbon::now()->startOfWeek(Carbon::MONDAY); // Segunda
+        $fimSemana = Carbon::now()->startOfWeek(Carbon::MONDAY)->addDays(5); // Sábado
+
+        $agendamentos = \App\Models\Paciente::with(['medico', 'exame'])
+            ->whereBetween('created_at', [$inicioSemana->startOfDay(), $fimSemana->endOfDay()])
+            ->orderBy('created_at', 'asc')
+            ->get()
+            ->map(function ($p) {
+                return [
+                    'id' => $p->id,
+                    'paciente' => $p->nome,
+                    'tipo' => $p->procedimento === 'consulta' ? 'Consulta' : 'Exame',
+                    'data' => $p->procedimento === 'consulta'
+                        ? ($p->data_consulta ?? $p->created_at->format('Y-m-d'))
+                        : $p->created_at->format('Y-m-d'),
+                    'medico' => optional($p->medico)->name,
+                    'exame' => optional($p->exame)->nome,
+                ];
+            });
+
+        return response()->json($agendamentos);
+    }
 }
 

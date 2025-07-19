@@ -67,6 +67,9 @@ Route::middleware(['auth', 'role:receptionist'])->group(function () {
 
     // Endpoint que retorna horários de médicos para a modal (já existe)
     Route::get('/recepcao/horarios-medicos', [RecepcaoController::class, 'horariosMedicos']);
+
+    Route::get('/recepcao/agendamentos-semana', [RecepcaoController::class, 'agendamentosDaSemana']);
+
 });
 
 //Rotas do Admin
