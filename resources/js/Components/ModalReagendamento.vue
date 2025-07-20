@@ -119,7 +119,10 @@ const buscarDatasDisponiveis = async () => {
 }
 
 const buscarValorConsulta = async () => {
-  if (!medicoId.value) return
+  if (!medicoId.value) {
+    console.warn('Médico ainda não selecionado.');
+    return;
+  }
 
   try {
     const { data } = await axios.get(`/admin/agenda-medica/medico/${medicoId.value}/preco`)
