@@ -21,7 +21,7 @@
           <label class="font-medium">Procedimento</label>
           <select v-model="procedimento" class="w-full border rounded p-2">
             <option value="consulta">Consulta</option>
-            <option value="exame">Exame</option>
+            <!--<option value="exame">Exame</option>-->
           </select>
         </div>
 
@@ -41,7 +41,7 @@
           </select>
         </div>
 
-        <div v-if="procedimento === 'exame'">
+        <!--<div v-if="procedimento === 'exame'">
           <label class="font-medium">Exame</label>
           <select v-model="exameId" class="w-full border rounded p-2">
             <option v-for="exame in exames" :key="exame.id" :value="exame.id">
@@ -51,7 +51,7 @@
 
           <label class="font-medium mt-2 block">Nova Data do Exame</label>
           <input type="date" v-model="novaData" class="w-full border rounded p-2" />
-        </div>
+        </div>-->
       </div>
 
       <div class="flex justify-end mt-6 space-x-2">
