@@ -11,7 +11,8 @@ const props = defineProps({
 const form = useForm({
   id: null,
   nome: '',
-  valor: ''
+  valor: '',
+  turno: 'ambos'
 })
 
 const editando = ref(false)
@@ -32,6 +33,7 @@ function editar(exame) {
   form.id = exame.id
   form.nome = exame.nome
   form.valor = exame.valor
+  form.turno = exame.turno ?? 'ambos'
   editando.value = true
 }
 
