@@ -69,6 +69,16 @@ function resetForm() {
             <input v-model="form.valor" type="number" step="0.01" min="0" class="w-full border rounded p-2" required />
           </div>
 
+          <div>
+            <label class="block text-sm font-medium">Turno</label>
+            <select v-model="form.turno" class="w-full border rounded p-2" required>
+              <option value="manha">Manhã</option>
+              <option value="tarde">Tarde</option>
+              <option value="ambos">Ambos</option>
+            </select>
+          </div>
+
+
           <div class="flex justify-between items-center">
             <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-green-700">
               {{ editando ? 'Atualizar' : 'Cadastrar' }}
