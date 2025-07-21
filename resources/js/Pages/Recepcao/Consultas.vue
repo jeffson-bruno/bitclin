@@ -70,7 +70,9 @@ const calendarOptions = {
   dayMaxEventRows: true,
   dateClick: async (info) => {
     const data = info.dateStr
-    dataSelecionada.value = new Date(data).toLocaleDateString('pt-BR')
+    const [ano, mes, dia] = data.split('-')
+    dataSelecionada.value = `${dia}/${mes}/${ano}`
+
 
     try {
       const { data: result } = await axios.get('/recepcao/horarios-medicos', {
