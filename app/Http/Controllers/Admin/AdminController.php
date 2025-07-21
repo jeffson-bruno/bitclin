@@ -54,15 +54,15 @@ class AdminController extends Controller
 
         // Pacientes para consulta cadastrados hoje
         $pacientesConsultaHoje = Paciente::where('procedimento', 'consulta')
-            ->whereDate('created_at', $hoje)
+            ->whereDate('data_consulta', $hoje)
             ->count();
         $listaPacientesConsultaHoje = Paciente::where('procedimento', 'consulta')
-            ->whereDate('created_at', $hoje)
+            ->whereDate('data_consulta', $hoje)
             ->with(['medico.especialidade'])
             ->get();
         
         // Faturamento dos últimos 7 dias
-        $hoje = now();
+        $agora = now();
         $seteDiasAtras = now()->subDays(6);
 
         $faturamentoUltimos7Dias = DB::table('pacientes')
@@ -80,7 +80,7 @@ class AdminController extends Controller
 
         $entradas = DB::table('pacientes')
             ->where('pago', 1)
-            ->whereBetween('created_at', [$inicioMes, $fimMes])
+            ->whereBetween('data_pagamento', [$inicioMes, $fimMes])
             ->sum('preco');
 
         $despesas = DB::table('despesas')
@@ -113,13 +113,15 @@ class AdminController extends Controller
 
         $pacientes = Paciente::with(['medico.especialidade'])
             ->where('procedimento', 'consulta')
-            ->whereDate('created_at', $hoje)
+            ->whereDate('data_consulta', $hoje) // FILTRA PELA DATA DE CONSULTA
             ->get()
             ->map(function ($p) {
                 return [
                     'id' => $p->id,
                     'nome' => $p->nome,
-                    'data_consulta' => $p->created_at->format('d/m/Y H:i'),
+                    'data_consulta' => $p->data_consulta
+                        ? Carbon::parse($p->data_consulta)->format('d/m/Y')
+                        : 'Não informado',
                     'telefone' => $p->telefone,
                     'medico' => $p->medico->name ?? 'Não informado',
                     'especialidade' => $p->medico?->especialidade?->nome ?? 'Não informada',
@@ -128,6 +130,7 @@ class AdminController extends Controller
 
         return response()->json($pacientes);
     }
+
     public function pacientesExamesSemana(Request $request)
     {
         $inicioSemana = Carbon::now()->startOfWeek(); // Segunda

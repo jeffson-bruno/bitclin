@@ -129,7 +129,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         $hoje = \Carbon\Carbon::today();
 
         $pacientes = \App\Models\Paciente::where('procedimento', 'consulta')
-            ->whereDate('created_at', $hoje)
+            ->whereDate('data_consulta', $hoje)
             ->get();
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdfs.relatorios.consultas_hoje', [

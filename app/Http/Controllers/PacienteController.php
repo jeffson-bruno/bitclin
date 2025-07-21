@@ -8,9 +8,12 @@ use App\Models\Exame;
 
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Carbon\Carbon;
 
 class PacienteController extends Controller
 {
+   
+
     // Exibe a lista de pacientes (mais para frente podemos alterar para retornar via Inertia)
     public function index(Request $request)
     {
@@ -48,40 +51,46 @@ class PacienteController extends Controller
 
     // Armazena um novo paciente no banco
     public function store(Request $request)
-{
-    $validated = $request->validate([
-        'nome' => 'required|string|max:255',
-        'telefone' => 'nullable|string|max:14',
-        'cpf' => 'nullable|string|max:14',
-        'estado_civil' => 'required|string|max:50',
-        'endereco' => 'nullable|string|max:255',
-        'procedimento' => 'required|string',
-        'medico_id' => 'nullable|exists:users,id',
-        'exame_id' => 'nullable|exists:exames,id',
-        'preco' => 'nullable|numeric',
-        'pago' => 'required|boolean',
-        'forma_pagamento' => 'nullable|string',
-        'data_pagamento' => 'nullable|date',
-        'data_nascimento' => 'required|string', // ← Temporário, pois vamos converter manualmente
-    ]);
+    {
+        $validated = $request->validate([
+            'nome' => 'required|string|max:255',
+            'telefone' => 'nullable|string|max:14',
+            'cpf' => 'nullable|string|max:14',
+            'estado_civil' => 'required|string|max:50',
+            'endereco' => 'nullable|string|max:255',
+            'procedimento' => 'required|string',
+            'medico_id' => 'nullable|exists:users,id',
+            'exame_id' => 'nullable|exists:exames,id',
+            'preco' => 'nullable|numeric',
+            'pago' => 'required|boolean',
+            'forma_pagamento' => 'nullable|string',
+            'data_pagamento' => 'nullable|date',
+            'data_nascimento' => 'required|string', // ← Temporário, pois vamos converter manualmente
+            'data_consulta' => 'nullable|date',
+        ]);
 
-    // Se estiver pago e a data não foi preenchida, usar data atual
-    if ($validated['pago'] && empty($validated['data_pagamento'])) {
-        $validated['data_pagamento'] = now();
-    }
-    // Transforma data_nascimento de dd/mm/yyyy para yyyy-mm-dd
-    if (!empty($validated['data_nascimento'])) {
-        $data = explode('/', $validated['data_nascimento']);
-        if (count($data) === 3) {
-            $validated['data_nascimento'] = "{$data[2]}-{$data[1]}-{$data[0]}";
+        // Se estiver pago e a data não foi preenchida, usar data atual
+        if ($validated['pago'] && empty($validated['data_pagamento'])) {
+            $validated['data_pagamento'] = now();
         }
+
+        // Tratamento de data_consulta para salvar como Y-m-d
+        if (!empty($validated['data_consulta'])) {
+            $validated['data_consulta'] = Carbon::parse($validated['data_consulta'])->format('Y-m-d');
+        }
+        // Transforma data_nascimento de dd/mm/yyyy para yyyy-mm-dd
+        if (!empty($validated['data_nascimento'])) {
+            $data = explode('/', $validated['data_nascimento']);
+            if (count($data) === 3) {
+                $validated['data_nascimento'] = "{$data[2]}-{$data[1]}-{$data[0]}";
+            }
+        }
+
+        // Agora usamos os dados validados e modificados
+        Paciente::create($validated);
+
+        return redirect()->route('pacientes.index')->with('success', 'Paciente cadastrado com sucesso!');
     }
-
-    // Agora usamos os dados validados e modificados
-    Paciente::create($validated);
-
-    return redirect()->route('pacientes.index')->with('success', 'Paciente cadastrado com sucesso!');
-}
 
 
     // Exibe detalhes de um paciente específico
@@ -125,26 +134,28 @@ class PacienteController extends Controller
 
         $paciente = Paciente::findOrFail($id);
 
+        // Atualiza o procedimento
         $paciente->procedimento = $request->procedimento;
-        $paciente->data_consulta = $request->data_consulta;
-        $paciente->exame_id = $request->exame_id;
-        $paciente->medico_id = $request->medico_id;
 
-        // Se for consulta, zera o exame
         if ($request->procedimento === 'consulta') {
+            $paciente->data_consulta = $request->data_consulta
+                ? Carbon::parse($request->data_consulta)->format('Y-m-d')
+                : null;
+            $paciente->medico_id = $request->medico_id;
             $paciente->exame_id = null;
         }
 
-        // Se for exame, zera os dados de consulta
         if ($request->procedimento === 'exame') {
-            $paciente->medico_id = null;
+            $paciente->exame_id = $request->exame_id;
             $paciente->data_consulta = null;
+            $paciente->medico_id = null;
         }
 
         $paciente->save();
 
         return response()->json(['success' => true, 'mensagem' => 'Paciente reagendado com sucesso!']);
     }
+
 
     // Deleta um paciente
     public function destroy(Paciente $paciente)

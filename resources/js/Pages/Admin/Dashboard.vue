@@ -5,6 +5,8 @@ import ModalPacientesExameSemana from '@/Components/ModalPacientesExameSemana.vu
 import BarChart from '@/Components/Charts/BarChart.vue'
 import PieChart from '@/Components/Charts/PieChart.vue'
 
+
+
 import { ref, computed } from 'vue'
 import axios from 'axios'
 
@@ -13,6 +15,9 @@ const pacientesConsultaHojeList = ref([])
 
 const showModalExames = ref(false)
 const pacientesExamesSemanaList = ref([])
+
+
+
 
 const props = defineProps({
   title: String,
@@ -141,12 +146,12 @@ const pieChartData = {
       <div class="bg-white p-6 rounded shadow text-center">
         <h3 class="text-gray-500 text-sm uppercase">Exames da Semana</h3>
         <p class="text-3xl font-bold text-purple-600 mt-2">{{ examesSemana }}</p>
-        <Button 
+        <button 
           @click="abrirModalExames"
           class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow"
         >
           Visualizar Exames
-        </Button>
+        </button>
       </div>
     </div>
 

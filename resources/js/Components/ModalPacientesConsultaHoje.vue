@@ -50,6 +50,8 @@
 <script setup>
 import { computed, defineProps, ref } from 'vue'
 
+
+
 const props = defineProps({
   show: Boolean,
   pacientes: Array, // Espera receber pacientes do backend já com 'medico' e 'especialidade' prontos

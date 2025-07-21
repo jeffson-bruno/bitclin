@@ -36,5 +36,19 @@ public function especialidade()
     return $this->belongsTo(Especialidade::class, 'especialidade_id');
 }
 
+// Scopes personalizados
+public function scopeConsultasHoje($query)
+{
+    return $query->where('procedimento', 'consulta')
+                 ->whereDate('data_consulta', now()->toDateString());
+}
+
+public function scopeExamesSemana($query)
+{
+    return $query->where('procedimento', 'exame')
+                 ->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
+}
+
+
 
 }

@@ -25,7 +25,8 @@ class RelatorioController extends Controller
         $inicio = Carbon::now()->startOfWeek();
         $fim = Carbon::now()->endOfWeek();
 
-        $entradas = Paciente::whereBetween('created_at', [$inicio, $fim])->get();
+        $entradas = Paciente::whereBetween('data_pagamento', [$inicio, $fim])->get();
+
         $despesas = Despesa::whereBetween('data_pagamento', [$inicio, $fim])->get();
 
         return $this->gerarPdf('pdfs.relatorios.periodo', $entradas, $despesas, 'semana', $inicio, $fim);
@@ -36,7 +37,8 @@ class RelatorioController extends Controller
         $inicio = Carbon::now()->startOfMonth();
         $fim = Carbon::now()->endOfMonth();
 
-        $entradas = Paciente::whereBetween('created_at', [$inicio, $fim])->get();
+        $entradas = Paciente::whereBetween('data_pagamento', [$inicio, $fim])->get();
+
         $despesas = Despesa::whereBetween('data_pagamento', [$inicio, $fim])->get();
 
         return $this->gerarPdf('pdfs.relatorios.periodo', $entradas, $despesas, 'mês', $inicio, $fim);
@@ -57,7 +59,8 @@ class RelatorioController extends Controller
             $inicio = Carbon::create($ano, $mes, 1)->startOfMonth();
             $fim = Carbon::create($ano, $mes, 1)->endOfMonth();
 
-            $entradas = Paciente::whereBetween('created_at', [$inicio, $fim])->get();
+            $entradas = Paciente::whereBetween('data_pagamento', [$inicio, $fim])->get();
+
             $despesas = Despesa::whereBetween('data_pagamento', [$inicio, $fim])->get();
 
             $totalEntradas = array_sum(array_column($relatorioMensal, 'entradas'));
