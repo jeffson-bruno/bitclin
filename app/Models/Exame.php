@@ -9,5 +9,5 @@ class Exame extends Model
 {
     
 
-    protected $fillable = ['nome', 'valor'];
+    protected $fillable = ['nome', 'valor', 'turno'];
 }
