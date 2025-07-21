@@ -160,6 +160,33 @@
                 </div>
               </div>
 
+              <!-- Turno do exame -->
+              <div v-if="form.procedimento === 'exame' && exameSelecionado">
+                <label class="block font-medium">Turno</label>
+
+                <!-- Exibir texto se turno for fixo -->
+                <input
+                  v-if="exameSelecionado.turno !== 'ambos'"
+                  type="text"
+                  class="mt-1 w-full rounded border-gray-300 bg-gray-100"
+                  :value="exameSelecionado.turno === 'manha' ? 'Manhã' : 'Tarde'"
+                  disabled
+                />
+
+                <!-- Exibir select se for ambos -->
+                <select
+                  v-else
+                  v-model="form.turno_exame"
+                  class="mt-1 w-full rounded border-gray-300"
+                  required
+                >
+                  <option disabled value="">Selecione o turno</option>
+                  <option value="manha">Manhã</option>
+                  <option value="tarde">Tarde</option>
+                </select>
+              </div>
+
+
 
               <div>
                 <label class="block font-medium">Preço</label>
@@ -226,6 +253,7 @@
 import axios from 'axios';
 import { ref, watch} from 'vue'
 import { router } from '@inertiajs/vue3'
+import { computed } from 'vue'
 import {
   mascaraCPF,
   mascaraTelefone,
@@ -266,6 +294,11 @@ const form = ref({
   medico_id: null,
   data_consulta: '',
   exame_id: null,
+  turno_exame: '',
+})
+
+const exameSelecionado = computed(() => {
+  return props.exames.find(exame => exame.id === form.value.exame_id) || null
 })
 
 watch(() => form.value.medico_id, (medicoId) => {
@@ -281,6 +314,15 @@ watch(() => form.value.exame_id, (exameId) => {
     buscarPrecoExame(exameId)
   }
 })
+watch(exameSelecionado, (exame) => {
+  if (!exame) return
+  if (exame.turno === 'manha' || exame.turno === 'tarde') {
+    form.value.turno_exame = exame.turno
+  } else {
+    form.value.turno_exame = ''
+  }
+})
+
 
 function buscarPrecoConsulta(medicoId) {
   axios.get(`/admin/agenda-medica/medico/${medicoId}/preco`)

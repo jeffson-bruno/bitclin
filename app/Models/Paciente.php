@@ -20,6 +20,7 @@ class Paciente extends Model
     'data_pagamento',
     'medico_id',
     'exame_id',
+    'turno_exame',
 ];
 public function medico()
 {
