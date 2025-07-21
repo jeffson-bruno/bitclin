@@ -1,7 +1,6 @@
 <template>
   <div v-if="show" class="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
     <div class="bg-white rounded-xl p-6 w-full max-w-lg shadow relative">
-      <!-- Botão de fechar -->
       <button
         @click="$emit('close')"
         class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-xl"
@@ -28,13 +27,13 @@
 
         <div v-if="procedimento === 'consulta'">
           <label class="font-medium">Médico</label>
-          <select v-model="medicoId" @change="() => { buscarDatasDisponiveis(); buscarValorConsulta(); }" class="w-full border rounded p-2">
+          <select v-model="medicoId" @change="buscarDatasDisponiveis" class="w-full border rounded p-2">
             <option v-for="medico in medicos" :key="medico.id" :value="medico.id">
               {{ medico.nome }}
             </option>
           </select>
 
-          <label class="font-medium mt-2 block">Data</label>
+          <label class="font-medium mt-2 block">Nova Data da Consulta</label>
           <select v-model="novaData" class="w-full border rounded p-2">
             <option v-for="data in datasDisponiveis" :key="data" :value="data">
               {{ formatarData(data) }}
@@ -44,16 +43,14 @@
 
         <div v-if="procedimento === 'exame'">
           <label class="font-medium">Exame</label>
-          <select v-model="exameId" @change="atualizarValorExame" class="w-full border rounded p-2">
+          <select v-model="exameId" class="w-full border rounded p-2">
             <option v-for="exame in exames" :key="exame.id" :value="exame.id">
               {{ exame.nome }}
             </option>
           </select>
-        </div>
 
-        <div>
-          <label class="font-medium">Novo Valor</label>
-          <input type="number" v-model="valor" class="w-full border rounded p-2" />
+          <label class="font-medium mt-2 block">Nova Data do Exame</label>
+          <input type="date" v-model="novaData" class="w-full border rounded p-2" />
         </div>
       </div>
 
@@ -83,12 +80,13 @@ const medicoId = ref(null)
 const exameId = ref(null)
 const datasDisponiveis = ref([])
 const novaData = ref('')
-const valor = ref('')
 
-// Buscar médicos e exames ao abrir modal
 watch(() => props.show, async (aberto) => {
   if (aberto) {
-    procedimento.value = props.paciente.procedimento?.toLowerCase() || 'consulta'
+    console.log('Paciente recebido:', props.paciente)
+
+    procedimento.value = props.paciente?.procedimento ? String(props.paciente.procedimento).toLowerCase() : 'consulta'
+
 
     try {
       const [respMedicos, respExames] = await Promise.all([
@@ -107,41 +105,29 @@ const buscarDatasDisponiveis = async () => {
   if (!medicoId.value) return
 
   try {
-    const { data } = await axios.get(`/admin/agenda-medica/medico/${medicoId.value}/dias`)
-    datasDisponiveis.value = data.map(data => {
-      // Converter "dd/mm/yyyy" para "yyyy-mm-dd" para usar no input type=date se necessário
-      const [dia, mes, ano] = data.split('/')
-      return `${ano}-${mes}-${dia}`
-    })
+    const { data } = await axios.get(`/api/agenda-medica/${medicoId.value}/datas`)
+    datasDisponiveis.value = data.map((item) => {
+      if (typeof item !== 'string') return ''
+
+      if (item.includes('/')) {
+        const partes = item.split('/')
+        if (partes.length === 3) {
+          const [dia, mes, ano] = partes
+          return `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`
+        }
+      }
+
+      if (item.includes('-')) {
+        return item // já no formato yyyy-mm-dd
+      }
+
+      return ''
+    }).filter(item => item) // remove strings vazias
   } catch (err) {
     console.error('Erro ao buscar datas disponíveis', err)
   }
 }
 
-const buscarValorConsulta = async () => {
-  if (!medicoId.value) {
-    console.warn('Médico ainda não selecionado.');
-    return;
-  }
-
-  try {
-    const { data } = await axios.get(`/admin/agenda-medica/medico/${medicoId.value}/preco`)
-    valor.value = data.preco
-  } catch (err) {
-    console.error('Erro ao buscar valor da consulta', err)
-  }
-}
-
-const atualizarValorExame = async () => {
-  if (!exameId.value) return
-
-  try {
-    const { data } = await axios.get(`/admin/exames/${exameId.value}/preco`)
-    valor.value = data.preco
-  } catch (err) {
-    console.error('Erro ao buscar valor do exame', err)
-  }
-}
 
 const formatarData = (data) => {
   const d = new Date(data)
@@ -154,12 +140,10 @@ const confirmarReagendamento = async () => {
       procedimento: procedimento.value,
       medico_id: procedimento.value === 'consulta' ? medicoId.value : null,
       exame_id: procedimento.value === 'exame' ? exameId.value : null,
-      data_consulta: procedimento.value === 'consulta' ? novaData.value : null,
-      valor: valor.value
+      data_consulta: novaData.value
     }
 
     await axios.put(`/pacientes/reagendar/${props.paciente.id}`, payload)
-
     emit('reagendado')
     emit('close')
   } catch (err) {
