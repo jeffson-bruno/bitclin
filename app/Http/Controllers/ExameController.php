@@ -36,9 +36,10 @@ class ExameController extends Controller
         $request->validate([
             'nome'  => 'required|string|max:255',
             'valor' => 'required|numeric|min:0',
+            'turno' => 'required|in:manha,tarde,ambos',
         ]);
 
-        Exame::create($request->only('nome', 'valor'));
+        Exame::create($request->only('nome', 'valor', 'turno'));
 
         return redirect()->back()->with('success', 'Exame cadastrado com sucesso.');
     }
@@ -67,9 +68,10 @@ class ExameController extends Controller
         $request->validate([
             'nome'  => 'required|string|max:255',
             'valor' => 'required|numeric|min:0',
+            'turno' => 'required|in:manha,tarde,ambos',
         ]);
 
-        $exame->update($request->only('nome', 'valor'));
+        $exame->update($request->only('nome', 'valor', 'turno'));
 
         return redirect()->back()->with('success', 'Exame atualizado com sucesso.');
     }
