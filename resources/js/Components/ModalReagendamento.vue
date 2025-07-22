@@ -9,7 +9,7 @@
         &times;
       </button>
 
-      <h2 class="text-xl font-bold mb-4 text-center">Reagendar Paciente</h2>
+      <h2 class="text-xl font-bold mb-4 text-center">Reagendar Consulta Paciente</h2>
 
       <div class="space-y-4">
         <div>
