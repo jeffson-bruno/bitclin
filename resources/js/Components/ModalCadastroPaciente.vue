@@ -186,16 +186,29 @@
                 </select>
               </div>
 
-              <div v-if="diasPermitidosExame.length">
+              <!-- Dia da Semana para Exame -->
+              <div v-if="form.procedimento === 'exame' && diasPermitidosExame.length">
                 <label class="block font-medium">Dia da Semana para Exame</label>
-                <select v-model="form.dia_semana_exame" class="mt-1 w-full rounded border-gray-300">
+                <select
+                  v-model="form.dia_semana_exame"
+                  class="mt-1 w-full rounded border-gray-300"
+                  required
+                >
                   <option disabled value="">Selecione o dia</option>
-                    <option v-for="dia in diasPermitidosExame" :key="dia" :value="dia">
-                      {{ dia.charAt(0).toUpperCase() + dia.slice(1) }}
+                  <option
+                    v-for="dia in diasPermitidosExame"
+                    :key="dia"
+                    :value="dia"
+                  >
+                    {{ dia.charAt(0).toUpperCase() + dia.slice(1) }}
                   </option>
                 </select>
               </div>
 
+
+              
+
+              <!-- Preço, Pagamento e Forma de Pagamento -->
               <div>
                 <label class="block font-medium">Preço</label>
                 <input
@@ -206,7 +219,6 @@
                   required
                 />
               </div>
-
               <div>
                 <label class="block font-medium">Pagamento Realizado?</label>
                 <select
