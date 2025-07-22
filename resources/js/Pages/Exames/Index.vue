@@ -35,7 +35,12 @@ function editar(exame) {
   form.nome = exame.nome
   form.valor = exame.valor
   form.turno = exame.turno ?? 'ambos'
-  form.dias_semana = exame.dias_semana ?? []
+  try {
+    form.dias_semana = JSON.parse(exame.dias_semana ?? '[]')
+  } catch (e) {
+    form.dias_semana = []
+  }
+
   editando.value = true
 }
 
@@ -54,6 +59,7 @@ function resetForm() {
 
 <template>
   <AdminLayout>
+    
     <template #header>Cadastro de Exames</template>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -72,16 +78,24 @@ function resetForm() {
           </div>
 
           <div>
-            <label for="dias_semana">Dias da Semana:</label>
-            <select name="dias_semana[]" id="dias_semana" class="form-control" multiple>
-                <option value="segunda">Segunda-feira</option>
-                <option value="terca">Terça-feira</option>
-                <option value="quarta">Quarta-feira</option>
-                <option value="quinta">Quinta-feira</option>
-                <option value="sexta">Sexta-feira</option>
-                <option value="sabado">Sábado</option>
-            </select>
+            
+
+            <label for="dias_semana" class="block text-sm font-medium">Dias da Semana:</label>
+              <select
+                  v-model="form.dias_semana"
+                  multiple
+                  id="dias_semana"
+                  class="mt-1 w-full rounded border-gray-300 p-2 h-32"
+                >
+                  <option value="segunda">Segunda-feira</option>
+                  <option value="terca">Terça-feira</option>
+                  <option value="quarta">Quarta-feira</option>
+                  <option value="quinta">Quinta-feira</option>
+                  <option value="sexta">Sexta-feira</option>
+                  <option value="sabado">Sábado</option>
+                </select>
           </div>
+
 
           <div>
             <label class="block text-sm font-medium">Turno</label>

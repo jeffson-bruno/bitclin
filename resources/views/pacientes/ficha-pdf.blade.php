@@ -162,7 +162,16 @@
         @if ($paciente->procedimento === 'exame')
             <tr class="linha">
                 <td><strong>Turno:</strong> {{ ucfirst($paciente->turno_exame) }}</td>
-                <td><strong>Dia da Semana:</strong> {{ ucfirst($paciente->dia_semana_exame) }}</td>
+                <td><strong>Dia da Semana:</strong>
+                    @php
+                        $dias = is_array(json_decode($paciente->dia_semana_exame))
+                            ? json_decode($paciente->dia_semana_exame)
+                            : [$paciente->dia_semana_exame];
+                    @endphp
+
+                    {{ implode(', ', array_map(fn($d) => ucfirst($d), $dias)) }}
+                </td>
+
                 <td></td>
             </tr>
         @endif

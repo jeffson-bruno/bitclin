@@ -44,7 +44,10 @@ class ExameController extends Controller
             'nome'        => $request->nome,
             'valor'       => $request->valor,
             'turno'       => $request->turno,
-            'dias_semana' => $request->dias_semana, // ← Aqui salvamos o array no banco (como JSON)
+            'dias_semana' => is_array($request->dias_semana)
+                ? json_encode($request->dias_semana)
+                : json_encode([]),
+            // ← Aqui salvamos o array no banco (como JSON)
         ]);
 
 
@@ -76,13 +79,17 @@ class ExameController extends Controller
             'nome'  => 'required|string|max:255',
             'valor' => 'required|numeric|min:0',
             'turno' => 'required|in:manha,tarde,ambos',
+            'dias_semana' => 'nullable|array',
         ]);
 
         $exame->update([
             'nome'        => $request->nome,
             'valor'       => $request->valor,
             'turno'       => $request->turno,
-            'dias_semana' => $request->dias_semana,
+            'dias_semana' => is_array($request->dias_semana)
+                ? json_encode($request->dias_semana)
+                : json_encode([]),
+            // ← Aqui atualizamos o array no banco (como JSON)
         ]);
 
 
@@ -97,7 +104,7 @@ class ExameController extends Controller
         return response()->json([
             'preco'        => $exame->valor,
             'turno'        => $exame->turno,
-            'dias_semana'  => $exame->dias_semana,
+            'dias_semana'  => json_decode($exame->dias_semana) ?? [],
         ]);
     }
 

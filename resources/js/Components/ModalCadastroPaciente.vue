@@ -270,15 +270,14 @@
 </template>
 
 <script setup>
-import axios from 'axios';
-import { ref, watch} from 'vue'
+import axios from 'axios'
+import { ref, watch, computed } from 'vue'
 import { router } from '@inertiajs/vue3'
-import { computed } from 'vue'
 import {
   mascaraCPF,
   mascaraTelefone,
   mascaraData
-} from '@/utils/masks';
+} from '@/utils/masks'
 
 const props = defineProps({
   medicos: {
@@ -291,10 +290,8 @@ const props = defineProps({
   },
 })
 
-
-
 const agendaDisponivel = ref([])
-
+const diasPermitidosExame = ref([])
 const emit = defineEmits(['close'])
 const isVisible = ref(true)
 const msgSucesso = ref(false)
@@ -316,10 +313,7 @@ const form = ref({
   exame_id: null,
   turno_exame: '',
   dia_semana_exame: '',
-})
-
-const exameSelecionado = computed(() => {
-  return props.exames.find(exame => exame.id === form.value.exame_id) || null
+  data_exame: '',
 })
 
 watch(() => form.value.medico_id, (medicoId) => {
@@ -330,33 +324,30 @@ watch(() => form.value.medico_id, (medicoId) => {
     buscarPrecoConsulta(medicoId)
   }
 })
+
 watch(() => form.value.exame_id, (exameId) => {
   if (form.value.procedimento === 'exame' && exameId) {
-    buscarPrecoExame(exameId)
-  }
-})
-watch(exameSelecionado, (exame) => {
-  if (!exame) return
-  if (exame.turno === 'manha' || exame.turno === 'tarde') {
-    form.value.turno_exame = exame.turno
-  } else {
-    form.value.turno_exame = ''
-  }
-})
-
-const diasPermitidosExame = ref([])
-
-watch(() => form.value.exame_id, (exameId) => {
-  if (exameId) {
     axios.get(`/admin/exames/${exameId}/info`).then(response => {
       form.value.preco = response.data.preco
-      form.value.turno_exame = response.data.turno
-      diasPermitidosExame.value = response.data.dias_semana || []
+
+      // Corrigir turno
+      if (response.data.turno === 'manha' || response.data.turno === 'tarde') {
+        form.value.turno_exame = response.data.turno
+      } else {
+        form.value.turno_exame = ''
+      }
+
+      // Corrigir dias da semana
+      try {
+        diasPermitidosExame.value = Array.isArray(response.data.dias_semana)
+          ? response.data.dias_semana
+          : JSON.parse(response.data.dias_semana || '[]')
+      } catch (e) {
+        diasPermitidosExame.value = []
+      }
     })
   }
 })
-
-
 
 function buscarPrecoConsulta(medicoId) {
   axios.get(`/admin/agenda-medica/medico/${medicoId}/preco`)
@@ -378,23 +369,11 @@ function buscarPrecoExame(exameId) {
     })
 }
 
-
-
-//function definirPreco() {
-  //if (form.value.procedimento === 'consulta') {
-    //form.value.preco = 150.0
-  //} else if (form.value.procedimento === 'exame') {
-    //form.value.preco = 250.0
-  //} else {
-    //form.value.preco = ''
-  //}
-//}
-
 function fecharModal() {
   isVisible.value = false
   setTimeout(() => {
     emit('close')
-  }, 300) // tempo da animação
+  }, 300)
 }
 
 function submit() {
@@ -403,28 +382,24 @@ function submit() {
   dadosParaEnviar.telefone = dadosParaEnviar.telefone.replace(/\D/g, '')
 
   // Converte data_pagamento para yyyy-mm-dd
-    if (form.data_pagamento) {
-    const dp = form.data_pagamento.split('/');
+  if (form.value.data_pagamento) {
+    const dp = form.value.data_pagamento.split('/')
     if (dp.length === 3) {
-        form.data_pagamento = `${dp[2]}-${dp[1]}-${dp[0]}`;
+      form.value.data_pagamento = `${dp[2]}-${dp[1]}-${dp[0]}`
     }
-    }
-    // Converte data_nascimento para yyyy-mm-dd
-    if (form.data_nascimento) {
-    const dn = form.data_nascimento.split('/');
+  }
+
+  // Converte data_nascimento para yyyy-mm-dd
+  if (form.value.data_nascimento) {
+    const dn = form.value.data_nascimento.split('/')
     if (dn.length === 3) {
-        form.data_nascimento = `${dn[2]}-${dn[1]}-${dn[0]}`;
+      form.value.data_nascimento = `${dn[2]}-${dn[1]}-${dn[0]}`
     }
-    }
-
-
+  }
 
   router.post('/pacientes', dadosParaEnviar, {
     onSuccess: () => {
-      // Mostra o toast primeiro
       window.$toast?.('Paciente salvo com sucesso!')
-
-      // Aguarda 100ms para garantir que o toast apareça
       setTimeout(() => {
         fecharModal()
         router.visit('/pacientes')
@@ -435,9 +410,8 @@ function submit() {
     }
   })
 }
-
-
 </script>
+
 
 <style>
 .modal-fade-enter-active,
