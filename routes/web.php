@@ -145,7 +145,15 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     //Rota para Pacientes com Exames na Semana
     Route::get('/pacientes/exames-semana', [AdminController::class, 'pacientesExamesSemana']);
 
-
+    // Buscar informações completas do exame
+    Route::get('exames/{id}/info', function ($id) {
+        $exame = \App\Models\Exame::findOrFail($id);
+        return response()->json([
+            'preco' => $exame->valor ?? 0,
+            'turno' => $exame->turno,
+            'dias_semana' => $exame->dias_semana, // precisa estar no cast como array
+        ]);
+    })->name('exames.info');
 
 
 });
@@ -307,6 +315,10 @@ Route::get('/api/exames/{id}/valor', function ($id) {
     return \App\Models\Exame::where('id', $id)
         ->value('valor');
 });
+
+// Rota para buscar informações do exame (usado no cadastro de paciente)
+Route::middleware(['auth', 'role:receptionist'])->get('/exames/{id}/info', [\App\Http\Controllers\ExameController::class, 'info']);
+
 
 
 

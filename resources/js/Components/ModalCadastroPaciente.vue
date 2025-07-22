@@ -88,29 +88,29 @@
                     required
                 />
                 </div>
+
+                <!-- Estado Civil -->
+
+                <div>
+                  <label class="block font-medium">Estado Civil</label>
+                  <select
+                      v-model="form.estado_civil"
+                      class="mt-1 w-full rounded border-gray-300"
+                      required
+                  >
+                      <option disabled value="">Selecione</option>
+                      <option value="solteiro">Solteiro(a)</option>
+                      <option value="casado">Casado(a)</option>
+                      <option value="divorciado">Divorciado(a)</option>
+                      <option value="viuvo">Viúvo(a)</option>
+                      <option value="outro">Outro</option>
+                  </select>
+                </div>
             </div>
 
             <!-- Coluna Direita -->
-
             
             <div class="space-y-4">
-
-                <!-- Estado Civil -->
-            <div>
-            <label class="block font-medium">Estado Civil</label>
-            <select
-                v-model="form.estado_civil"
-                class="mt-1 w-full rounded border-gray-300"
-                required
-            >
-                <option disabled value="">Selecione</option>
-                <option value="solteiro">Solteiro(a)</option>
-                <option value="casado">Casado(a)</option>
-                <option value="divorciado">Divorciado(a)</option>
-                <option value="viuvo">Viúvo(a)</option>
-                <option value="outro">Outro</option>
-            </select>
-            </div>
 
             <!-- Procedimento -->
               <div>
@@ -186,7 +186,15 @@
                 </select>
               </div>
 
-
+              <div v-if="diasPermitidosExame.length">
+                <label class="block font-medium">Dia da Semana para Exame</label>
+                <select v-model="form.dia_semana_exame" class="mt-1 w-full rounded border-gray-300">
+                  <option disabled value="">Selecione o dia</option>
+                    <option v-for="dia in diasPermitidosExame" :key="dia" :value="dia">
+                      {{ dia.charAt(0).toUpperCase() + dia.slice(1) }}
+                  </option>
+                </select>
+              </div>
 
               <div>
                 <label class="block font-medium">Preço</label>
@@ -322,6 +330,19 @@ watch(exameSelecionado, (exame) => {
     form.value.turno_exame = ''
   }
 })
+
+const diasPermitidosExame = ref([])
+
+watch(() => form.value.exame_id, (exameId) => {
+  if (exameId) {
+    axios.get(`/admin/exames/${exameId}/info`).then(response => {
+      form.value.preco = response.data.preco
+      form.value.turno_exame = response.data.turno
+      diasPermitidosExame.value = response.data.dias_semana || []
+    })
+  }
+})
+
 
 
 function buscarPrecoConsulta(medicoId) {

@@ -37,9 +37,16 @@ class ExameController extends Controller
             'nome'  => 'required|string|max:255',
             'valor' => 'required|numeric|min:0',
             'turno' => 'required|in:manha,tarde,ambos',
+            'dias_semana' => 'nullable|array',
         ]);
 
-        Exame::create($request->only('nome', 'valor', 'turno'));
+        Exame::create([
+            'nome'        => $request->nome,
+            'valor'       => $request->valor,
+            'turno'       => $request->turno,
+            'dias_semana' => $request->dias_semana, // ← Aqui salvamos o array no banco (como JSON)
+        ]);
+
 
         return redirect()->back()->with('success', 'Exame cadastrado com sucesso.');
     }
@@ -71,10 +78,29 @@ class ExameController extends Controller
             'turno' => 'required|in:manha,tarde,ambos',
         ]);
 
-        $exame->update($request->only('nome', 'valor', 'turno'));
+        $exame->update([
+            'nome'        => $request->nome,
+            'valor'       => $request->valor,
+            'turno'       => $request->turno,
+            'dias_semana' => $request->dias_semana,
+        ]);
+
 
         return redirect()->back()->with('success', 'Exame atualizado com sucesso.');
     }
+
+    //Retorna os  Dados do Exame
+    public function info($id)
+    {
+        $exame = Exame::findOrFail($id);
+
+        return response()->json([
+            'preco'        => $exame->valor,
+            'turno'        => $exame->turno,
+            'dias_semana'  => $exame->dias_semana,
+        ]);
+    }
+
 
     /**
      * Remove the specified resource from storage.

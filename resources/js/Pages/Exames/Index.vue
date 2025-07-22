@@ -12,7 +12,8 @@ const form = useForm({
   id: null,
   nome: '',
   valor: '',
-  turno: 'ambos'
+  turno: 'ambos',
+  dias_semana: []
 })
 
 const editando = ref(false)
@@ -34,6 +35,7 @@ function editar(exame) {
   form.nome = exame.nome
   form.valor = exame.valor
   form.turno = exame.turno ?? 'ambos'
+  form.dias_semana = exame.dias_semana ?? []
   editando.value = true
 }
 
@@ -67,6 +69,18 @@ function resetForm() {
           <div>
             <label class="block text-sm font-medium">Valor (R$)</label>
             <input v-model="form.valor" type="number" step="0.01" min="0" class="w-full border rounded p-2" required />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium">Dias da Semana</label>
+            <select v-model="form.dias_semana" multiple class="w-full border rounded p-2">
+              <option value="segunda">Segunda</option>
+              <option value="terca">Terça</option>
+              <option value="quarta">Quarta</option>
+              <option value="quinta">Quinta</option>
+              <option value="sexta">Sexta</option>
+              <option value="sabado">Sábado</option>
+            </select>
           </div>
 
           <div>
