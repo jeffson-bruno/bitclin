@@ -72,14 +72,14 @@ function resetForm() {
           </div>
 
           <div>
-            <label class="block text-sm font-medium">Dias da Semana</label>
-            <select v-model="form.dias_semana" multiple class="w-full border rounded p-2">
-              <option value="segunda">Segunda</option>
-              <option value="terca">Terça</option>
-              <option value="quarta">Quarta</option>
-              <option value="quinta">Quinta</option>
-              <option value="sexta">Sexta</option>
-              <option value="sabado">Sábado</option>
+            <label for="dias_semana">Dias da Semana:</label>
+            <select name="dias_semana[]" id="dias_semana" class="form-control" multiple>
+                <option value="segunda">Segunda-feira</option>
+                <option value="terca">Terça-feira</option>
+                <option value="quarta">Quarta-feira</option>
+                <option value="quinta">Quinta-feira</option>
+                <option value="sexta">Sexta-feira</option>
+                <option value="sabado">Sábado</option>
             </select>
           </div>
 
