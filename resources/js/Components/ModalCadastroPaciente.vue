@@ -303,6 +303,7 @@ const form = ref({
   data_consulta: '',
   exame_id: null,
   turno_exame: '',
+  dia_semana_exame: '',
 })
 
 const exameSelecionado = computed(() => {

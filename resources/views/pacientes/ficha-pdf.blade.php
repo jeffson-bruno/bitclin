@@ -119,7 +119,6 @@
     }
 @endphp
 
-
 <!-- VIA DO PACIENTE -->
 <div class="via">
     <img src="{{ public_path('images/marca-dagua.png') }}" class="marca-dagua-1" alt="Marca d'água">
@@ -159,6 +158,14 @@
         <tr class="linha">
             <td colspan="3" class="procedimento">Procedimento: {{ $textoProcedimento }}</td>
         </tr>
+
+        @if ($paciente->procedimento === 'exame')
+            <tr class="linha">
+                <td><strong>Turno:</strong> {{ ucfirst($paciente->turno_exame) }}</td>
+                <td><strong>Dia da Semana:</strong> {{ ucfirst($paciente->dia_semana_exame) }}</td>
+                <td></td>
+            </tr>
+        @endif
     </table>
 
     <div class="rodape">
@@ -166,8 +173,6 @@
         (11) 91234-5678 | @clinica.exemplo
     </div>
 </div>
-
-<div class="divisoria">---------------- Corte Aqui ----------------</div>
 
 <!-- VIA DA CLÍNICA -->
 <div class="via">
@@ -208,6 +213,15 @@
         <tr class="linha">
             <td colspan="3" class="procedimento">Procedimento: {{ $textoProcedimento }}</td>
         </tr>
+
+        @if ($paciente->procedimento === 'exame')
+            <tr class="linha">
+                <td><strong>Turno:</strong> {{ ucfirst($paciente->turno_exame) }}</td>
+                <td><strong>Dia da Semana:</strong> {{ ucfirst($paciente->dia_semana_exame) }}</td>
+                <td></td>
+            </tr>
+        @endif
+
         <tr class="linha">
             <td colspan="3">
                 <strong>Valor:</strong> R$ {{ number_format($paciente->preco, 2, ',', '.') }} - 
@@ -221,6 +235,8 @@
         (11) 91234-5678 | @clinica.exemplo
     </div>
 </div>
+
+
 
 </body>
 </html>

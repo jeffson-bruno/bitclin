@@ -67,6 +67,8 @@ class PacienteController extends Controller
             'data_pagamento' => 'nullable|date',
             'data_nascimento' => 'required|string', // ← Temporário, pois vamos converter manualmente
             'data_consulta' => 'nullable|date',
+            'turno_exame' => 'nullable|in:manha,tarde,ambos',
+            'dia_semana_exame' => 'nullable|string',
         ]);
 
         // Se estiver pago e a data não foi preenchida, usar data atual
@@ -115,6 +117,8 @@ class PacienteController extends Controller
                 'pago' => 'required|boolean',
                 'forma_pagamento' => 'nullable|required_if:pago,true|string|max:255',
                 'data_pagamento' => 'nullable|required_if:pago,true|date',
+                'turno_exame' => 'nullable|in:manha,tarde,ambos',
+                'dia_semana_exame' => 'nullable|string',
             ]);
 
 
