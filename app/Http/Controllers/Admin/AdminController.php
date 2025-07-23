@@ -133,18 +133,26 @@ class AdminController extends Controller
 
     public function pacientesExamesSemana(Request $request)
     {
+        // Força locale para português (importante para nome do dia da semana)
+        App::setLocale('pt_BR');
+        setlocale(LC_TIME, 'pt_BR.UTF-8');
+
         $inicioSemana = Carbon::now()->startOfWeek(); // Segunda
         $fimSemana = Carbon::now()->endOfWeek();     // Domingo
 
         $pacientes = Paciente::where('procedimento', 'exame')
-            ->whereBetween('created_at', [$inicioSemana, $fimSemana])
-            ->with('exame') // Assumindo que há relação com tabela de exames
+            ->whereBetween('data_consulta', [$inicioSemana, $fimSemana])
+            ->with('exame')
             ->get()
             ->map(function ($p) {
+                $data = $p->data_consulta
+                    ? Carbon::parse($p->data_consulta)->translatedFormat('d/m/Y') . ' – ' . ucfirst(Carbon::parse($p->data_consulta)->translatedFormat('l'))
+                    : 'Não informado';
+
                 return [
                     'id' => $p->id,
                     'nome' => $p->nome,
-                    'data_exame' => $p->created_at->format('d/m/Y H:i'),
+                    'data_exame' => $data,
                     'telefone' => $p->telefone,
                     'exame' => $p->exame->nome ?? 'Não informado',
                 ];
@@ -152,6 +160,7 @@ class AdminController extends Controller
 
         return response()->json($pacientes);
     }
+
 
 }
 
