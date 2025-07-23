@@ -10,6 +10,7 @@ class Paciente extends Model
     'nome',
     'cpf',
     'telefone',
+    'estado_civil',
     'data_nascimento',
     'endereco',
     'observacoes',
@@ -21,6 +22,7 @@ class Paciente extends Model
     'medico_id',
     'exame_id',
     'turno_exame',
+    'dia_semana_exame',
 ];
 public function medico()
 {

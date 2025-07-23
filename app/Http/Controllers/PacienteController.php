@@ -42,6 +42,7 @@ class PacienteController extends Controller
 
     public function store(Request $request)
     {
+        
         $validated = $request->validate([
             'nome' => 'required|string|max:255',
             'telefone' => 'nullable|string|max:14',
@@ -84,6 +85,23 @@ class PacienteController extends Controller
                 }
             }
         }
+
+        if ($validated['procedimento'] === 'exame' && !empty($validated['exame_id'])) {
+            // Se já existe em $validated, não mexe
+            if (isset($validated['dia_semana_exame']) && $validated['dia_semana_exame']) {
+                // já está pronto, não precisa fazer nada
+            } else {
+                // fallback: tenta pegar o primeiro dia do exame
+                $exame = Exame::find($validated['exame_id']);
+                if ($exame && $exame->dias_semana) {
+                    $dias = is_array($exame->dias_semana) ? $exame->dias_semana : json_decode($exame->dias_semana, true);
+                    $validated['dia_semana_exame'] = is_array($dias) ? $dias[0] ?? null : null;
+                }
+            }
+        }
+
+
+
 
         Paciente::create($validated);
 

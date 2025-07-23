@@ -382,20 +382,21 @@ function submit() {
   dadosParaEnviar.telefone = dadosParaEnviar.telefone.replace(/\D/g, '')
 
   // Converte data_pagamento para yyyy-mm-dd
-  if (form.value.data_pagamento) {
-    const dp = form.value.data_pagamento.split('/')
-    if (dp.length === 3) {
-      form.value.data_pagamento = `${dp[2]}-${dp[1]}-${dp[0]}`
-    }
+  if (dadosParaEnviar.data_pagamento && dadosParaEnviar.data_pagamento.includes('/')) {
+  const dp = dadosParaEnviar.data_pagamento.split('/')
+  if (dp.length === 3) {
+    dadosParaEnviar.data_pagamento = `${dp[2]}-${dp[1]}-${dp[0]}`
   }
+}
 
-  // Converte data_nascimento para yyyy-mm-dd
-  if (form.value.data_nascimento) {
-    const dn = form.value.data_nascimento.split('/')
-    if (dn.length === 3) {
-      form.value.data_nascimento = `${dn[2]}-${dn[1]}-${dn[0]}`
-    }
+if (dadosParaEnviar.data_nascimento && dadosParaEnviar.data_nascimento.includes('/')) {
+  const dn = dadosParaEnviar.data_nascimento.split('/')
+  if (dn.length === 3) {
+    dadosParaEnviar.data_nascimento = `${dn[2]}-${dn[1]}-${dn[0]}`
   }
+}
+
+console.log('Dados enviados:', dadosParaEnviar)
 
   router.post('/pacientes', dadosParaEnviar, {
     onSuccess: () => {

@@ -9,6 +9,8 @@ use App\Models\AgendaMedica;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\App;
+
 
 
 use App\Http\Controllers\Controller;
@@ -132,34 +134,42 @@ class AdminController extends Controller
     }
 
     public function pacientesExamesSemana(Request $request)
-    {
-        // Força locale para português (importante para nome do dia da semana)
-        App::setLocale('pt_BR');
-        setlocale(LC_TIME, 'pt_BR.UTF-8');
+{
+    $diasSemana = [
+        'domingo' => 0,
+        'segunda' => 1,
+        'terça' => 2,
+        'quarta' => 3,
+        'quinta' => 4,
+        'sexta' => 5,
+        'sábado' => 6,
+    ];
 
-        $inicioSemana = Carbon::now()->startOfWeek(); // Segunda
-        $fimSemana = Carbon::now()->endOfWeek();     // Domingo
+    $pacientes = Paciente::where('procedimento', 'exame')
+        ->with('exame')
+        ->get()
+        ->map(function ($p) use ($diasSemana) {
+            $dia = strtolower($p->dia_semana_exame ?? '');
+            $hoje = Carbon::now()->startOfWeek(); // Segunda
 
-        $pacientes = Paciente::where('procedimento', 'exame')
-            ->whereBetween('data_consulta', [$inicioSemana, $fimSemana])
-            ->with('exame')
-            ->get()
-            ->map(function ($p) {
-                $data = $p->data_consulta
-                    ? Carbon::parse($p->data_consulta)->translatedFormat('d/m/Y') . ' – ' . ucfirst(Carbon::parse($p->data_consulta)->translatedFormat('l'))
-                    : 'Não informado';
+            if (!isset($diasSemana[$dia])) {
+                $dataConvertida = 'Não informado';
+            } else {
+                $dataConvertida = $hoje->copy()->addDays($diasSemana[$dia]);
+                $dataConvertida = ucfirst($dataConvertida->translatedFormat('d/m/Y – l'));
+            }
 
-                return [
-                    'id' => $p->id,
-                    'nome' => $p->nome,
-                    'data_exame' => $data,
-                    'telefone' => $p->telefone,
-                    'exame' => $p->exame->nome ?? 'Não informado',
-                ];
-            });
+            return [
+                'id' => $p->id,
+                'nome' => $p->nome,
+                'data_exame' => $dataConvertida,
+                'telefone' => $p->telefone,
+                'exame' => $p->exame->nome ?? 'Não informado',
+            ];
+        });
 
-        return response()->json($pacientes);
-    }
+    return response()->json($pacientes);
+}
 
 
 }
