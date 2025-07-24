@@ -70,6 +70,11 @@ Route::middleware(['auth', 'role:receptionist'])->group(function () {
 
     Route::get('/recepcao/agendamentos-semana', [RecepcaoController::class, 'agendamentosDaSemana']);
 
+    Route::get('/recepcao/agenda-medica/medico/{id}/dias', [AgendaMedicaController::class, 'diasPorMedico']);
+    Route::get('/recepcao/agenda-medica/medico/{id}/preco', [AgendaMedicaController::class, 'precoPorMedico']);
+    Route::get('/recepcao/exames/{id}/info', [ExameController::class, 'info']);
+
+    Route::get('/recepcao/pacientes', [RecepcaoController::class, 'pacientes'])->name('recepcao.pacientes');
 });
 
 //Rotas do Admin

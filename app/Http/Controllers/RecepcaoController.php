@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Paciente;
 use Illuminate\Support\Str;
+use App\Models\Exame;
 
 
 
@@ -160,6 +161,16 @@ class RecepcaoController extends Controller
 
         return response()->json($agendamentos);
     }
+
+    public function pacientes()
+    {
+        return Inertia::render('Recepcao/Pacientes', [
+            'pacientes' => \App\Models\Paciente::orderBy('created_at', 'desc')->paginate(10),
+            'medicos'   => \App\Models\User::where('role', 'doctor')->get(['id', 'name']),
+            'exames'    => \App\Models\Exame::all(['id', 'nome', 'valor', 'turno', 'dias_semana']),
+        ]);
+    }
+
 
 
     
