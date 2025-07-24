@@ -8,6 +8,8 @@ use App\Models\AgendaMedica;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Paciente;
+use Illuminate\Support\Str;
+
 
 
 class RecepcaoController extends Controller
@@ -104,37 +106,62 @@ class RecepcaoController extends Controller
         ]);
     }
 
+    //Agendamentos da Semana:
     public function agendamentosDaSemana()
     {
         $inicioSemana = Carbon::now()->startOfWeek(Carbon::MONDAY); // Segunda
         $fimSemana = Carbon::now()->startOfWeek(Carbon::MONDAY)->addDays(5); // Sábado
 
         $agendamentos = \App\Models\Paciente::with(['medico', 'exame'])
-        ->where(function ($query) use ($inicioSemana, $fimSemana) {
-            $query->where(function ($q) use ($inicioSemana, $fimSemana) {
-                $q->where('procedimento', 'consulta')
-                ->whereBetween('data_consulta', [$inicioSemana->startOfDay(), $fimSemana->endOfDay()]);
+            ->where(function ($query) use ($inicioSemana, $fimSemana) {
+                $query->where(function ($q) use ($inicioSemana, $fimSemana) {
+                    $q->where('procedimento', 'consulta')
+                        ->whereBetween('data_consulta', [$inicioSemana->startOfDay(), $fimSemana->endOfDay()]);
+                })
+                ->orWhere(function ($q) use ($inicioSemana, $fimSemana) {
+                    $q->where('procedimento', 'exame')
+                        ->whereNotNull('dia_semana_exame');
+                });
             })
-            ->orWhere(function ($q) use ($inicioSemana, $fimSemana) {
-                $q->where('procedimento', 'exame')
-                ->whereBetween('created_at', [$inicioSemana->startOfDay(), $fimSemana->endOfDay()]);
+            ->orderByRaw("COALESCE(data_consulta, created_at)")
+            ->get()
+            ->map(function ($p) {
+                return [
+                    'id' => $p->id,
+                    'paciente' => $p->nome,
+                    'tipo' => $p->procedimento === 'consulta' ? 'Consulta' : 'Exame',
+                    'data' => $p->procedimento === 'consulta'
+                        ? ($p->data_consulta ?? $p->created_at->format('Y-m-d'))
+                        : (function () use ($p) {
+                            if ($p->dia_semana_exame) {
+                                $diasSemana = [
+                                    'domingo' => 0,
+                                    'segunda' => 1,
+                                    'terça' => 2,
+                                    'quarta' => 3,
+                                    'quinta' => 4,
+                                    'sexta' => 5,
+                                    'sábado' => 6,
+                                ];
+
+                                $dia = Str::lower($p->dia_semana_exame);
+                                $hoje = now()->startOfWeek(Carbon::MONDAY); // Segunda da semana atual
+
+                                if (isset($diasSemana[$dia])) {
+                                    return $hoje->copy()->addDays($diasSemana[$dia])->format('Y-m-d');
+                                }
+                            }
+                            return $p->created_at->format('Y-m-d'); // fallback
+                        })(),
+                    'medico' => optional($p->medico)->name,
+                    'exame' => optional($p->exame)->nome,
+                ];
             });
-        })
-        ->orderByRaw("COALESCE(data_consulta, created_at)")
-        ->get()
-        ->map(function ($p) {
-            return [
-                'id' => $p->id,
-                'paciente' => $p->nome,
-                'tipo' => $p->procedimento === 'consulta' ? 'Consulta' : 'Exame',
-                'data' => $p->procedimento === 'consulta'
-                    ? ($p->data_consulta ?? $p->created_at->format('Y-m-d'))
-                    : $p->created_at->format('Y-m-d'),
-                'medico' => optional($p->medico)->name,
-                'exame' => optional($p->exame)->nome,
-            ];
-        });
+
         return response()->json($agendamentos);
     }
+
+
+    
 }
 
