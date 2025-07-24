@@ -133,43 +133,51 @@ class AdminController extends Controller
         return response()->json($pacientes);
     }
 
+    
     public function pacientesExamesSemana(Request $request)
-{
-    $diasSemana = [
-        'domingo' => 0,
-        'segunda' => 1,
-        'terça' => 2,
-        'quarta' => 3,
-        'quinta' => 4,
-        'sexta' => 5,
-        'sábado' => 6,
-    ];
+    {
 
-    $pacientes = Paciente::where('procedimento', 'exame')
-        ->with('exame')
-        ->get()
-        ->map(function ($p) use ($diasSemana) {
-            $dia = strtolower($p->dia_semana_exame ?? '');
-            $hoje = Carbon::now()->startOfWeek(); // Segunda
+        Carbon::setLocale('pt_BR');
+        
+        $diasSemana = [
+            'domingo' => 0,
+            'segunda' => 1,
+            'terça'   => 2,
+            'quarta'  => 3,
+            'quinta'  => 4,
+            'sexta'   => 5,
+            'sábado'  => 6,
+        ];
 
-            if (!isset($diasSemana[$dia])) {
-                $dataConvertida = 'Não informado';
-            } else {
-                $dataConvertida = $hoje->copy()->addDays($diasSemana[$dia]);
-                $dataConvertida = ucfirst($dataConvertida->translatedFormat('d/m/Y – l'));
-            }
+        $pacientes = Paciente::where('procedimento', 'exame')
+            ->with('exame')
+            ->get()
+            ->map(function ($p) use ($diasSemana) {
+                $dia = strtolower($p->dia_semana_exame ?? '');
+                
+                // Pegamos o início da SEMANA (domingo)
+                $inicioSemana = Carbon::now()->startOfWeek(Carbon::SUNDAY);
 
-            return [
-                'id' => $p->id,
-                'nome' => $p->nome,
-                'data_exame' => $dataConvertida,
-                'telefone' => $p->telefone,
-                'exame' => $p->exame->nome ?? 'Não informado',
-            ];
-        });
+                if (!isset($diasSemana[$dia])) {
+                    $dataConvertida = 'Não informado';
+                } else {
+                    // Usamos domingo como base e somamos até o dia correto
+                    $dataConvertida = $inicioSemana->copy()->addDays($diasSemana[$dia]);
+                    $dataConvertida = ucfirst($dataConvertida->translatedFormat('d/m/Y – l'));
+                }
 
-    return response()->json($pacientes);
-}
+                return [
+                    'id' => $p->id,
+                    'nome' => $p->nome,
+                    'data_exame' => $dataConvertida,
+                    'telefone' => $p->telefone,
+                    'exame' => $p->exame->nome ?? 'Não informado',
+                ];
+            });
+
+        return response()->json($pacientes);
+    }
+
 
 
 }
