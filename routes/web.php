@@ -12,7 +12,6 @@ use App\Models\SenhaAtendimento;
 use App\Models\Paciente;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Http\Controllers\RecepcaoController;
-use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\EspecialidadeController;
 use App\Http\Controllers\Medico\MedicoController;
@@ -22,10 +21,7 @@ use App\Http\Controllers\Admin\DespesaController;
 use App\Http\Controllers\Admin\RelatorioController;
 use App\Models\User;
 use App\Models\Exame;
-use App\Http\Controllers\DashboardController;
-
-
-
+use App\Http\Controllers\Api\CadastroDadosController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -36,255 +32,101 @@ Route::get('/', function () {
     ]);
 });
 
-//Rotas Essenciais
 Route::get('/dashboard', function () {
     $user = auth()->user();
 
-    if ($user->hasRole('admin')) {
-        return redirect()->route('admin.dashboard');
-    }
-
-    if ($user->hasRole('receptionist')) {
-        return redirect()->route('recepcao.dashboard');
-    }
-
-    if ($user->hasRole('doctor')) {
-       return redirect()->route('medico.dashboard');
-   }
+    if ($user->hasRole('admin')) return redirect()->route('admin.dashboard');
+    if ($user->hasRole('receptionist')) return redirect()->route('recepcao.dashboard');
+    if ($user->hasRole('doctor')) return redirect()->route('medico.dashboard');
 
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+//ROTAS DO CADASTRO DE DADOS
+Route::middleware(['auth'])->prefix('cadastro')->group(function () {
+    Route::get('/agenda-medica/medico/{id}/dias', [CadastroDadosController::class, 'diasDisponiveisConsulta']);
+    Route::get('/agenda-medica/medico/{id}/preco', [CadastroDadosController::class, 'precoConsulta']);
+    Route::get('/exames/{id}/info', [CadastroDadosController::class, 'infoExame']);
+    Route::put('/pacientes/{id}/reagendar', [CadastroDadosController::class, 'reagendar']);
+});
 
-/////////////////////////  RECEPÇÃO  /////////////////////////
-// Rotas da Recepção
 Route::middleware(['auth', 'role:receptionist'])->group(function () {
     Route::get('/recepcao', [RecepcaoController::class, 'index'])->name('recepcao.dashboard');
-    
-    // Página com o calendário
     Route::get('/recepcao/consultas', [RecepcaoController::class, 'consultas'])->name('recepcao.consultas');
-
-    // Endpoint que retorna as consultas para o calendário (🔹 novo)
     Route::get('/recepcao/consultas-e-agendamentos', [RecepcaoController::class, 'consultasEAgendamentos']);
-
-
-    // Endpoint que retorna horários de médicos para a modal (já existe)
     Route::get('/recepcao/horarios-medicos', [RecepcaoController::class, 'horariosMedicos']);
-
     Route::get('/recepcao/agendamentos-semana', [RecepcaoController::class, 'agendamentosDaSemana']);
-
-    Route::get('/recepcao/agenda-medica/medico/{id}/dias', function ($id) {
-        $dias = \App\Models\AgendaMedica::where('medico_id', $id)
-            ->orderBy('data')
-            ->pluck('data')
-            ->unique()
-            ->map(fn($data) => \Carbon\Carbon::parse($data)->format('d/m/Y'))
-            ->values();
-
-        return response()->json($dias);
-    });
-
-    Route::get('/recepcao/agenda-medica/medico/{id}/preco', [AgendaMedicaController::class, 'buscarPreco']);
-
-    Route::get('/recepcao/exames/{id}/info', function ($id) {
-        $exame = \App\Models\Exame::findOrFail($id);
-        return response()->json([
-            'preco' => $exame->valor ?? 0,
-            'turno' => $exame->turno,
-            'dias_semana' => $exame->dias_semana, // precisa estar no cast como array
-        ]);
-    });
-
     Route::get('/recepcao/pacientes/exames-semana', [RecepcaoController::class, 'pacientesExamesSemana']);
-
-
     Route::get('/recepcao/pacientes', [RecepcaoController::class, 'pacientes'])->name('recepcao.pacientes');
+    Route::get('/recepcao/consultas-hoje', [RecepcaoController::class, 'consultasHoje']);
 });
-//////////////// fim Rotas Recepção ///////////////////////
 
-//Rotas do Admin
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
-
-    // Especialidades
-    Route::resource('especialidades', EspecialidadeController::class)
-        ->names('especialidades')
-        ->only(['index', 'store', 'update', 'destroy']);
-    //Exames
+    Route::resource('especialidades', EspecialidadeController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('exames', \App\Http\Controllers\ExameController::class)->except(['show']);
-    //Agenda
     Route::resource('agenda-medica', AgendaMedicaController::class)->except(['show']);
-    Route::get('agenda-medica/medico/{id}/dias', function ($id) {
-        $dias = \App\Models\AgendaMedica::where('medico_id', $id)
-            ->orderBy('data')
-            ->pluck('data')
-            ->unique()
-            ->map(fn($data) => \Carbon\Carbon::parse($data)->format('d/m/Y'))
-            ->values();
-
-        return response()->json($dias);
-    })->middleware(['auth', 'role:admin']);
-
-    // Buscar valor da consulta do médico (última agenda cadastrada)
-    Route::get('agenda-medica/medico/{id}/preco', [\App\Http\Controllers\Admin\AgendaMedicaController::class, 'buscarPreco'])
-        ->name('agenda-medica.buscarPreco');
-    // Buscar valor do exame selecionado
-    Route::get('exames/{id}/preco', function ($id) {
-        $exame = \App\Models\Exame::findOrFail($id);
-        return response()->json(['preco' => $exame->valor ?? 0]);
-    })->name('exames.preco');
-
-    //Financeiro
-    Route::get('/financeiro', [App\Http\Controllers\Admin\FinanceiroController::class, 'index'])->name('financeiro.index');
+    Route::get('agenda-medica/medico/{id}/preco', [AgendaMedicaController::class, 'buscarPreco'])->name('agenda-medica.buscarPreco');
+    Route::get('/financeiro', [FinanceiroController::class, 'index'])->name('financeiro.index');
     Route::post('/financeiro/baixar/{id}', [FinanceiroController::class, 'baixarPagamento'])->name('financeiro.baixar');
+    Route::resource('despesas', DespesaController::class)->only(['index','store','destroy']);
+    Route::post('despesas/{id}/baixar', [DespesaController::class, 'baixar'])->name('despesas.baixar');
 
-    //Despesas
-    Route::resource('despesas', \App\Http\Controllers\Admin\DespesaController::class)
-    ->names('despesas')
-    ->only(['index','store','destroy']);
-    Route::post('despesas/{id}/baixar', [DespesaController::class, 'baixar'])
-    ->name('despesas.baixar');
-
-    // Relatórios Financeiros
-    Route::controller(App\Http\Controllers\Admin\RelatorioController::class)->prefix('relatorios')->name('relatorios.')->group(function () {
-        Route::get('/', 'index')->name('index'); // Página de seleção dos relatórios
+    Route::controller(RelatorioController::class)->prefix('relatorios')->name('relatorios.')->group(function () {
+        Route::get('/', 'index')->name('index');
         Route::get('/dia', 'relatorioDia')->name('dia');
         Route::get('/semana', 'relatorioSemana')->name('semana');
         Route::get('/mes', 'relatorioMes')->name('mes');
         Route::get('/anual', 'relatorioAnual')->name('anual');
     });
 
-    //Relatorio Pacientes para consultas do  dia
     Route::get('relatorios/consultas-hoje', function () {
         $hoje = \Carbon\Carbon::today();
-
-        $pacientes = \App\Models\Paciente::where('procedimento', 'consulta')
-            ->whereDate('data_consulta', $hoje)
-            ->get();
-
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdfs.relatorios.consultas_hoje', [
-            'pacientes' => $pacientes,
-            'hoje' => $hoje->format('d/m/Y'),
-        ]);
-
+        $pacientes = \App\Models\Paciente::where('procedimento', 'consulta')->whereDate('data_consulta', $hoje)->get();
+        $pdf = Pdf::loadView('pdfs.relatorios.consultas_hoje', ['pacientes' => $pacientes, 'hoje' => $hoje->format('d/m/Y')]);
         return $pdf->download("relatorio-consultas-$hoje.pdf");
     })->name('relatorios.consultasHoje');
 
-    //Rota  para  Mostrar Pacientes com Consultas Hoje
     Route::get('/pacientes/consultas-hoje', [AdminController::class, 'pacientesConsultaHoje']);
-    //Rota para Pacientes com Exames na Semana
     Route::get('/pacientes/exames-semana', [AdminController::class, 'pacientesExamesSemana']);
-
-    // Buscar informações completas do exame
-    Route::get('exames/{id}/info', function ($id) {
-        $exame = \App\Models\Exame::findOrFail($id);
-        return response()->json([
-            'preco' => $exame->valor ?? 0,
-            'turno' => $exame->turno,
-            'dias_semana' => $exame->dias_semana, // precisa estar no cast como array
-        ]);
-    })->name('exames.info');
-
-
 });
-////////////////////////////Fim Rotas Admin///////////////////////////////////////
 
-// Painel do Médico
 Route::middleware(['auth', 'role:doctor'])->prefix('medico')->name('medico.')->group(function () {
     Route::get('/dashboard', [MedicoController::class, 'index'])->name('dashboard');
 });
-
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-});
-Route::middleware('guest')->group(function () {
-    Route::get('register', [RegisteredUserController::class, 'create'])->name('register');
-    Route::post('register', [RegisteredUserController::class, 'store']);
-    
-    Route::get('login', [AuthenticatedSessionController::class, 'create'])->name('login');
-    Route::post('login', [AuthenticatedSessionController::class, 'store']);
-});
 
-Route::middleware(['auth'])->group(function () {
-    // Cadastro
     Route::resource('pacientes', PacienteController::class);
     Route::resource('usuarios', UsuarioController::class);
-
-    // Agendamentos
-    //Route::resource('consultas', ConsultaController::class);
-    //Route::resource('exames', ExameController::class);
 
     Route::post('/senhas', [SenhaAtendimentoController::class, 'store']);
 
     Route::get('/senhas/imprimir/{id}', function ($id) {
         $senha = SenhaAtendimento::with('paciente')->findOrFail($id);
-
         return Inertia::render('Senhas/Imprimir', [
             'senha' => $senha,
             'clinica' => [
-            'nome' => 'Clínica Santa Esperança', // <- aqui você pode futuramente puxar de settings/banco
-            'logo' => asset('images/logo-clinica.png') // <- (opcional)
+                'nome' => 'Clínica Santa Esperança',
+                'logo' => asset('images/logo-clinica.png')
             ]
         ]);
     });
-    // Imprimir ficha do paciente (FICHA.VUE)
+
     Route::get('/pacientes/imprimir-ficha/{id}', function ($id) {
-        $paciente = \App\Models\Paciente::with(['medico.especialidade', 'exame'])->findOrFail($id);
-
+        $paciente = Paciente::with(['medico.especialidade', 'exame'])->findOrFail($id);
         $descricaoProcedimento = 'Não informado';
-
-        if ($paciente->procedimento === 'consulta' && $paciente->medico) {
-            $especialidade = $paciente->medico->especialidade->nome ?? 'Especialidade não informada';
-            $descricaoProcedimento = "Consulta com $especialidade";
-        }
-
-        if ($paciente->procedimento === 'exame' && $paciente->exame) {
-            $descricaoProcedimento = "Exame / {$paciente->exame->nome}";
-        }
-
-        $statusPagamento = 'Não Pago';
-        if ($paciente->pago) {
-            $statusPagamento = match ($paciente->forma_pagamento) {
-                'pix' => 'Pago via Pix',
-                'cartao' => 'Pago com Cartão',
-                'dinheiro' => 'Pagamento efetuado à vista',
-                default => 'Pago'
-            };
-        }
-
-        $dadosProcedimento = [
-            'procedimento' => $descricaoProcedimento,
-            'valor' => $paciente->preco ?? 0,
-            'pago' => $statusPagamento
-        ];
-
-        return Inertia::render('Pacientes/Ficha', [
-            'paciente' => $paciente,
-            'procedimento' => $dadosProcedimento
-        ]);
-    });
-
-    // Imprimir ficha em PDF
-    Route::get('/pacientes/imprimir-ficha/{id}', function ($id) {
-        $paciente = \App\Models\Paciente::with(['medico.especialidade', 'exame'])->findOrFail($id);
-
-        // Montar descrição do procedimento
-        $descricaoProcedimento = 'Não informado';
-
         if ($paciente->procedimento === 'consulta' && $paciente->medico_id) {
             $medico = User::with('especialidade')->find($paciente->medico_id);
             $especialidade = $medico?->especialidade?->nome ?? 'Especialidade não informada';
             $descricaoProcedimento = "Consulta com $especialidade";
         }
-
         if ($paciente->procedimento === 'exame' && $paciente->exame_id) {
             $exame = Exame::find($paciente->exame_id);
             $descricaoProcedimento = $exame ? "Exame / {$exame->nome}" : 'Exame não identificado';
         }
-
-        // Determinar forma de pagamento
         $statusPagamento = 'Não Pago';
         if ($paciente->pago) {
             $statusPagamento = match ($paciente->forma_pagamento) {
@@ -294,69 +136,20 @@ Route::middleware(['auth'])->group(function () {
                 default => 'Pago'
             };
         }
-
-        // Montar os dados
         $dadosProcedimento = [
             'procedimento' => $descricaoProcedimento,
             'valor' => $paciente->preco ?? 0,
             'pago' => $statusPagamento
         ];
-
         $pdf = Pdf::loadView('pacientes.ficha-pdf', [
             'paciente' => $paciente,
             'procedimento' => $dadosProcedimento
         ])->setPaper('a4');
-    
+        return $pdf->download('ficha-atendimento.pdf');
+    });
 
-    return $pdf->download('ficha-atendimento.pdf'); // ou ->stream() para abrir direto no navegador
-
-    
+    Route::put('/pacientes/{id}', [PacienteController::class, 'update'])->name('pacientes.update');
+    Route::put('/pacientes/reagendar/{id}', [PacienteController::class, 'reagendar'])->name('pacientes.reagendar');
 });
 
-//Rotas de Pacientes
-Route::get('/pacientes', [PacienteController::class, 'index'])->name('pacientes.index');
-//UUppdate paciente
-Route::put('/pacientes/{id}', [PacienteController::class, 'update'])->name('pacientes.update');
-//Reagendar
-Route::put('/pacientes/reagendar/{id}', [PacienteController::class, 'reagendar'])->name('pacientes.reagendar');
-
-//Rotas Públicas que retornam dados Medicos e Exames e valores para o  Recepcionista
-Route::get('/api/medicos', function () {
-    return \App\Models\User::where('role', 'doctor')->select('id', 'name as nome')->get();
-});
-
-Route::get('/api/exames', function () {
-    return \App\Models\Exame::select('id', 'nome', 'valor')->get();
-});
-// Datas disponíveis para médico (usado no reagendamento)
-Route::get('/api/agenda-medica/{medico_id}/datas', function ($medico_id) {
-    return \App\Models\AgendaMedica::where('medico_id', $medico_id)
-        ->pluck('data');
-});
-
-// Valor da consulta para um médico
-Route::get('/api/agenda-medica/{medico_id}/valor', function ($medico_id) {
-    return \App\Models\AgendaMedica::where('medico_id', $medico_id)
-        ->value('valor');
-});
-
-// Valor do exame
-Route::get('/api/exames/{id}/valor', function ($id) {
-    return \App\Models\Exame::where('id', $id)
-        ->value('valor');
-});
-
-// Rota para buscar informações do exame (usado no cadastro de paciente)
-Route::middleware(['auth', 'role:receptionist'])->get('/exames/{id}/info', [\App\Http\Controllers\ExameController::class, 'info']);
-
-
-
-
-
-
-
-
-//Fechamento
-});
-// Authentication Routes
 require __DIR__.'/auth.php';

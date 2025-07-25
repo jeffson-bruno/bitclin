@@ -1,0 +1,75 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use App\Models\AgendaMedica;
+use App\Models\Paciente;
+use Illuminate\Support\Carbon;
+
+class CadastroDadosController extends Controller
+{
+    /**
+     * Buscar dias disponíveis na agenda de um médico.
+     */
+    public function diasDisponiveisConsulta($medicoId)
+    {
+        $dias = AgendaMedica::where('medico_id', $medicoId)
+            ->orderBy('data')
+            ->pluck('data')
+            ->map(fn($data) => Carbon::parse($data)->format('d/m/Y'));
+
+        return response()->json($dias);
+    }
+
+    /**
+     * Buscar o preço da consulta com o médico.
+     */
+    public function precoConsulta($medicoId)
+    {
+        $preco = AgendaMedica::where('medico_id', $medicoId)
+            ->orderByDesc('data')
+            ->value('preco');
+
+        return response()->json(['preco_consulta' => $preco ?? 0]);
+    }
+
+    /**
+     * Buscar dados de exame: valor, turno e dias disponíveis.
+     */
+    public function infoExame($id)
+    {
+        $exame = \App\Models\Exame::findOrFail($id);
+
+        return response()->json([
+            'preco' => $exame->valor,
+            'turno' => $exame->turno,
+            'dias_semana' => json_decode($exame->dias_semana ?? '[]'),
+        ]);
+    }
+
+    /**
+     * Reagendar paciente (consulta ou exame).
+     */
+    public function reagendar(Request $request, $id)
+    {
+        $paciente = Paciente::findOrFail($id);
+
+        if ($request->procedimento === 'consulta') {
+            $paciente->medico_id = $request->medico_id;
+            $paciente->data_consulta = $request->data_consulta;
+        } elseif ($request->procedimento === 'exame') {
+            $paciente->exame_id = $request->exame_id;
+            $paciente->turno_exame = $request->turno_exame;
+            $paciente->dia_semana_exame = $request->dia_semana_exame;
+        }
+
+        $paciente->procedimento = $request->procedimento;
+        $paciente->save();
+
+        return response()->json(['message' => 'Paciente reagendado com sucesso!']);
+    }
+}
+
+

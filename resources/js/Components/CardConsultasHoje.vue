@@ -57,8 +57,10 @@ const consultasFiltradas = computed(() => {
 })
 
 function formatarData(data) {
-  return new Date(data).toLocaleDateString('pt-BR')
+  const [ano, mes, dia] = data.split('-')
+  return `${dia}/${mes}/${ano}`
 }
+
 
 function imprimirSenha(consulta) {
   // Aqui você pode disparar a modal já existente passando os dados do paciente

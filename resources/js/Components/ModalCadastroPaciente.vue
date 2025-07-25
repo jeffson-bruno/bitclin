@@ -279,7 +279,7 @@ import {
   mascaraData
 } from '@/utils/masks'
 
-// Props recebidas normalmente
+// Props recebidas
 const props = defineProps({
   medicos: {
     type: Array,
@@ -291,7 +291,7 @@ const props = defineProps({
   },
 })
 
-// Pega o usuário logado direto do contexto do Inertia
+// Usuário logado
 const user = usePage().props.auth.user
 
 const agendaDisponivel = ref([])
@@ -300,6 +300,7 @@ const emit = defineEmits(['close'])
 const isVisible = ref(true)
 const msgSucesso = ref(false)
 
+// Formulário
 const form = ref({
   nome: '',
   cpf: '',
@@ -320,24 +321,27 @@ const form = ref({
   data_exame: '',
 })
 
-// Função utilitária para montar a rota base correta
-function rotaBaseAdminOuRecepcao(subrota) {
-  const base = user.role === 'admin' ? '/admin' : '/recepcao'
-  return `${base}${subrota}`
-}
-
+// 🔄 Watch para seleção de médico em consultas
 watch(() => form.value.medico_id, (medicoId) => {
   if (form.value.procedimento === 'consulta' && medicoId) {
-    axios.get(rotaBaseAdminOuRecepcao(`/agenda-medica/medico/${medicoId}/dias`)).then(response => {
+    axios.get(`/cadastro/agenda-medica/medico/${medicoId}/dias`).then(response => {
       agendaDisponivel.value = response.data
     })
-    buscarPrecoConsulta(medicoId)
+
+    axios.get(`/cadastro/agenda-medica/medico/${medicoId}/preco`)
+      .then(response => {
+        form.value.preco = response.data.preco
+      })
+      .catch(() => {
+        form.value.preco = ''
+      })
   }
 })
 
+// 🔄 Watch para seleção de exame
 watch(() => form.value.exame_id, (exameId) => {
   if (form.value.procedimento === 'exame' && exameId) {
-    axios.get(rotaBaseAdminOuRecepcao(`/exames/${exameId}/info`)).then(response => {
+    axios.get(`/cadastro/exames/${exameId}/info`).then(response => {
       form.value.preco = response.data.preco
 
       // Corrigir turno
@@ -359,27 +363,7 @@ watch(() => form.value.exame_id, (exameId) => {
   }
 })
 
-
-function buscarPrecoConsulta(medicoId) {
-  axios.get(rotaBaseAdminOuRecepcao(`/agenda-medica/medico/${medicoId}/preco`))
-    .then(response => {
-      form.value.preco = response.data.preco_consulta
-    })
-    .catch(() => {
-      form.value.preco = ''
-    })
-}
-
-function buscarPrecoExame(exameId) {
-  axios.get(rotaBaseAdminOuRecepcao(`/exames/${exameId}/preco`))
-    .then(response => {
-      form.value.preco = response.data.preco
-    })
-    .catch(() => {
-      form.value.preco = ''
-    })
-}
-
+// Fecha a modal
 function fecharModal() {
   isVisible.value = false
   setTimeout(() => {
@@ -387,12 +371,13 @@ function fecharModal() {
   }, 300)
 }
 
+// Envio do formulário
 function submit() {
   const dadosParaEnviar = { ...form.value }
   dadosParaEnviar.cpf = dadosParaEnviar.cpf.replace(/\D/g, '')
   dadosParaEnviar.telefone = dadosParaEnviar.telefone.replace(/\D/g, '')
 
-  // Converte data_pagamento para yyyy-mm-dd
+  // Converte datas
   if (dadosParaEnviar.data_pagamento && dadosParaEnviar.data_pagamento.includes('/')) {
     const dp = dadosParaEnviar.data_pagamento.split('/')
     if (dp.length === 3) {
@@ -406,8 +391,6 @@ function submit() {
       dadosParaEnviar.data_nascimento = `${dn[2]}-${dn[1]}-${dn[0]}`
     }
   }
-
-  console.log('Dados enviados:', dadosParaEnviar)
 
   router.post('/pacientes', dadosParaEnviar, {
     onSuccess: () => {
@@ -423,6 +406,7 @@ function submit() {
   })
 }
 </script>
+
 
 
 

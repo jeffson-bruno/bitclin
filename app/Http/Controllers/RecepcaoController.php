@@ -243,4 +243,27 @@ class RecepcaoController extends Controller
         return response()->json($pacientes);
     }
 
+    public function consultasHoje()
+    {
+        $hoje = Carbon::today()->toDateString();
+
+        $consultasHoje = Paciente::with('medico')
+            ->where('procedimento', 'consulta')
+            ->whereDate('data_consulta', $hoje)
+            ->orderBy('data_consulta')
+            ->get()
+            ->map(function ($p) {
+                return [
+                    'id' => $p->id,
+                    'paciente' => $p->nome,
+                    'data' => $p->data_consulta,
+                    'medico' => optional($p->medico)->name,
+                    'telefone' => $p->telefone,
+                ];
+            });
+
+        return response()->json($consultasHoje);
+    }
+
+
 }
