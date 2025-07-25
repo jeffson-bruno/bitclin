@@ -51,17 +51,23 @@ Route::middleware(['auth'])->prefix('cadastro')->group(function () {
 
 });
 
+//Rotas de recepção
+
 Route::middleware(['auth', 'role:receptionist'])->group(function () {
     Route::get('/recepcao', [RecepcaoController::class, 'index'])->name('recepcao.dashboard');
     Route::get('/recepcao/consultas', [RecepcaoController::class, 'consultas'])->name('recepcao.consultas');
     Route::get('/recepcao/consultas-e-agendamentos', [RecepcaoController::class, 'consultasEAgendamentos']);
     Route::get('/recepcao/horarios-medicos', [RecepcaoController::class, 'horariosMedicos']);
     Route::get('/recepcao/agendamentos-semana', [RecepcaoController::class, 'agendamentosDaSemana']);
-    Route::get('/recepcao/pacientes/exames-semana', [RecepcaoController::class, 'pacientesExamesSemana']);
+    Route::get('/recepcao/pacientes/exames-semana', [CadastroDadosController::class, 'pacientesExamesSemana']);
+    Route::get('/recepcao/pacientes/consultas-hoje', [CadastroDadosController::class, 'pacientesConsultaHoje']);
     Route::get('/recepcao/pacientes', [RecepcaoController::class, 'pacientes'])->name('recepcao.pacientes');
-    Route::get('/recepcao/consultas-hoje', [RecepcaoController::class, 'consultasHoje']);
+    Route::get('/recepcao/consultas-hoje', [RecepcaoController::class, 'consultasHoje']); // opcional, se for diferente
 });
 
+///////////////////////////////////////////////////////////////////////////////////
+
+//Rotas do administrador
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
     Route::resource('especialidades', EspecialidadeController::class)->only(['index', 'store', 'update', 'destroy']);
@@ -88,9 +94,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         return $pdf->download("relatorio-consultas-$hoje.pdf");
     })->name('relatorios.consultasHoje');
 
-    Route::get('/pacientes/consultas-hoje', [AdminController::class, 'pacientesConsultaHoje']);
-    Route::get('/pacientes/exames-semana', [AdminController::class, 'pacientesExamesSemana']);
+    Route::get('/pacientes/consultas-hoje', [CadastroDadosController::class, 'pacientesConsultaHoje']);
+    Route::get('/pacientes/exames-semana', [CadastroDadosController::class, 'pacientesExamesSemana']);
 });
+
+////////////////////////////////////////////////////////////////////////////////////////
 
 Route::middleware(['auth', 'role:doctor'])->prefix('medico')->name('medico.')->group(function () {
     Route::get('/dashboard', [MedicoController::class, 'index'])->name('dashboard');

@@ -76,55 +76,61 @@ class CadastroDadosController extends Controller
 
     public function pacientesExamesSemana()
     {
-        Carbon::setLocale('pt_BR');
+        try {
+            Carbon::setLocale('pt_BR');
 
-        $abreviacoes = [
-            'DOM' => 'domingo',
-            'SEG' => 'segunda',
-            'TER' => 'terça',
-            'QUAR' => 'quarta',
-            'QUI' => 'quinta',
-            'SEX' => 'sexta',
-            'SAB' => 'sábado',
-        ];
+            // Map com chaves em minúsculo
+            $diasMap = [
+                'domingo' => Carbon::SUNDAY,
+                'segunda' => Carbon::MONDAY,
+                'terça'   => Carbon::TUESDAY,
+                'quarta'  => Carbon::WEDNESDAY,
+                'quinta'  => Carbon::THURSDAY,
+                'sexta'   => Carbon::FRIDAY,
+                'sabado'  => Carbon::SATURDAY,
+            ];
 
-        $diasSemana = [
-            'domingo' => 0,
-            'segunda' => 1,
-            'terça' => 2,
-            'quarta' => 3,
-            'quinta' => 4,
-            'sexta' => 5,
-            'sábado' => 6,
-        ];
+            $pacientes = Paciente::with('exame')
+                ->where('procedimento', 'exame')
+                ->get()
+                ->map(function ($p) use ($diasMap) {
+                    $diaSemana = strtolower(trim($p->dia_semana_exame ?? ''));
 
-        $pacientes = Paciente::where('procedimento', 'exame')
-            ->with('exame')
-            ->get()
-            ->map(function ($p) use ($abreviacoes, $diasSemana) {
-                $sigla = strtoupper($p->dia_semana_exame ?? '');
-                $diaExtenso = $abreviacoes[$sigla] ?? null;
+                    if (!isset($diasMap[$diaSemana])) {
+                        $dataFormatada = 'Não informada';
+                    } else {
+                        $hoje = Carbon::today();
+                        $carbonDia = Carbon::now()->next($diasMap[$diaSemana]);
 
-                if (!$diaExtenso || !isset($diasSemana[$diaExtenso])) {
-                    $dataExame = 'Não informado';
-                } else {
-                    $hoje = now()->startOfWeek(Carbon::MONDAY);
-                    $dataExame = $hoje->copy()->addDays($diasSemana[$diaExtenso])
-                        ->translatedFormat('d/m/Y – l');
-                }
+                        // Garante que seja a próxima ocorrência se o dia for hoje
+                        if ($carbonDia->lt($hoje)) {
+                            $carbonDia->addWeek();
+                        }
 
-                return [
-                    'id' => $p->id,
-                    'nome' => $p->nome,
-                    'data_exame' => $dataExame,
-                    'telefone' => $p->telefone,
-                    'exame' => optional($p->exame)->nome,
-                ];
-            });
+                        $dataFormatada = $carbonDia->translatedFormat('d/m/Y – l');
+                    }
 
-        return response()->json($pacientes);
+                    return [
+                        'id' => $p->id,
+                        'nome' => $p->nome,
+                        'dia_semana_exame' => ucfirst($diaSemana),
+                        'data' => $dataFormatada,
+                        'exame' => optional($p->exame)->nome ?? 'Não informado',
+                        'turno' => ucfirst($p->turno_exame) ?? '-',
+                        'telefone' => $p->telefone,
+                    ];
+                });
+
+            return response()->json($pacientes);
+        } catch (\Throwable $e) {
+            \Log::error('Erro ao buscar exames da semana: ' . $e->getMessage());
+            return response()->json(['error' => 'Erro ao buscar exames'], 500);
+        }
     }
 
+
 }
+
+
 
 

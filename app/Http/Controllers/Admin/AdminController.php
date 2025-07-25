@@ -109,74 +109,34 @@ class AdminController extends Controller
 
         ]);
     }
-    public function pacientesConsultaHoje(Request $request)
-    {
-        $hoje = Carbon::today()->toDateString();
-
-        $pacientes = Paciente::with(['medico.especialidade'])
-            ->where('procedimento', 'consulta')
-            ->whereDate('data_consulta', $hoje) // FILTRA PELA DATA DE CONSULTA
-            ->get()
-            ->map(function ($p) {
-                return [
-                    'id' => $p->id,
-                    'nome' => $p->nome,
-                    'data_consulta' => $p->data_consulta
-                        ? Carbon::parse($p->data_consulta)->format('d/m/Y')
-                        : 'Não informado',
-                    'telefone' => $p->telefone,
-                    'medico' => $p->medico->name ?? 'Não informado',
-                    'especialidade' => $p->medico?->especialidade?->nome ?? 'Não informada',
-                ];
-            });
-
-        return response()->json($pacientes);
-    }
-
     
-    public function pacientesExamesSemana(Request $request)
+    public function pacientesConsultaHoje()
     {
+        try {
+            $hoje = Carbon::today()->toDateString();
 
-        Carbon::setLocale('pt_BR');
-        
-        $diasSemana = [
-            'domingo' => 0,
-            'segunda' => 1,
-            'terça'   => 2,
-            'quarta'  => 3,
-            'quinta'  => 4,
-            'sexta'   => 5,
-            'sábado'  => 6,
-        ];
+            $pacientes = Paciente::with('medico.especialidade')
+                ->where('procedimento', 'consulta')
+                ->whereDate('data_consulta', $hoje)
+                ->get()
+                ->map(function ($p) {
+                    return [
+                        'id' => $p->id,
+                        'nome' => $p->nome,
+                        'data_consulta' => $p->data_consulta ? Carbon::parse($p->data_consulta)->format('d/m/Y') : 'Não informada',
+                        'especialidade' => optional($p->medico->especialidade)->nome ?? 'Não informada',
+                        'medico' => optional($p->medico)->name ?? 'Não informado',
+                        'telefone' => $p->telefone,
+                    ];
+                });
 
-        $pacientes = Paciente::where('procedimento', 'exame')
-            ->with('exame')
-            ->get()
-            ->map(function ($p) use ($diasSemana) {
-                $dia = strtolower($p->dia_semana_exame ?? '');
-                
-                // Pegamos o início da SEMANA (domingo)
-                $inicioSemana = Carbon::now()->startOfWeek(Carbon::SUNDAY);
-
-                if (!isset($diasSemana[$dia])) {
-                    $dataConvertida = 'Não informado';
-                } else {
-                    // Usamos domingo como base e somamos até o dia correto
-                    $dataConvertida = $inicioSemana->copy()->addDays($diasSemana[$dia]);
-                    $dataConvertida = ucfirst($dataConvertida->translatedFormat('d/m/Y – l'));
-                }
-
-                return [
-                    'id' => $p->id,
-                    'nome' => $p->nome,
-                    'data_exame' => $dataConvertida,
-                    'telefone' => $p->telefone,
-                    'exame' => $p->exame->nome ?? 'Não informado',
-                ];
-            });
-
-        return response()->json($pacientes);
+            return response()->json($pacientes);
+        } catch (\Throwable $e) {
+            \Log::error('Erro ao buscar pacientesConsultaHoje: '.$e->getMessage());
+            return response()->json(['error' => 'Erro interno ao buscar pacientes'], 500);
+        }
     }
+
 
 
 

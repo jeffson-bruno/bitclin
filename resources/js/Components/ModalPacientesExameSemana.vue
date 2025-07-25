@@ -28,7 +28,7 @@
           <tbody>
             <tr v-for="p in pacientesFiltrados" :key="p.id" class="hover:bg-gray-50">
               <td class="px-4 py-2 border-b">{{ p.nome }}</td>
-              <td class="px-4 py-2 border-b">{{ p.data_exame }}</td>
+              <td class="px-4 py-2 border-b">{{ p.data }}</td>
               <td class="px-4 py-2 border-b">{{ p.exame }}</td>
               <td class="px-4 py-2 border-b">{{ p.telefone }}</td>
             </tr>
