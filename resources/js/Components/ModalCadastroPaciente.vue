@@ -271,14 +271,15 @@
 
 <script setup>
 import axios from 'axios'
-import { ref, watch, computed } from 'vue'
-import { router } from '@inertiajs/vue3'
+import { ref, watch } from 'vue'
+import { router, usePage } from '@inertiajs/vue3'
 import {
   mascaraCPF,
   mascaraTelefone,
   mascaraData
 } from '@/utils/masks'
 
+// Props recebidas normalmente
 const props = defineProps({
   medicos: {
     type: Array,
@@ -289,6 +290,9 @@ const props = defineProps({
     default: () => [],
   },
 })
+
+// Pega o usuário logado direto do contexto do Inertia
+const user = usePage().props.auth.user
 
 const agendaDisponivel = ref([])
 const diasPermitidosExame = ref([])
@@ -316,9 +320,15 @@ const form = ref({
   data_exame: '',
 })
 
+// Função utilitária para montar a rota base correta
+function rotaBaseAdminOuRecepcao(subrota) {
+  const base = user.role === 'admin' ? '/admin' : '/recepcao'
+  return `${base}${subrota}`
+}
+
 watch(() => form.value.medico_id, (medicoId) => {
   if (form.value.procedimento === 'consulta' && medicoId) {
-    axios.get(`/admin/agenda-medica/medico/${medicoId}/dias`).then(response => {
+    axios.get(rotaBaseAdminOuRecepcao(`/agenda-medica/medico/${medicoId}/dias`)).then(response => {
       agendaDisponivel.value = response.data
     })
     buscarPrecoConsulta(medicoId)
@@ -327,7 +337,7 @@ watch(() => form.value.medico_id, (medicoId) => {
 
 watch(() => form.value.exame_id, (exameId) => {
   if (form.value.procedimento === 'exame' && exameId) {
-    axios.get(`/admin/exames/${exameId}/info`).then(response => {
+    axios.get(rotaBaseAdminOuRecepcao(`/exames/${exameId}/info`)).then(response => {
       form.value.preco = response.data.preco
 
       // Corrigir turno
@@ -349,8 +359,9 @@ watch(() => form.value.exame_id, (exameId) => {
   }
 })
 
+
 function buscarPrecoConsulta(medicoId) {
-  axios.get(`/admin/agenda-medica/medico/${medicoId}/preco`)
+  axios.get(rotaBaseAdminOuRecepcao(`/agenda-medica/medico/${medicoId}/preco`))
     .then(response => {
       form.value.preco = response.data.preco_consulta
     })
@@ -360,7 +371,7 @@ function buscarPrecoConsulta(medicoId) {
 }
 
 function buscarPrecoExame(exameId) {
-  axios.get(`/admin/exames/${exameId}/preco`)
+  axios.get(rotaBaseAdminOuRecepcao(`/exames/${exameId}/preco`))
     .then(response => {
       form.value.preco = response.data.preco
     })
@@ -383,20 +394,20 @@ function submit() {
 
   // Converte data_pagamento para yyyy-mm-dd
   if (dadosParaEnviar.data_pagamento && dadosParaEnviar.data_pagamento.includes('/')) {
-  const dp = dadosParaEnviar.data_pagamento.split('/')
-  if (dp.length === 3) {
-    dadosParaEnviar.data_pagamento = `${dp[2]}-${dp[1]}-${dp[0]}`
+    const dp = dadosParaEnviar.data_pagamento.split('/')
+    if (dp.length === 3) {
+      dadosParaEnviar.data_pagamento = `${dp[2]}-${dp[1]}-${dp[0]}`
+    }
   }
-}
 
-if (dadosParaEnviar.data_nascimento && dadosParaEnviar.data_nascimento.includes('/')) {
-  const dn = dadosParaEnviar.data_nascimento.split('/')
-  if (dn.length === 3) {
-    dadosParaEnviar.data_nascimento = `${dn[2]}-${dn[1]}-${dn[0]}`
+  if (dadosParaEnviar.data_nascimento && dadosParaEnviar.data_nascimento.includes('/')) {
+    const dn = dadosParaEnviar.data_nascimento.split('/')
+    if (dn.length === 3) {
+      dadosParaEnviar.data_nascimento = `${dn[2]}-${dn[1]}-${dn[0]}`
+    }
   }
-}
 
-console.log('Dados enviados:', dadosParaEnviar)
+  console.log('Dados enviados:', dadosParaEnviar)
 
   router.post('/pacientes', dadosParaEnviar, {
     onSuccess: () => {
@@ -412,6 +423,8 @@ console.log('Dados enviados:', dadosParaEnviar)
   })
 }
 </script>
+
+
 
 
 <style>

@@ -54,7 +54,9 @@ Route::get('/dashboard', function () {
 
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-//Recepção
+
+/////////////////////////  RECEPÇÃO  /////////////////////////
+// Rotas da Recepção
 Route::middleware(['auth', 'role:receptionist'])->group(function () {
     Route::get('/recepcao', [RecepcaoController::class, 'index'])->name('recepcao.dashboard');
     
@@ -70,12 +72,34 @@ Route::middleware(['auth', 'role:receptionist'])->group(function () {
 
     Route::get('/recepcao/agendamentos-semana', [RecepcaoController::class, 'agendamentosDaSemana']);
 
-    Route::get('/recepcao/agenda-medica/medico/{id}/dias', [AgendaMedicaController::class, 'diasPorMedico']);
-    Route::get('/recepcao/agenda-medica/medico/{id}/preco', [AgendaMedicaController::class, 'precoPorMedico']);
-    Route::get('/recepcao/exames/{id}/info', [ExameController::class, 'info']);
+    Route::get('/recepcao/agenda-medica/medico/{id}/dias', function ($id) {
+        $dias = \App\Models\AgendaMedica::where('medico_id', $id)
+            ->orderBy('data')
+            ->pluck('data')
+            ->unique()
+            ->map(fn($data) => \Carbon\Carbon::parse($data)->format('d/m/Y'))
+            ->values();
+
+        return response()->json($dias);
+    });
+
+    Route::get('/recepcao/agenda-medica/medico/{id}/preco', [AgendaMedicaController::class, 'buscarPreco']);
+
+    Route::get('/recepcao/exames/{id}/info', function ($id) {
+        $exame = \App\Models\Exame::findOrFail($id);
+        return response()->json([
+            'preco' => $exame->valor ?? 0,
+            'turno' => $exame->turno,
+            'dias_semana' => $exame->dias_semana, // precisa estar no cast como array
+        ]);
+    });
+
+    Route::get('/recepcao/pacientes/exames-semana', [RecepcaoController::class, 'pacientesExamesSemana']);
+
 
     Route::get('/recepcao/pacientes', [RecepcaoController::class, 'pacientes'])->name('recepcao.pacientes');
 });
+//////////////// fim Rotas Recepção ///////////////////////
 
 //Rotas do Admin
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -162,6 +186,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
 
 });
+////////////////////////////Fim Rotas Admin///////////////////////////////////////
 
 // Painel do Médico
 Route::middleware(['auth', 'role:doctor'])->prefix('medico')->name('medico.')->group(function () {
