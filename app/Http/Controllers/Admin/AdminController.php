@@ -110,33 +110,7 @@ class AdminController extends Controller
         ]);
     }
     
-    public function pacientesConsultaHoje()
-    {
-        try {
-            $hoje = Carbon::today()->toDateString();
-
-            $pacientes = Paciente::with('medico.especialidade')
-                ->where('procedimento', 'consulta')
-                ->whereDate('data_consulta', $hoje)
-                ->get()
-                ->map(function ($p) {
-                    return [
-                        'id' => $p->id,
-                        'nome' => $p->nome,
-                        'data_consulta' => $p->data_consulta ? Carbon::parse($p->data_consulta)->format('d/m/Y') : 'Não informada',
-                        'especialidade' => optional($p->medico->especialidade)->nome ?? 'Não informada',
-                        'medico' => optional($p->medico)->name ?? 'Não informado',
-                        'telefone' => $p->telefone,
-                    ];
-                });
-
-            return response()->json($pacientes);
-        } catch (\Throwable $e) {
-            \Log::error('Erro ao buscar pacientesConsultaHoje: '.$e->getMessage());
-            return response()->json(['error' => 'Erro interno ao buscar pacientes'], 500);
-        }
-    }
-
+    
 
 
 
