@@ -31,7 +31,7 @@
           </label>
           <button
             class="text-sm text-blue-600 hover:underline"
-            @click="imprimirSenha(consulta)"
+            @click="abrirModalSenha(consulta)"
           >
             🖨️ Imprimir Senha
           </button>
@@ -41,32 +41,68 @@
 
     <p v-else class="text-gray-500 text-center mt-4">Nenhuma consulta para hoje encontrada.</p>
   </div>
+
+  <!-- Modal para gerar senha -->
+  <ModalSenha
+    :mostrar="mostrarModalSenha"
+    :tipo-inicial="tipoSenha"
+    @confirmar="confirmarGeracaoSenha"
+    @cancelar="mostrarModalSenha = false"
+  />
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
+import ModalSenha from '@/Components/ModalSenha.vue'
 
+// Estado da lista de consultas
 const consultas = ref([])
 const busca = ref('')
 
+// Filtro por nome do paciente
 const consultasFiltradas = computed(() => {
   return consultas.value.filter(c =>
     c.paciente.toLowerCase().includes(busca.value.toLowerCase())
   )
 })
 
+// Formata data YYYY-MM-DD para DD/MM/YYYY
 function formatarData(data) {
   const [ano, mes, dia] = data.split('-')
   return `${dia}/${mes}/${ano}`
 }
 
+// ---------------------------
+// Modal de Senha
+// ---------------------------
+const mostrarModalSenha = ref(false)
+const tipoSenha = ref('convencional')
+const pacienteSelecionado = ref(null)
 
-function imprimirSenha(consulta) {
-  // Aqui você pode disparar a modal já existente passando os dados do paciente
-  alert(`Senha para ${consulta.paciente} - Dr(a). ${consulta.medico}`)
+function abrirModalSenha(paciente) {
+  pacienteSelecionado.value = paciente
+  tipoSenha.value = 'convencional'
+  mostrarModalSenha.value = true
 }
 
+async function confirmarGeracaoSenha(tipo) {
+  tipoSenha.value = tipo
+  try {
+    const { data } = await axios.post('/senhas', {
+      paciente_id: pacienteSelecionado.value.id,
+      tipo: tipoSenha.value
+    })
+    window.open(`/senhas/imprimir/${data.senha.id}`, '_blank')
+    mostrarModalSenha.value = false
+  } catch (e) {
+    alert('Erro ao gerar senha.')
+  }
+}
+
+// ---------------------------
+// Buscar consultas do dia
+// ---------------------------
 onMounted(async () => {
   try {
     const { data } = await axios.get('/recepcao/consultas-hoje')
