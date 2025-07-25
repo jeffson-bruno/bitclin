@@ -47,6 +47,8 @@ Route::middleware(['auth'])->prefix('cadastro')->group(function () {
     Route::get('/agenda-medica/medico/{id}/preco', [CadastroDadosController::class, 'precoConsulta']);
     Route::get('/exames/{id}/info', [CadastroDadosController::class, 'infoExame']);
     Route::put('/pacientes/{id}/reagendar', [CadastroDadosController::class, 'reagendar']);
+    Route::get('/cadastro/exames-semana', [CadastroDadosController::class, 'pacientesExamesSemana']);
+
 });
 
 Route::middleware(['auth', 'role:receptionist'])->group(function () {

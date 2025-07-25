@@ -73,6 +73,58 @@ class CadastroDadosController extends Controller
 
         return response()->json(['message' => 'Paciente reagendado com sucesso!']);
     }
+
+    public function pacientesExamesSemana()
+    {
+        Carbon::setLocale('pt_BR');
+
+        $abreviacoes = [
+            'DOM' => 'domingo',
+            'SEG' => 'segunda',
+            'TER' => 'terça',
+            'QUAR' => 'quarta',
+            'QUI' => 'quinta',
+            'SEX' => 'sexta',
+            'SAB' => 'sábado',
+        ];
+
+        $diasSemana = [
+            'domingo' => 0,
+            'segunda' => 1,
+            'terça' => 2,
+            'quarta' => 3,
+            'quinta' => 4,
+            'sexta' => 5,
+            'sábado' => 6,
+        ];
+
+        $pacientes = Paciente::where('procedimento', 'exame')
+            ->with('exame')
+            ->get()
+            ->map(function ($p) use ($abreviacoes, $diasSemana) {
+                $sigla = strtoupper($p->dia_semana_exame ?? '');
+                $diaExtenso = $abreviacoes[$sigla] ?? null;
+
+                if (!$diaExtenso || !isset($diasSemana[$diaExtenso])) {
+                    $dataExame = 'Não informado';
+                } else {
+                    $hoje = now()->startOfWeek(Carbon::MONDAY);
+                    $dataExame = $hoje->copy()->addDays($diasSemana[$diaExtenso])
+                        ->translatedFormat('d/m/Y – l');
+                }
+
+                return [
+                    'id' => $p->id,
+                    'nome' => $p->nome,
+                    'data_exame' => $dataExame,
+                    'telefone' => $p->telefone,
+                    'exame' => optional($p->exame)->nome,
+                ];
+            });
+
+        return response()->json($pacientes);
+    }
+
 }
 
 
