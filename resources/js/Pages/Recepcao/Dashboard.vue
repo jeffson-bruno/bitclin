@@ -73,8 +73,15 @@ const agendamentosFiltrados = computed(() => {
 
 // Função utilitária para formatar data
 function formatarData(data) {
-  return new Date(data).toLocaleDateString('pt-BR')
+  const partes = data.split('-') // Divide a string '2025-07-25'
+  const ano = parseInt(partes[0])
+  const mes = parseInt(partes[1]) - 1 // JavaScript começa os meses em 0
+  const dia = parseInt(partes[2])
+
+  const dataLocal = new Date(ano, mes, dia)
+  return dataLocal.toLocaleDateString('pt-BR')
 }
+
 
 // Carrega os agendamentos da semana
 onMounted(async () => {

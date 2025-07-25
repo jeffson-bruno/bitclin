@@ -182,7 +182,7 @@ class RecepcaoController extends Controller
         ]);
     }
 
-    // ✅ NOVA FUNÇÃO: exames da semana com base no campo dia_semana_exame
+    // NOVA FUNÇÃO: exames da semana com base no campo dia_semana_exame
     public function pacientesExamesSemana()
     {
         Carbon::setLocale('pt_BR');
@@ -210,28 +210,37 @@ class RecepcaoController extends Controller
         $pacientes = Paciente::where('procedimento', 'exame')
             ->with('exame')
             ->get()
-            ->map(function ($p) use ($diasSemana, $abreviacoes) {
-                $diaAbreviado = strtoupper($p->dia_semana_exame ?? '');
-                $nomeDia = $abreviacoes[$diaAbreviado] ?? strtolower($p->dia_semana_exame ?? '');
+            ->map(function ($p) use ($abreviacoes, $diasSemana) {
+                $sigla = Str::upper($p->dia_semana_exame ?? '');
+                $diaExtenso = $abreviacoes[$sigla] ?? null;
 
-                $inicioSemana = Carbon::now()->startOfWeek(Carbon::SUNDAY);
-
-                if (!isset($diasSemana[$nomeDia])) {
-                    $dataConvertida = 'Não informado';
+                // Se não encontrar o dia, usar a data de criação
+                if (!$diaExtenso || !isset($diasSemana[$diaExtenso])) {
+                    $dataExame = $p->created_at->format('Y-m-d');
                 } else {
-                    $dataConvertida = $inicioSemana->copy()->addDays($diasSemana[$nomeDia]);
-                    $dataConvertida = ucfirst($dataConvertida->translatedFormat('d/m/Y – l'));
+                    $hoje = now();
+                    $hojeIndice = $hoje->dayOfWeekIso - 1; // segunda=0
+                    $indiceExame = $diasSemana[$diaExtenso];
+
+                    $diasParaSomar = $indiceExame - $hojeIndice;
+                    if ($diasParaSomar < 0) {
+                        $diasParaSomar += 7;
+                    }
+
+                    $dataExame = $hoje->copy()->addDays($diasParaSomar)->format('Y-m-d');
                 }
 
                 return [
                     'id' => $p->id,
-                    'nome' => $p->nome,
-                    'data_exame' => $dataConvertida,
-                    'telefone' => $p->telefone,
-                    'exame' => $p->exame->nome ?? 'Não informado',
+                    'paciente' => $p->nome,
+                    'tipo' => 'Exame',
+                    'data' => $dataExame,
+                    'medico' => optional($p->medico)->name,
+                    'exame' => optional($p->exame)->nome,
                 ];
             });
 
         return response()->json($pacientes);
     }
+
 }
