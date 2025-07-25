@@ -28,12 +28,15 @@ class CadastroDadosController extends Controller
      */
     public function precoConsulta($medicoId)
     {
-        $preco = AgendaMedica::where('medico_id', $medicoId)
-            ->orderByDesc('data')
-            ->value('preco');
+        $agenda = \App\Models\AgendaMedica::where('medico_id', $medicoId)
+            ->orderBy('data', 'desc')
+            ->first();
 
-        return response()->json(['preco_consulta' => $preco ?? 0]);
+        return response()->json([
+            'preco' => $agenda->preco_consulta ?? 0,
+        ]);
     }
+
 
     /**
      * Buscar dados de exame: valor, turno e dias disponíveis.
