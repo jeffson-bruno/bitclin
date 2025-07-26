@@ -62,7 +62,10 @@ Route::middleware(['auth', 'role:receptionist'])->group(function () {
     Route::get('/recepcao/pacientes/exames-semana', [CadastroDadosController::class, 'pacientesExamesSemana']);
     Route::get('/recepcao/pacientes/consultas-hoje', [CadastroDadosController::class, 'pacientesConsultaHoje']);
     Route::get('/recepcao/pacientes', [RecepcaoController::class, 'pacientes'])->name('recepcao.pacientes');
-    Route::get('/recepcao/consultas-hoje', [RecepcaoController::class, 'consultasHoje']); // opcional, se for diferente
+    Route::get('/recepcao/consultas-hoje', [RecepcaoController::class, 'consultasHoje']); 
+    Route::post('/recepcao/presenca/{id}', [RecepcaoController::class, 'marcarPresenca']);
+
+
 });
 
 ///////////////////////////////////////////////////////////////////////////////////

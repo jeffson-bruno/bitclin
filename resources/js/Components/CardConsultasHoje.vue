@@ -26,7 +26,12 @@
 
         <div class="flex items-center justify-between mt-2">
           <label class="inline-flex items-center">
-            <input type="checkbox" v-model="consulta.presente" class="mr-2">
+            <input
+              type="checkbox"
+              v-model="consulta.presente"
+              @change="registrarPresenca(consulta)"
+              class="mr-2"
+            />
             <span class="text-sm">Presente</span>
           </label>
           <button
@@ -111,4 +116,14 @@ onMounted(async () => {
     console.error('Erro ao carregar consultas de hoje:', error)
   }
 })
+
+async function registrarPresenca(consulta) {
+  try {
+    await axios.post(`/recepcao/presenca/${consulta.id}`)
+    consulta.presente = true
+  } catch (e) {
+    alert('Erro ao registrar presença.')
+  }
+}
+
 </script>

@@ -265,5 +265,15 @@ class RecepcaoController extends Controller
         return response()->json($consultasHoje);
     }
 
+    public function marcarPresenca($id)
+    {
+        $paciente = Paciente::findOrFail($id);
+        $paciente->presenca = true;
+        $paciente->save();
+
+        return response()->json(['success' => true]);
+    }
+
+
 
 }
