@@ -13,10 +13,9 @@
     <div class="bg-white p-6 rounded shadow">
       <h2 class="text-lg font-semibold mb-4">📋 Pacientes Agendados para Hoje</h2>
 
-      <div v-if="pacientes.length">
+      <div v-if="props.pacientes.length">
         <div
-          v-for="paciente in pacientes"
-          :key="paciente.id"
+          v-for="paciente in props.pacientes" :key="paciente.id"
           class="border rounded p-4 mb-4 shadow-sm"
         >
           <div class="flex justify-between items-center mb-2">
@@ -78,15 +77,19 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
 import { router } from '@inertiajs/vue3'
-import axios from 'axios'
-import { usePage } from '@inertiajs/vue3'
 
-const pacientes = ref([])
-const props = usePage().props
+// Props com fallback seguro
+const props = defineProps({
+  pacientes: {
+    type: Array,
+    default: () => []
+  }
+})
 
-console.log('Pacientes recebidos no Dashboard do Médico:', props.pacientes)
+const pacientes = props.pacientes
+
+console.log('Pacientes recebidos no Dashboard do Médico:', pacientes)
 
 function formatarData(data) {
   if (!data) return '—'
@@ -98,7 +101,7 @@ function logout() {
   router.post('/logout')
 }
 
-// Placeholder para futuras funções
+// Ações de placeholders
 function chamarSenha(paciente) {
   console.log('Chamando senha do paciente:', paciente)
 }
@@ -118,15 +121,5 @@ function solicitarExames(paciente) {
 function criarProntuario(paciente) {
   console.log('Criar prontuário para:', paciente)
 }
-
-// Buscar pacientes ao montar
-onMounted(async () => {
-  try {
-    const { data } = await axios.get('/medico/dashboard')
-    pacientes.value = data.pacientes ?? []
-  } catch (error) {
-    console.error('Erro ao carregar pacientes do médico:', error)
-  }
-})
 </script>
 

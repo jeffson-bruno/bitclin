@@ -10,10 +10,11 @@ use Carbon\Carbon;
 
 class MedicoController extends Controller
 {
-    public function dashboard()
+    public function index()
     {
-        $medicoId = Auth::id();
+        $medicoId = 32;
         $hoje = Carbon::today()->toDateString();
+
 
         $pacientes = Paciente::where('procedimento', 'consulta')
             ->where('medico_id', $medicoId)
@@ -39,8 +40,11 @@ class MedicoController extends Controller
            // ]);
         //}
 
-        return Inertia::render('Medico/Dashboard', [
-            'pacientes' => $pacientes,
-        ]);
+        //return Inertia::render('Medico/Dashboard', [
+            //'pacientes' => $pacientes,
+       /// ]);
+
+       dd($pacientes);
+
     }
 }
