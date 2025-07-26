@@ -108,6 +108,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 Route::middleware(['auth', 'role:doctor'])->prefix('medico')->name('medico.')->group(function () {
     Route::get('/dashboard', [MedicoController::class, 'index'])->name('dashboard');
     
+    //Rota para chamar senha
+    Route::post('/chamar-senha/{paciente_id}', [\App\Http\Controllers\Medico\ChamadaSenhaController::class, 'chamar'])->name('chamar.senha');
+
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////

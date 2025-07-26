@@ -7,8 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\SenhaAtendimento;
 use Illuminate\Support\Carbon;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+
 
 class ChamadaSenhaController extends Controller
 {
