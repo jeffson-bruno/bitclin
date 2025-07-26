@@ -106,7 +106,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
 //Rotas do médico
 Route::middleware(['auth', 'role:doctor'])->prefix('medico')->name('medico.')->group(function () {
-    Route::get('/dashboard', [MedicoController::class, 'index'])->name('medico.dashboard');
+    Route::get('/dashboard', [MedicoController::class, 'index'])->name('dashboard');
     
 });
 
