@@ -83,13 +83,10 @@ import { useToast } from '@/Composables/useToast'
 
 const { success, error } = useToast()
 
-success('Senha chamada com sucesso!')
-error('Falha ao chamar senha.')
-
 
 //Chamar senha Paciente
 const chamarSenha = async (paciente) => {
-  console.log('Chamando senha do paciente:', paciente)
+  //console.log('Chamando senha do paciente:', paciente)
   try {
     const response = await axios.get(`/teste-chamar/${paciente.id}`)
 
