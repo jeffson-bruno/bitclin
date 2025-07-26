@@ -13,9 +13,9 @@
     <div class="bg-white p-6 rounded shadow">
       <h2 class="text-lg font-semibold mb-4">📋 Pacientes Agendados para Hoje</h2>
 
-      <div v-if="props.pacientes.length">
+      <div v-if="pacientes.length">
         <div
-          v-for="paciente in props.pacientes" :key="paciente.id"
+          v-for="paciente in pacientes" :key="paciente.id"
           class="border rounded p-4 mb-4 shadow-sm"
         >
           <div class="flex justify-between items-center mb-2">
@@ -79,15 +79,13 @@
 <script setup>
 import { router } from '@inertiajs/vue3'
 
-// Props com fallback seguro
-const props = defineProps({
+// Definindo props diretamente
+const { pacientes } = defineProps({
   pacientes: {
     type: Array,
     default: () => []
   }
 })
-
-const pacientes = props.pacientes
 
 console.log('Pacientes recebidos no Dashboard do Médico:', pacientes)
 
@@ -101,7 +99,7 @@ function logout() {
   router.post('/logout')
 }
 
-// Ações de placeholders
+// Ações (placeholders)
 function chamarSenha(paciente) {
   console.log('Chamando senha do paciente:', paciente)
 }
@@ -122,4 +120,5 @@ function criarProntuario(paciente) {
   console.log('Criar prontuário para:', paciente)
 }
 </script>
+
 

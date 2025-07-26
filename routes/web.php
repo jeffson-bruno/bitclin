@@ -23,6 +23,7 @@ use App\Models\User;
 use App\Models\Exame;
 use App\Http\Controllers\Api\CadastroDadosController;
 
+
 Route::get('/', function () {
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
@@ -105,7 +106,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
 //Rotas do médico
 Route::middleware(['auth', 'role:doctor'])->prefix('medico')->name('medico.')->group(function () {
-    Route::get('/dashboard', [MedicoController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [MedicoController::class, 'index'])->name('medico.dashboard');
     
 });
 
