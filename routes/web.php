@@ -103,9 +103,13 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
 ////////////////////////////////////////////////////////////////////////////////////////
 
+//Rotas do médico
 Route::middleware(['auth', 'role:doctor'])->prefix('medico')->name('medico.')->group(function () {
     Route::get('/dashboard', [MedicoController::class, 'index'])->name('dashboard');
+    
 });
+
+///////////////////////////////////////////////////////////////////////////////////////////
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
