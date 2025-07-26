@@ -15,7 +15,21 @@ class RecepcaoController extends Controller
 {
     public function index()
     {
-        return Inertia::render('Recepcao/Dashboard');
+        $hoje = Carbon::now()->format('Y-m-d');
+
+        $medicosHoje = AgendaMedica::with('medico')
+            ->where('data', $hoje)
+            ->get()
+            ->map(function ($agenda) {
+                return [
+                    'nome' => 'Dr. ' . $agenda->medico->name,
+                    'hora_inicio' => $agenda->hora_inicio,
+                    'hora_fim' => $agenda->hora_fim,
+                ];
+            });
+            return Inertia::render('Recepcao/Dashboard', [
+            'medicosHoje' => $medicosHoje,
+        ]);
     }
 
     public function horariosMedicos(Request $request)
