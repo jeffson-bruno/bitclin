@@ -4,9 +4,9 @@
       v-if="visible"
       :class="[
         'fixed top-6 right-6 text-white px-4 py-2 rounded shadow-lg z-[9999]',
-        type === 'success' ? 'bg-green-600' :
-        type === 'error' ? 'bg-red-600' :
-        type === 'info' ? 'bg-blue-600' :
+        type.value === 'success' ? 'bg-green-600' :
+        type.value === 'error' ? 'bg-red-600' :
+        type.value === 'info' ? 'bg-blue-600' :
         'bg-gray-600'
       ]"
     >
@@ -15,17 +15,9 @@
   </transition>
 </template>
 
-
-
 <script setup>
-import { ref, watch } from 'vue'
-
-const props = defineProps({
-  type: {
-    type: String,
-    default: 'success' // 'success', 'error', 'info'
-  }
-})
+import { ref } from 'vue'
+import { toastRef } from '@/Composables/useGlobalToast'
 
 const visible = ref(false)
 const message = ref('')
@@ -33,11 +25,15 @@ const type = ref('success')
 
 function showToast(msg, duration = 3000, toastType = 'success') {
   message.value = msg
+  type.value = toastType
   visible.value = true
-  props.type = toastType
-  setTimeout(() => (visible.value = false), duration)
+  setTimeout(() => {
+    visible.value = false
+  }, duration)
 }
 
+// Registra a instância globalmente
+toastRef.value = { showToast }
 
 defineExpose({ showToast })
 </script>
@@ -52,3 +48,4 @@ defineExpose({ showToast })
   opacity: 0;
 }
 </style>
+
