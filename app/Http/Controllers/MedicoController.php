@@ -32,6 +32,13 @@ class MedicoController extends Controller
                 ];
             });
 
+        // Se for requisição AJAX (axios), retorna JSON
+        //if (request()->wantsJson()) {
+            //return response()->json([
+                //'pacientes' => $pacientes
+           // ]);
+        //}
+
         return Inertia::render('Medico/Dashboard', [
             'pacientes' => $pacientes,
         ]);

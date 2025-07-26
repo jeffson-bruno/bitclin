@@ -1,20 +1,132 @@
 <template>
-  <div class="p-8">
-    <h1 class="text-2xl font-bold">Bem-vindo ao Painel do Médico</h1>
-
-    <button
+  <div class="p-6 space-y-6">
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-bold text-gray-800">👨‍⚕️ Painel do Médico</h1>
+      <button
         @click="logout"
         class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition"
       >
         Sair
       </button>
+    </div>
+
+    <div class="bg-white p-6 rounded shadow">
+      <h2 class="text-lg font-semibold mb-4">📋 Pacientes Agendados para Hoje</h2>
+
+      <div v-if="pacientes.length">
+        <div
+          v-for="paciente in pacientes"
+          :key="paciente.id"
+          class="border rounded p-4 mb-4 shadow-sm"
+        >
+          <div class="flex justify-between items-center mb-2">
+            <div>
+              <p class="text-lg font-bold">{{ paciente.nome }}</p>
+              <p class="text-sm text-gray-600">
+                Idade: {{ paciente.idade }} |
+                Estado Civil: {{ paciente.estado_civil }} |
+                Data da Consulta: {{ formatarData(paciente.data) }}
+              </p>
+              <p class="text-sm text-gray-500" v-if="paciente.senha">
+                Senha: <span class="font-semibold">{{ paciente.senha }}</span>
+              </p>
+            </div>
+
+            <!-- Botões de ação -->
+            <div class="flex gap-2">
+              <button
+                class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm"
+                @click="chamarSenha(paciente)"
+              >
+                Chamar Senha
+              </button>
+
+              <button
+                class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm"
+                @click="emitirReceita(paciente)"
+              >
+                Receita
+              </button>
+
+              <button
+                class="bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1 rounded text-sm"
+                @click="emitirAtestado(paciente)"
+              >
+                Atestado
+              </button>
+
+              <button
+                class="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded text-sm"
+                @click="solicitarExames(paciente)"
+              >
+                Exames
+              </button>
+
+              <button
+                class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm"
+                @click="criarProntuario(paciente)"
+              >
+                Prontuário
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p v-else class="text-gray-500 text-sm">Nenhum paciente agendado para hoje.</p>
+    </div>
   </div>
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue'
 import { router } from '@inertiajs/vue3'
+import axios from 'axios'
+import { usePage } from '@inertiajs/vue3'
+
+const pacientes = ref([])
+const props = usePage().props
+
+console.log('Pacientes recebidos no Dashboard do Médico:', props.pacientes)
+
+function formatarData(data) {
+  if (!data) return '—'
+  const [ano, mes, dia] = data.split('-')
+  return `${dia}/${mes}/${ano}`
+}
 
 function logout() {
   router.post('/logout')
 }
+
+// Placeholder para futuras funções
+function chamarSenha(paciente) {
+  console.log('Chamando senha do paciente:', paciente)
+}
+
+function emitirReceita(paciente) {
+  console.log('Emitir receita para:', paciente)
+}
+
+function emitirAtestado(paciente) {
+  console.log('Emitir atestado para:', paciente)
+}
+
+function solicitarExames(paciente) {
+  console.log('Solicitar exames para:', paciente)
+}
+
+function criarProntuario(paciente) {
+  console.log('Criar prontuário para:', paciente)
+}
+
+// Buscar pacientes ao montar
+onMounted(async () => {
+  try {
+    const { data } = await axios.get('/medico/dashboard')
+    pacientes.value = data.pacientes ?? []
+  } catch (error) {
+    console.error('Erro ao carregar pacientes do médico:', error)
+  }
+})
 </script>
+
