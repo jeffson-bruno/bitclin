@@ -87,7 +87,7 @@ const { pacientes } = defineProps({
   }
 })
 
-console.log('Pacientes recebidos no Dashboard do Médico:', pacientes)
+///console.log('Pacientes recebidos no Dashboard do Médico:', pacientes)
 
 function formatarData(data) {
   if (!data) return '—'

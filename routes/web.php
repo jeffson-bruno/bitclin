@@ -111,9 +111,13 @@ Route::middleware(['auth', 'role:doctor'])->prefix('medico')->name('medico.')->g
     //Rota para chamar senha
     Route::post('/chamar-senha/{paciente_id}', [\App\Http\Controllers\Medico\ChamadaSenhaController::class, 'chamar'])->name('chamar.senha');
 
+    
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////
+
+
+
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -172,5 +176,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/pacientes/{id}', [PacienteController::class, 'update'])->name('pacientes.update');
     Route::put('/pacientes/reagendar/{id}', [PacienteController::class, 'reagendar'])->name('pacientes.reagendar');
 });
+
+
 
 require __DIR__.'/auth.php';
