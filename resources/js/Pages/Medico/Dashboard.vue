@@ -95,14 +95,18 @@ onMounted(() => {
 //Chamar senha Paciente
 const chamarSenha = async (paciente) => {
   try {
-    const response = await axios.get(`/teste-chamar/${paciente.id}`)
+    const response = await axios.post(`/medico/chamar-senha/${paciente.id}`)
     if (response.data.success) {
       success(response.data.mensagem)
     } else {
       error(response.data.mensagem)
     }
   } catch (err) {
-    error('Erro ao chamar a senha.')
+    if (err.response?.status === 403) {
+      error(err.response.data.erro || 'Limite de chamadas atingido.')
+    } else {
+      error('Erro ao chamar a senha.')
+    }
   }
 }
 
