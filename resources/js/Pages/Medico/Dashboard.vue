@@ -34,7 +34,7 @@
             <!-- Botões de ação -->
             <div class="flex gap-2">
               <button
-                class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
                 @click="chamarSenha(paciente)"
               >
                 Chamar Senha
@@ -78,6 +78,30 @@
 
 <script setup>
 import { router } from '@inertiajs/vue3'
+import axios from 'axios'
+import { useToast } from '@/Composables/useToast'
+
+const { success, error } = useToast()
+
+success('Senha chamada com sucesso!')
+error('Falha ao chamar senha.')
+
+
+//Chamar senha Paciente
+const chamarSenha = async (paciente) => {
+  console.log('Chamando senha do paciente:', paciente)
+  try {
+    const response = await axios.get(`/teste-chamar/${paciente.id}`)
+
+    if (response.data.success) {
+      success(response.data.mensagem)
+    } else {
+      error(response.data.mensagem)
+    }
+  } catch (err) {
+    error('Erro ao chamar a senha.')
+  }
+}
 
 // Definindo props diretamente
 const { pacientes } = defineProps({
@@ -99,10 +123,6 @@ function logout() {
   router.post('/logout')
 }
 
-// Ações (placeholders)
-function chamarSenha(paciente) {
-  console.log('Chamando senha do paciente:', paciente)
-}
 
 function emitirReceita(paciente) {
   console.log('Emitir receita para:', paciente)

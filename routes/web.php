@@ -116,6 +116,22 @@ Route::middleware(['auth', 'role:doctor'])->prefix('medico')->name('medico.')->g
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 
+// TESTE TEMPORÁRIO - NÃO REQUER LOGIN
+Route::get('/teste-chamar/{paciente}', function ($pacienteId) {
+    $senha = \App\Models\SenhaAtendimento::where('paciente_id', $pacienteId)
+        ->whereNull('chamada_em')
+        ->latest()
+        ->first();
+
+    if (!$senha) {
+        return response()->json(['success' => false, 'mensagem' => 'Senha não encontrada ou já chamada.']);
+    }
+
+    $senha->chamada_em = now();
+    $senha->save();
+
+    return response()->json(['success' => true, 'mensagem' => 'Senha chamada com sucesso!']);
+});
 
 
 
