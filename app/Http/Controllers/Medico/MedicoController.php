@@ -8,6 +8,8 @@ use Inertia\Inertia;
 use App\Models\Paciente;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use App\Models\Chamada;
+use App\Models\SenhaAtendimento;
 
 class MedicoController extends Controller
 {
@@ -39,6 +41,36 @@ class MedicoController extends Controller
 
         return Inertia::render('Medico/Dashboard', [
             'pacientes' => $pacientes,
+        ]);
+    }
+
+    public function chamarSenha($senhaId)
+    {
+        $medicoId = Auth::id();
+
+        // Conta quantas vezes o médico já chamou essa senha
+        $tentativas = Chamada::where('senha_id', $senhaId)
+                            ->where('medico_id', $medicoId)
+                            ->count();
+
+        if ($tentativas >= 3) {
+            return response()->json([
+                'status' => 'erro',
+                'mensagem' => 'Limite de chamadas atingido para essa senha.'
+            ], 403);
+        }
+
+        // Registra nova chamada
+        Chamada::create([
+            'senha_id' => $senhaId,
+            'medico_id' => $medicoId,
+            'tentativa' => $tentativas + 1,
+        ]);
+
+        return response()->json([
+            'status' => 'sucesso',
+            'mensagem' => 'Senha chamada com sucesso!',
+            'tentativas_restantes' => 2 - $tentativas,
         ]);
     }
 }
