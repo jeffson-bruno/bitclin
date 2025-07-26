@@ -22,6 +22,7 @@ use App\Http\Controllers\Admin\RelatorioController;
 use App\Models\User;
 use App\Models\Exame;
 use App\Http\Controllers\Api\CadastroDadosController;
+use App\Http\Controllers\Medico\ChamadaSenhaController;
 
 
 Route::get('/', function () {
@@ -108,31 +109,13 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 Route::middleware(['auth', 'role:doctor'])->prefix('medico')->name('medico.')->group(function () {
     Route::get('/dashboard', [MedicoController::class, 'index'])->name('dashboard');
     
-    //Rota para chamar senha
-    Route::post('/chamar-senha/{paciente_id}', [\App\Http\Controllers\Medico\ChamadaSenhaController::class, 'chamar'])->name('chamar.senha');
+    // Chamar senha (com controle de tentativas)
+    Route::post('/chamar-senha/{paciente_id}', [ChamadaSenhaController::class, 'chamar'])->name('chamar.senha');
 
     
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-
-// TESTE TEMPORÁRIO - NÃO REQUER LOGIN
-Route::get('/teste-chamar/{paciente}', function ($pacienteId) {
-    $senha = \App\Models\SenhaAtendimento::where('paciente_id', $pacienteId)
-        ->whereNull('chamada_em')
-        ->latest()
-        ->first();
-
-    if (!$senha) {
-        return response()->json(['success' => false, 'mensagem' => 'Senha não encontrada ou já chamada.']);
-    }
-
-    $senha->chamada_em = now();
-    $senha->save();
-
-    return response()->json(['success' => true, 'mensagem' => 'Senha chamada com sucesso!']);
-});
-
 
 
 Route::middleware('auth')->group(function () {
