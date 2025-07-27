@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Admin;
+use Illuminate\Support\Facades\Log;
 
 use App\Http\Controllers\Controller;
 use Inertia\Inertia;
@@ -17,24 +18,25 @@ class MonitorController extends Controller
     // Método novo: API para retornar a última chamada + histórico
     public function dadosChamadas()
     {
+        $chamadaAtual = Chamada::with('senha')->latest()->first();
+
         $ultimasChamadas = Chamada::with('senha')
             ->latest()
-            ->take(3)
-            ->get()
-            ->reverse()
-            ->map(function ($chamada) {
-                return [
-                    'senha' => $chamada->senha->codigo ?? '---',
-                    'nome' => $chamada->senha->nome_paciente ?? 'Paciente',
-                    'chamada_em' => $chamada->created_at->format('H:i:s'),
-                ];
-            });
-
-        $chamadaAtual = $ultimasChamadas->last();
+            ->take(5)
+            ->skip(1)
+            ->get();
 
         return response()->json([
-            'atual' => $chamadaAtual,
-            'ultimas' => $ultimasChamadas,
+            'atual' => [
+                'senha' => $chamadaAtual->senha->codigo ?? '',
+                'nome' => $chamadaAtual->senha->nome ?? '',
+            ],
+            'ultimas' => $ultimasChamadas->map(function ($chamada) {
+                return [
+                    'senha' => $chamada->senha->codigo ?? '',
+                    'nome' => $chamada->senha->nome ?? '',
+                ];
+            }),
         ]);
     }
 }

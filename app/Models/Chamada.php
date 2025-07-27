@@ -14,5 +14,11 @@ class Chamada extends Model
         'medico_id',
         'tentativa',
     ];
+
+    public function senha()
+    {
+        return $this->belongsTo(\App\Models\SenhaAtendimento::class, 'senha_id');
+    }
+
 }
 
