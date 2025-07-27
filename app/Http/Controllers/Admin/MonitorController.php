@@ -18,25 +18,24 @@ class MonitorController extends Controller
     // Método novo: API para retornar a última chamada + histórico
     public function dadosChamadas()
     {
-        $chamadaAtual = Chamada::with('senha')->latest()->first();
+        $chamadaAtual = Chamada::with('senha.paciente')->latest()->first();
 
         $ultimasChamadas = Chamada::with('senha')
             ->latest()
             ->take(5)
-            ->skip(1)
             ->get();
 
         return response()->json([
             'atual' => [
                 'senha' => $chamadaAtual->senha->codigo ?? '',
-                'nome' => $chamadaAtual->senha->nome ?? '',
+                'nome' => $chamadaAtual->senha->paciente->nome ?? '', // <- aqui é a correção
             ],
-            'ultimas' => $ultimasChamadas->map(function ($chamada) {
+            'ultimas' => $ultimasChamadas->map(function ($c) {
                 return [
-                    'senha' => $chamada->senha->codigo ?? '',
-                    'nome' => $chamada->senha->nome ?? '',
+                    'senha' => $c->senha->codigo ?? '',
                 ];
             }),
         ]);
     }
+
 }
