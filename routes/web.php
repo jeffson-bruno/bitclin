@@ -103,7 +103,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/pacientes/exames-semana', [CadastroDadosController::class, 'pacientesExamesSemana']);
 
     //Rota para o monitor de chamadas
-    Route::get('/monitor', [\App\Http\Controllers\Admin\MonitorController::class, 'index'])->name('monitor');
+    Route::get('/monitor/dados-chamadas', [\App\Http\Controllers\Admin\MonitorController::class, 'dadosChamadas']);
+
 });
 
 ////////////////////////////////////////////////////////////////////////////////////////
