@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Inertia\Inertia;
 
+use App\Models\Chamada;
+
 class MonitorController extends Controller
 {
     public function index()
