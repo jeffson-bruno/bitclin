@@ -15,18 +15,19 @@
       <p class="text-5xl text-red-600 font-semibold">{{ senhaAtual.nome || 'Aguardando chamada...' }}</p>
     </div>
 
-    <!-- Rodapé com animação -->
+    <!-- Rodapé -->
     <div class="absolute bottom-6 w-full text-center z-10">
-      <div class="overflow-hidden whitespace-nowrap animate-marquee">
-        <span class="text-xl text-gray-700 font-medium">
-          Senhas Chamadas:
-          <span v-for="(s, index) in ultimasChamadas" :key="index">
-            SENHA: {{ s.senha }}<span v-if="index < ultimasChamadas.length - 1"> | </span>
-          </span>
-        </span>
-      </div>
+        <p class="text-xl text-gray-700 font-bold uppercase mb-2">Senhas Chamadas:</p>
+        <div class="w-full overflow-hidden">
+            <div class="animate-marquee text-2xl text-gray-800 font-semibold">
+            <span v-for="(s, index) in ultimasChamadas" :key="index" class="mx-4">
+                SENHA: {{ s.senha }}
+            </span>
+            </div>
+        </div>
     </div>
-  </div>
+</div>
+
 </template>
 
 <script setup>
@@ -36,28 +37,43 @@ import axios from 'axios'
 const senhaAtual = ref({})
 const ultimasChamadas = ref([])
 const ultimaSenhaChamada = ref(null)
+const corSenha = ref('text-blue-600') // azul por padrão
 const audioBip = new Audio('/sounds/infobleep.mp3')
 
+// Falar a senha com voz
 const falarSenha = (senha, nome) => {
-  const utterance = new SpeechSynthesisUtterance(`Senha ${senha}, ${nome}, por favor, dirigir-se ao atendimento.`)
-  utterance.lang = 'pt-BR'
-  speechSynthesis.speak(utterance)
+  const sintetizador = window.speechSynthesis
+  if (sintetizador.speaking) sintetizador.cancel()
+
+  const senhaSeparada = senha.split('').join(' ')
+  const texto = `Senha ${senhaSeparada}, ${nome}, por favor dirigir-se ao atendimento.`
+
+  const fala = new SpeechSynthesisUtterance(texto)
+  fala.lang = 'pt-BR'
+  sintetizador.speak(fala)
 }
 
+// Buscar chamadas e aplicar lógica de alteração de cor
 const buscarDadosChamadas = async () => {
   try {
     const response = await axios.get('/monitor/dados-chamadas')
     const novaSenha = response.data.atual || {}
 
     if (novaSenha && novaSenha.senha !== ultimaSenhaChamada.value?.senha) {
-    audioBip.play()
-    falarSenha(novaSenha)
-    }
+      await audioBip.play().catch(() => console.warn('Audio não pôde ser reproduzido'))
+      falarSenha(novaSenha.senha, novaSenha.nome)
 
-    senhaAtual.value = novaSenha
-    ultimasChamadas.value = response.data.ultimas || []
+      corSenha.value = 'text-red-600' // fica vermelho
+      setTimeout(() => {
+        corSenha.value = 'text-blue-600' // volta para azul após 3s
+        senhaAtual.value = novaSenha // só atualiza depois da mudança de cor
+      }, 3000)
+
+      ultimaSenhaChamada.value = novaSenha
+      ultimasChamadas.value = response.data.ultimas || []
+    }
   } catch (err) {
-    console.error('Erro ao buscar chamadas', err)
+    console.error('Erro ao buscar chamadas:', err)
   }
 }
 
@@ -67,6 +83,7 @@ onMounted(() => {
 })
 </script>
 
+
 <style scoped>
 @keyframes marquee {
   0% { transform: translateX(100%); }
@@ -75,7 +92,8 @@ onMounted(() => {
 
 .animate-marquee {
   display: inline-block;
-  animation: marquee 20s linear infinite;
+  white-space: nowrap;
+  animation: marquee 30s linear infinite;
 }
 
 @keyframes fade-in {
