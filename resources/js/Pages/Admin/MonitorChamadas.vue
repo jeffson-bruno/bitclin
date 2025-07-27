@@ -70,12 +70,15 @@ const falarSenha = (senha, nome) => {
 }
 
 // Busca dados da chamada
+let primeiraExecucao = true
+
 const buscarDadosChamadas = async () => {
   try {
     const response = await axios.get('/monitor/dados-chamadas')
     const novaSenha = response.data.atual || {}
 
-    if (novaSenha && novaSenha.senha !== ultimaSenhaChamada.value?.senha) {
+    // Evita chamar senha automaticamente na primeira renderização
+    if (!primeiraExecucao && novaSenha && novaSenha.senha !== ultimaSenhaChamada.value?.senha) {
       senhaCor.value = 'text-red-600'
       audioBip.play()
       falarSenha(novaSenha.senha, novaSenha.nome)
@@ -89,6 +92,8 @@ const buscarDadosChamadas = async () => {
 
     senhaAtual.value = novaSenha
     ultimasChamadas.value = response.data.ultimas || []
+
+    primeiraExecucao = false // a partir da próxima execução, chama normalmente
 
   } catch (err) {
     console.error('Erro ao buscar chamadas', err)
