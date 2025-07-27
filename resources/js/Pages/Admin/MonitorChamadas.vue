@@ -10,25 +10,40 @@
     />
 
     <!-- SENHA ATUAL -->
-    <div class="z-10 text-center animate-fade-in">
-      <h1 class="text-7xl font-bold text-red-600 mb-8">SENHA: {{ senhaAtual.senha || '—' }}</h1>
-      <p class="text-5xl text-red-600 font-semibold">{{ senhaAtual.nome || 'Aguardando chamada...' }}</p>
+    <div class="z-10 text-center">
+      <h1
+        :key="senhaAtual.senha"
+        class="text-7xl font-bold mb-8 fade-in"
+        :class="senhaCor"
+      >
+        SENHA: {{ senhaAtual.senha || '—' }}
+      </h1>
+      <p
+        :key="senhaAtual.nome"
+        class="text-5xl font-semibold fade-in"
+        :class="senhaCor"
+      >
+        {{ senhaAtual.nome || 'Aguardando chamada...' }}
+      </p>
     </div>
 
     <!-- Rodapé -->
-    <div class="absolute bottom-6 w-full text-center z-10">
-        <p class="text-xl text-gray-700 font-bold uppercase mb-2">Senhas Chamadas:</p>
-        <div class="w-full overflow-hidden">
-            <div class="animate-marquee text-2xl text-gray-800 font-semibold">
-            <span v-for="(s, index) in ultimasChamadas" :key="index" class="mx-4">
-                SENHA: {{ s.senha }}
-            </span>
-            </div>
+    <div class="absolute bottom-6 w-full z-10 px-8">
+      <p class="text-xl text-gray-700 font-bold uppercase text-center mb-2">
+        Últimas Chamadas:
+      </p>
+      <div class="relative w-full overflow-hidden border border-gray-300 rounded-md px-8 py-2">
+        <div class="animate-marquee text-2xl text-gray-800 font-semibold whitespace-nowrap">
+          <span v-for="(s, index) in ultimasChamadas" :key="index" class="mx-6">
+            SENHA: {{ s.senha }}
+          </span>
         </div>
+      </div>
     </div>
-</div>
 
+  </div>
 </template>
+
 
 <script setup>
 import { onMounted, ref } from 'vue'
@@ -37,43 +52,46 @@ import axios from 'axios'
 const senhaAtual = ref({})
 const ultimasChamadas = ref([])
 const ultimaSenhaChamada = ref(null)
-const corSenha = ref('text-blue-600') // azul por padrão
+const senhaCor = ref('text-blue-600')
 const audioBip = new Audio('/sounds/infobleep.mp3')
 
-// Falar a senha com voz
+// Fala a senha de forma pausada
 const falarSenha = (senha, nome) => {
   const sintetizador = window.speechSynthesis
   if (sintetizador.speaking) sintetizador.cancel()
 
-  const senhaSeparada = senha.split('').join(' ')
-  const texto = `Senha ${senhaSeparada}, ${nome}, por favor dirigir-se ao atendimento.`
+  const senhaSeparada = senha?.split('').join(' ') || ''
+  const texto = `Senha ${senhaSeparada}, ${nome}, por favor, dirigir-se ao atendimento.`
 
   const fala = new SpeechSynthesisUtterance(texto)
   fala.lang = 'pt-BR'
+  fala.rate = 0.9
   sintetizador.speak(fala)
 }
 
-// Buscar chamadas e aplicar lógica de alteração de cor
+// Busca dados da chamada
 const buscarDadosChamadas = async () => {
   try {
     const response = await axios.get('/monitor/dados-chamadas')
     const novaSenha = response.data.atual || {}
 
     if (novaSenha && novaSenha.senha !== ultimaSenhaChamada.value?.senha) {
-      await audioBip.play().catch(() => console.warn('Audio não pôde ser reproduzido'))
+      senhaCor.value = 'text-red-600'
+      audioBip.play()
       falarSenha(novaSenha.senha, novaSenha.nome)
 
-      corSenha.value = 'text-red-600' // fica vermelho
       setTimeout(() => {
-        corSenha.value = 'text-blue-600' // volta para azul após 3s
-        senhaAtual.value = novaSenha // só atualiza depois da mudança de cor
-      }, 3000)
+        senhaCor.value = 'text-blue-600'
+      }, 5000)
 
       ultimaSenhaChamada.value = novaSenha
-      ultimasChamadas.value = response.data.ultimas || []
     }
+
+    senhaAtual.value = novaSenha
+    ultimasChamadas.value = response.data.ultimas || []
+
   } catch (err) {
-    console.error('Erro ao buscar chamadas:', err)
+    console.error('Erro ao buscar chamadas', err)
   }
 }
 
@@ -84,7 +102,18 @@ onMounted(() => {
 </script>
 
 
+
 <style scoped>
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
 @keyframes marquee {
   0% { transform: translateX(100%); }
   100% { transform: translateX(-100%); }
@@ -92,16 +121,8 @@ onMounted(() => {
 
 .animate-marquee {
   display: inline-block;
-  white-space: nowrap;
-  animation: marquee 30s linear infinite;
+  animation: marquee 35s linear infinite;
 }
 
-@keyframes fade-in {
-  0% { opacity: 0; transform: scale(0.95); }
-  100% { opacity: 1; transform: scale(1); }
-}
 
-.animate-fade-in {
-  animation: fade-in 0.8s ease-in-out;
-}
 </style>
