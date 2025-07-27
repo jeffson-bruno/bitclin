@@ -106,10 +106,15 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 Route::get('/monitor', [\App\Http\Controllers\Admin\MonitorController::class, 'index'])->name('monitor');
 
 // Rota da API de dados do monitor
-Route::get('/monitor/dados-chamadas', [\App\Http\Controllers\Admin\MonitorController::class, 'dadosChamadas']);
+//Route::get('/monitor/dados-chamadas', [\App\Http\Controllers\Admin\MonitorController::class, 'dadosChamadas']);
 });
 
 ////////////////////////////////////////////////////////////////////////////////////////
+
+//API para o Monitor de Chamadas
+// API pública da tela do monitor (não requer login)
+Route::get('/monitor/dados-chamadas', [\App\Http\Controllers\Admin\MonitorController::class, 'dadosChamadas']);
+
 
 //Rotas do médico
 Route::middleware(['auth', 'role:doctor'])->prefix('medico')->name('medico.')->group(function () {

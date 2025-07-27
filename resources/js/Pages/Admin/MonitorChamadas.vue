@@ -3,7 +3,7 @@
 
     <!-- Marca d'água -->
     <img
-      src="/images/logo-clinica.png"
+      src="/images/marca-dagua.png"
       alt="Logo da Clínica"
       class="absolute w-1/2 opacity-10 z-0"
       style="top: 50%; left: 50%; transform: translate(-50%, -50%);"
