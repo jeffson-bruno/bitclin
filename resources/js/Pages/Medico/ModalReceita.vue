@@ -63,7 +63,42 @@ const props = defineProps({
 })
 
 const crm = ref('')
+
+const medicamentos = ref([
+  {
+    nome: '',
+    quantidade: '',
+    tipo: '',
+    intervaloHoras: '',
+    detalhes: {
+      gotas: '',
+      ml: '',
+      comprimidos: '',
+      ampolas: ''
+    },
+    vezesPorDia: []
+  }
+])
+
+const adicionarMedicamento = () => {
+  medicamentos.value.push({
+    nome: '',
+    quantidade: '',
+    tipo: '',
+    intervaloHoras: '',
+    detalhes: {
+      gotas: '',
+      ml: '',
+      comprimidos: '',
+      ampolas: ''
+    },
+    vezesPorDia: []
+  })
+}
+
+const tipos = ['Gotas', 'Líquido', 'Comprimido', 'Injetável']
 </script>
+
 
 <style scoped>
 .input-form {
