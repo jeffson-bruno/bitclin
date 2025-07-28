@@ -1,8 +1,11 @@
 <template>
   <div class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4">
-    <div class="bg-white rounded-xl shadow-lg max-w-3xl w-full p-6 relative">
+    <div class="bg-white rounded-xl shadow-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto relative p-6">
       <!-- Botão Fechar -->
-      <button @click="$emit('close')" class="absolute top-3 right-3 text-gray-500 hover:text-red-500">
+      <button
+        @click="$emit('close')"
+        class="absolute top-3 right-3 text-gray-500 hover:text-red-500"
+      >
         ✕
       </button>
 
@@ -110,19 +113,6 @@
             </button>
           </div>
 
-          <!-- Espaço para assinatura -->
-          <div class="mt-12 text-center">
-            <div class="border-t border-gray-400 w-1/2 mx-auto pt-1 text-sm">
-              Dr. {{ medico.nome }} - CRM: {{ crm }}
-            </div>
-            <p class="text-xs mt-1">Assinatura e Carimbo</p>
-          </div>
-
-          <!-- Rodapé com dados da clínica -->
-          <div class="absolute bottom-4 left-0 right-0 text-center text-xs text-gray-600">
-            Clínica Exemplo – Rua Projetada 01, Cocal-PI • (86) 9 9999-9999 • CEP 64230-000<br />
-            Instagram: @clinicaexemplo | Facebook: /clinicaexemplo
-          </div>
         </div>
       </div>
     </div>

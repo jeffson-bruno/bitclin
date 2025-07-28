@@ -74,6 +74,14 @@
 
     <!-- TOAST VISUAL -->
     <Toast ref="globalToast" />
+
+    <ModalReceita
+      v-if="mostrarModalReceita"
+      :paciente="pacienteSelecionado"
+      :medico="medicoLogado"
+      @close="mostrarModalReceita = false"
+    />
+
   </div>
 </template>
 
@@ -84,9 +92,13 @@ import axios from 'axios'
 import { useToast } from '@/Composables/useToast'
 import Toast from '@/Components/Toast.vue'
 import { toastRef } from '@/Composables/useGlobalToast'
+import ModalReceita from '@/Components/ModalReceita.vue'
 
 const { success, error } = useToast()
 const globalToast = ref(null)
+
+const mostrarModalReceita = ref(false)
+const pacienteSelecionado = ref(null)
 
 onMounted(() => {
   toastRef.value = globalToast.value
@@ -129,8 +141,17 @@ function logout() {
   router.post('/logout')
 }
 
+// Simulando médico logado (em produção, substitua pelos dados reais)
+const medicoLogado = {
+  nome: 'Dcoctor3'
+}
+
 // Ações do médico
-function emitirReceita(paciente) { console.log('Emitir receita para:', paciente) }
+function emitirReceita(paciente) {
+  pacienteSelecionado.value = paciente
+  mostrarModalReceita.value = true
+}
+
 function emitirAtestado(paciente) { console.log('Emitir atestado para:', paciente) }
 function solicitarExames(paciente) { console.log('Solicitar exames para:', paciente) }
 function criarProntuario(paciente) { console.log('Criar prontuário para:', paciente) }
