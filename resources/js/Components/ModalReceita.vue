@@ -113,6 +113,13 @@
             </button>
           </div>
 
+          <button
+            @click="enviarReceita"
+            class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded"
+          >
+            Gerar PDF e Salvar
+          </button>
+
         </div>
       </div>
     </div>
@@ -164,13 +171,37 @@ const adicionarMedicamento = () => {
 const tipos = ['Gotas', 'Líquido', 'Comprimido', 'Injetável']
 
 const calcularIdade = (dataNasc) => {
+  if (!dataNasc) return '—'
   const nasc = new Date(dataNasc)
+  if (isNaN(nasc)) return '—'
   const hoje = new Date()
   let idade = hoje.getFullYear() - nasc.getFullYear()
   const m = hoje.getMonth() - nasc.getMonth()
   if (m < 0 || (m === 0 && hoje.getDate() < nasc.getDate())) idade--
   return idade
 }
+
+const enviarReceita = async () => {
+  try {
+    const response = await axios.post('/medico/gerar-receita', {
+      paciente_id: props.paciente.id,
+      medico_id: props.medico.id,
+      crm: crm.value,
+      medicamentos: medicamentos.value
+    })
+
+    if (response.data.success) {
+      alert('Receita gerada e salva com sucesso!')
+    } else {
+      alert('Erro ao salvar a receita')
+    }
+  } catch (err) {
+    console.error(err)
+    alert('Erro ao enviar dados da receita.')
+  }
+}
+
+
 </script>
 
 <style scoped>

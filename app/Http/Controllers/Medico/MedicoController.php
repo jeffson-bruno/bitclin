@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Medico;
 
+use App\Models\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -10,6 +11,9 @@ use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use App\Models\Chamada;
 use App\Models\SenhaAtendimento;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Storage;
+
 
 class MedicoController extends Controller
 {
@@ -73,4 +77,40 @@ class MedicoController extends Controller
             'tentativas_restantes' => 2 - $tentativas,
         ]);
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////
+    public function gerarReceita(Request $request)
+    {
+        $request->validate([
+            'paciente_id' => 'required|exists:pacientes,id',
+            'medico_id' => 'required|exists:users,id',
+            'crm' => 'required|string',
+            'medicamentos' => 'required|array',
+        ]);
+
+        $paciente = Paciente::findOrFail($request->paciente_id);
+        $medico = User::findOrFail($request->medico_id);
+        $medicamentos = $request->medicamentos;
+
+        $data = now()->format('Y-m-d_H-i-s');
+        $fileName = 'receita_' . $paciente->id . '_' . $data . '.pdf';
+
+        $pdf = Pdf::loadView('pdf.receita', compact('paciente', 'medico', 'medicamentos'))
+            ->setPaper('A4', 'portrait');
+
+        Storage::disk('public')->put('receitas/' . $fileName, $pdf->output());
+
+        Receita::create([
+            'paciente_id' => $paciente->id,
+            'medico_id' => $medico->id,
+            'arquivo' => 'receitas/' . $fileName,
+            'crm' => $request->crm,
+            'data_receita' => now()
+        ]);
+
+        return response()->json(['success' => true]);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
 }

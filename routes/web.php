@@ -123,7 +123,9 @@ Route::middleware(['auth', 'role:doctor'])->prefix('medico')->name('medico.')->g
     // Chamar senha (com controle de tentativas)
     Route::post('/chamar-senha/{paciente_id}', [ChamadaSenhaController::class, 'chamar'])->name('chamar.senha');
 
-    
+    Route::post('/gerar-receita', [MedicoController::class, 'gerarReceita'])->name('gerar-receita');
+
+
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////
