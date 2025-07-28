@@ -20,7 +20,7 @@
       >
         <!-- Marca d'água -->
         <div class="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none select-none z-0">
-          <img src="/images/logo-clinica.png" alt="Marca d'água" class="w-1/2" />
+          <img src="/images/logo.png" alt="Marca d'água" class="w-1/2" />
         </div>
 
         <!-- Conteúdo da Receita -->
@@ -185,13 +185,14 @@ const enviarReceita = async () => {
   try {
     const response = await axios.post('/medico/gerar-receita', {
       paciente_id: props.paciente.id,
-      medico_id: props.medico.id,
       crm: crm.value,
       medicamentos: medicamentos.value
     })
 
     if (response.data.success) {
       alert('Receita gerada e salva com sucesso!')
+      // Se desejar, feche a modal após o envio:
+      // emit('close')
     } else {
       alert('Erro ao salvar a receita')
     }
@@ -200,6 +201,7 @@ const enviarReceita = async () => {
     alert('Erro ao enviar dados da receita.')
   }
 }
+
 
 
 </script>

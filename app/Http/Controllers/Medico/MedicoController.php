@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Medico;
 
 use App\Models\User;
+use App\Models\Receita;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -35,6 +36,7 @@ class MedicoController extends Controller
                 return [
                     'id' => $p->id,
                     'nome' => $p->nome,
+                    'data_nascimento' => $p->data_nascimento,
                     'idade' => Carbon::parse($p->data_nascimento)->age,
                     'estado_civil' => $p->estado_civil,
                     'data' => $p->data_consulta,
@@ -81,21 +83,24 @@ class MedicoController extends Controller
     ////////////////////////////////////////////////////////////////////////////////////////
     public function gerarReceita(Request $request)
     {
+        $medicoId = Auth::id(); // Pega o ID do médico logado
+
         $request->validate([
             'paciente_id' => 'required|exists:pacientes,id',
-            'medico_id' => 'required|exists:users,id',
             'crm' => 'required|string',
             'medicamentos' => 'required|array',
         ]);
 
         $paciente = Paciente::findOrFail($request->paciente_id);
-        $medico = User::findOrFail($request->medico_id);
+        $medico = \App\Models\User::findOrFail($medicoId); // Usa o médico logado
         $medicamentos = $request->medicamentos;
 
         $data = now()->format('Y-m-d_H-i-s');
         $fileName = 'receita_' . $paciente->id . '_' . $data . '.pdf';
 
-        $pdf = Pdf::loadView('pdf.receita', compact('paciente', 'medico', 'medicamentos'))
+        $crm = $request->crm;
+
+        $pdf = Pdf::loadView('pdfs.receita', compact('paciente', 'medico', 'medicamentos', 'crm'))
             ->setPaper('A4', 'portrait');
 
         Storage::disk('public')->put('receitas/' . $fileName, $pdf->output());
@@ -110,6 +115,7 @@ class MedicoController extends Controller
 
         return response()->json(['success' => true]);
     }
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////
 
