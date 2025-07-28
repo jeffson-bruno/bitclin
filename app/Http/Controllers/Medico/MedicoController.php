@@ -105,7 +105,7 @@ class MedicoController extends Controller
 
         Storage::disk('public')->put('receitas/' . $fileName, $pdf->output());
 
-        Receita::create([
+        $receita = Receita::create([
             'paciente_id' => $paciente->id,
             'medico_id' => $medico->id,
             'arquivo' => 'receitas/' . $fileName,
@@ -113,7 +113,12 @@ class MedicoController extends Controller
             'data_receita' => now()
         ]);
 
-        return response()->json(['success' => true]);
+
+        return response()->json([
+            'success' => true,
+            'receita_id' => $receita->id,
+            'url' => asset('storage/receitas/' . $fileName),
+        ]);
     }
 
 

@@ -129,6 +129,7 @@
 <script setup>
 import { ref } from 'vue'
 
+const emit = defineEmits(['close'])
 const props = defineProps({
   paciente: Object,
   medico: Object,
@@ -191,8 +192,8 @@ const enviarReceita = async () => {
 
     if (response.data.success) {
       alert('Receita gerada e salva com sucesso!')
-      // Se desejar, feche a modal após o envio:
-      // emit('close')
+      window.open(response.data.url, '_blank');
+      emit('close')
     } else {
       alert('Erro ao salvar a receita')
     }
