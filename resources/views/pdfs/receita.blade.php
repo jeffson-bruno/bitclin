@@ -110,55 +110,80 @@
         <table style="width: 100%; border-collapse: collapse; font-family: DejaVu Sans, sans-serif;">
             @foreach($medicamentos as $med)
                 @php
+                    $linhaPontos = str_repeat('.', 30);
+                    $tipo = $med['tipo'] ?? '';
+
+                    $nome = $med['nome'] ?? '';
+                    $quantidade = $med['quantidade'] ?? '';
+                    $mg = isset($med['mg']) && !empty($med['mg']) ? $med['mg'] . (str_contains($med['mg'], 'ml') ? '' : 'mg') : '';
+                    $intervalo = !empty($med['intervaloHoras']) ? $med['intervaloHoras'] . ' hs' : '';
                     $quantidadeTipo = '';
-                    if (!empty($med['detalhes']['comprimidos'])) {
+                    $dosagem = $med['dosagem'] ?? '';
+
+                    // Ajustar quantidadeTipo com base no tipo
+                    if ($tipo === 'Comprimido' && !empty($med['detalhes']['comprimidos'])) {
                         $quantidadeTipo = $med['detalhes']['comprimidos'] . ' Comp.';
-                    } elseif (!empty($med['detalhes']['gotas'])) {
+                    } elseif ($tipo === 'Gotas' && !empty($med['detalhes']['gotas'])) {
                         $quantidadeTipo = $med['detalhes']['gotas'] . ' Gotas';
-                    } elseif (!empty($med['detalhes']['ml'])) {
+                    } elseif ($tipo === 'Líquido' && !empty($med['detalhes']['ml'])) {
                         $quantidadeTipo = $med['detalhes']['ml'] . ' ml';
-                    } elseif (!empty($med['detalhes']['ampolas'])) {
+                    } elseif ($tipo === 'Injetável' && !empty($med['detalhes']['ampolas'])) {
                         $quantidadeTipo = $med['detalhes']['ampolas'] . ' Amp';
                     }
-
-                    $intervalo = trim(($med['intervaloHoras'] ?? $med['intervalo'] ?? ''));
-
-                    if (!empty($intervalo)) {
-                        $intervalo .= ' hs';
-                    }
-
-                    $linhaPontos = str_repeat('.', 40);
-                    $linhaPontos2 = str_repeat('.', 30);
                 @endphp
 
-                <tr style="margin-bottom: 20px;">
-                    <td colspan="2" style="padding: 4px; padding-top: 10px; border-bottom: 1px dashed #ccc;">
-                        {{-- Nome, Caixas e Miligramas (inclusive para Injetável) --}}
-                        {{ $med['nome'] }} {{ $linhaPontos }}
-                        {{ $med['quantidade'] ?? '1' }} {{ ($med['quantidade'] ?? 1) > 1 ? 'Cxs' : 'Cx' }}
-                        @if (!empty($med['miligramas']))
-                            - {{ $med['miligramas'] }}
-                        @endif
-                    </td>
-                </tr>
-
-                <tr>
-                    <td colspan="2" style="padding: 4px;">
-                        {{ $quantidadeTipo }} {{ $linhaPontos2 }} {{ $intervalo }}
-                    </td>
-                </tr>
-
-                @if(($med['tipo'] ?? '') === 'Injetável' && !empty($med['instrucao']))
+                @if($tipo === 'Injetável')
+                    {{-- Linha 1: Nome + ampola --}}
                     <tr>
                         <td colspan="2" style="padding: 4px;">
-                            <strong>Instruções de Aplicação:</strong> {{ $med['instrucao'] }}
+                            {{ $nome }} {{ $linhaPontos }} {{ $quantidadeTipo }}
+                        </td>
+                    </tr>
+
+                    {{-- Linha 2: Dosagem --}}
+                    @if(!empty($dosagem))
+                        <tr>
+                            <td colspan="2" style="padding: 4px;">
+                                {{ $dosagem }} {{ !empty($med['unidade']) ? $med['unidade'] : 'mg/ml' }}
+                            </td>
+                        </tr>
+                    @endif
+                @else
+                    {{-- Linha 1: Nome + mg/ml + pontos + quantidade de caixa --}}
+                    <tr>
+                        <td colspan="2" style="padding: 4px;">
+                            {{ $nome }}
+                            @if(!empty($med['mg']))
+                                - {{ $med['mg'] }}
+                            @endif
+                            {{ $linhaPontos }}
+                            {{ $quantidade }} {{ ($quantidade ?? 1) > 1 ? 'Cxs' : 'Cx' }}
+                        </td>
+                    </tr>
+
+                    {{-- Linha 2: Tipo e intervalo --}}
+                    <tr>
+                        <td colspan="2" style="padding: 4px;">
+                            {{ $quantidadeTipo }} {{ str_repeat('.', 20) }} {{ $intervalo }}
                         </td>
                     </tr>
                 @endif
 
+                {{-- Linha 3 (ambos os casos): Instrução de Aplicação, se houver --}}
+                @if(!empty($med['instrucao']))
+                    <tr>
+                        <td colspan="2" style="padding: 4px; font-style: italic;">
+                            Instrução: {{ $med['instrucao'] }}
+                        </td>
+                    </tr>
+                @endif
+
+                {{-- Espaçamento entre medicamentos --}}
+                <tr><td colspan="2" style="height: 15px;"></td></tr>
             @endforeach
         </table>
     </div>
+
 
 
 

@@ -73,7 +73,7 @@
                     <input v-model="med.quantidade" type="number" class="input-form" />
                   </div>
                   <div>
-                    <label class="text-sm text-gray-600">Miligramas (mg)</label>
+                    <label class="text-sm text-gray-600"> (mG - mL )</label>
                     <input v-model="med.miligramas" type="text" class="input-form" placeholder="Ex: 500mg" />
                   </div>
                   <div>
@@ -198,26 +198,46 @@ const calcularIdade = (dataNasc) => {
   return idade
 }
 
+const prepararMedicamentos = () => {
+  return medicamentos.value.map((med) => {
+    let miligramaFormatada = med.miligramas;
+
+    if (med.tipo === 'Líquido' || med.tipo === 'Gotas') {
+      if (miligramaFormatada && !miligramaFormatada.toLowerCase().includes('ml')) {
+        miligramaFormatada += ' ml';
+      }
+    } else if (med.tipo === 'Comprimido') {
+      if (miligramaFormatada && !miligramaFormatada.toLowerCase().includes('mg')) {
+        miligramaFormatada += ' mg';
+      }
+    }
+
+    return {
+      ...med,
+      mg: miligramaFormatada
+    };
+  });
+};
+
 const enviarReceita = async () => {
   try {
     const response = await axios.post('/medico/gerar-receita', {
       paciente_id: props.paciente.id,
       crm: crm.value,
-      medicamentos: medicamentos.value
-    })
+      medicamentos: prepararMedicamentos()
+    });
 
     if (response.data.success) {
-      //alert('Receita gerada e salva com sucesso!')
       window.open(response.data.url, '_blank');
-      emit('close')
+      emit('close');
     } else {
-      alert('Erro ao salvar a receita')
+      alert('Erro ao salvar a receita');
     }
   } catch (err) {
-    console.error(err)
-    alert('Erro ao enviar dados da receita.')
+    console.error(err);
+    alert('Erro ao enviar dados da receita.');
   }
-}
+};
 
 
 
