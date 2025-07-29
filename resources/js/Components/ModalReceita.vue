@@ -50,76 +50,90 @@
             <h3 class="font-semibold text-lg mb-4">Prescrição</h3>
 
             <div v-for="(med, index) in medicamentos" :key="index" class="mb-6 border p-4 rounded-lg bg-gray-50">
+              <!-- Linha 1: Nome e Tipo -->
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 <div>
                   <label class="text-sm text-gray-600">Nome do Remédio</label>
                   <input v-model="med.nome" type="text" class="input-form" />
                 </div>
                 <div>
-                  <label class="text-sm text-gray-600">Quantidade (Caixas)</label>
-                  <input v-model="med.quantidade" type="number" class="input-form" />
-                </div>
-              </div>
-
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label class="text-sm text-gray-600">Tipo</label>
+                  <label class="text-sm text-gray-600">Forma Farmacêutica (Tipo)</label>
                   <select v-model="med.tipo" class="input-form">
                     <option value="" disabled>Selecione</option>
                     <option v-for="tipo in tipos" :key="tipo" :value="tipo">{{ tipo }}</option>
                   </select>
                 </div>
+              </div>
 
-                <div v-if="med.tipo !== 'Injetável'">
-                  <label class="text-sm text-gray-600">Intervalo (horas)</label>
-                  <input v-model="med.intervaloHoras" type="text" class="input-form" placeholder="Ex: a cada 8 horas" />
+              <!-- Se NÃO for injetável -->
+              <div v-if="med.tipo !== 'Injetável'">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                  <div>
+                    <label class="text-sm text-gray-600">Quantidade (Caixas)</label>
+                    <input v-model="med.quantidade" type="number" class="input-form" />
+                  </div>
+                  <div>
+                    <label class="text-sm text-gray-600">Miligramas (mg)</label>
+                    <input v-model="med.miligramas" type="text" class="input-form" placeholder="Ex: 500mg" />
+                  </div>
+                  <div>
+                    <label class="text-sm text-gray-600">Intervalo (horas)</label>
+                    <input v-model="med.intervaloHoras" type="text" class="input-form" placeholder="Ex: 8 / 8 horas" />
+                  </div>
+                </div>
+
+
+                <!-- Dosagem -->
+                <div>
+                  <label class="text-sm text-gray-600">Dosagem</label>
+                  <div v-if="med.tipo === 'Gotas'">
+                    <input v-model="med.detalhes.gotas" type="text" class="input-form" placeholder="Ex: 15 gotas" />
+                  </div>
+                  <div v-else-if="med.tipo === 'Líquido'">
+                    <input v-model="med.detalhes.ml" type="text" class="input-form" placeholder="Ex: 10 ml" />
+                  </div>
+                  <div v-else-if="med.tipo === 'Comprimido'">
+                    <input v-model="med.detalhes.comprimidos" type="text" class="input-form" placeholder="Ex: 1 comp" />
+                  </div>
                 </div>
               </div>
 
-              <!-- Vezes ao dia -->
-              <div class="mt-4">
-                <label class="text-sm text-gray-600">Tomar quantas vezes ao dia?</label>
-                <div class="flex gap-4 mt-1">
-                  <label v-for="n in 4" :key="n" class="flex items-center gap-1 text-sm">
-                    <input type="checkbox" :value="n" v-model="med.vezesPorDia" />
-                    {{ n }}x
-                  </label>
+              <!-- Se for Injetável -->
+              <div v-else>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label class="text-sm text-gray-600">Quantidade (Ampolas ou Frascos)</label>
+                    <input v-model="med.detalhes.ampolas" type="text" class="input-form" />
+                  </div>
+                  <div>
+                    <label class="text-sm text-gray-600">Dosagem</label>
+                    <input v-model="med.dosagem" type="text" class="input-form" placeholder="Ex: 1mg/ml" />
+                  </div>
                 </div>
-              </div>
-
-              <!-- Campos adicionais conforme o tipo -->
-              <div class="mt-4">
-                <template v-if="med.tipo === 'Gotas'">
-                  <label class="text-sm text-gray-600">Quantas gotas?</label>
-                  <input v-model="med.detalhes.gotas" type="number" class="input-form" />
-                </template>
-                <template v-else-if="med.tipo === 'Líquido'">
-                  <label class="text-sm text-gray-600">Quantos ml?</label>
-                  <input v-model="med.detalhes.ml" type="number" class="input-form" />
-                </template>
-                <template v-else-if="med.tipo === 'Comprimido'">
-                  <label class="text-sm text-gray-600">Quantos comprimidos?</label>
-                  <input v-model="med.detalhes.comprimidos" type="number" class="input-form" />
-                </template>
-                <template v-else-if="med.tipo === 'Injetável'">
-                  <label class="text-sm text-gray-600">Quantas ampolas?</label>
-                  <input v-model="med.detalhes.ampolas" type="number" class="input-form" />
-                </template>
+                <div>
+                  <label class="text-sm text-gray-600">Instruções de Aplicação</label>
+                  <textarea v-model="med.instrucao" class="input-form" placeholder="Descreva como deve ser administrado..."></textarea>
+                </div>
               </div>
             </div>
 
-            <button @click="adicionarMedicamento" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-              + Adicionar Medicamento
-            </button>
+            <!-- Botão Adicionar Medicamento -->
+            <div class="flex justify-center mt-4">
+              <button @click="adicionarMedicamento" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                + Adicionar Medicamento
+              </button>
+            </div>
           </div>
 
-          <button
-            @click="enviarReceita"
-            class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded"
-          >
-            Gerar PDF e Salvar
-          </button>
-
+          <!-- Botão Gerar PDF -->
+          <div class="flex justify-end mt-6">
+            <button
+              @click="enviarReceita"
+              class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded"
+            >
+              Gerar PDF e Salvar
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -143,15 +157,17 @@ const medicamentos = ref([
     quantidade: '',
     tipo: '',
     intervaloHoras: '',
+    dosagem: '',
+    instrucao: '',
     detalhes: {
       gotas: '',
       ml: '',
       comprimidos: '',
       ampolas: ''
-    },
-    vezesPorDia: []
+    }
   }
 ])
+
 
 const adicionarMedicamento = () => {
   medicamentos.value.push({
@@ -191,7 +207,7 @@ const enviarReceita = async () => {
     })
 
     if (response.data.success) {
-      alert('Receita gerada e salva com sucesso!')
+      //alert('Receita gerada e salva com sucesso!')
       window.open(response.data.url, '_blank');
       emit('close')
     } else {

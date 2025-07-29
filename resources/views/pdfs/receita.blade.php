@@ -107,7 +107,7 @@
     </div>
 
     <div class="medicamentos">
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; font-family: DejaVu Sans, sans-serif;">
+        <table style="width: 100%; border-collapse: collapse; font-family: DejaVu Sans, sans-serif;">
             @foreach($medicamentos as $med)
                 @php
                     $quantidadeTipo = '';
@@ -121,27 +121,45 @@
                         $quantidadeTipo = $med['detalhes']['ampolas'] . ' Amp';
                     }
 
-                    $intervalo = $med['intervaloHoras'] ?? $med['intervalo'] ?? '';
+                    $intervalo = trim(($med['intervaloHoras'] ?? $med['intervalo'] ?? ''));
+
+                    if (!empty($intervalo)) {
+                        $intervalo .= ' hs';
+                    }
+
                     $linhaPontos = str_repeat('.', 40);
+                    $linhaPontos2 = str_repeat('.', 30);
                 @endphp
 
-                {{-- Linha 1: Nome e Cx unidos com pontos --}}
-                <tr>
-                    <td colspan="2" style="padding: 4px;">
-                        {{ $med['nome'] }} {{ $linhaPontos }} {{ $med['quantidade'] }} {{ $med['quantidade'] > 1 ? 'Cxs' : 'Cx' }}
+                <tr style="margin-bottom: 20px;">
+                    <td colspan="2" style="padding: 4px; padding-top: 10px; border-bottom: 1px dashed #ccc;">
+                        {{-- Nome, Caixas e Miligramas (inclusive para Injetável) --}}
+                        {{ $med['nome'] }} {{ $linhaPontos }}
+                        {{ $med['quantidade'] ?? '1' }} {{ ($med['quantidade'] ?? 1) > 1 ? 'Cxs' : 'Cx' }}
+                        @if (!empty($med['miligramas']))
+                            - {{ $med['miligramas'] }}
+                        @endif
                     </td>
                 </tr>
 
-                {{-- Linha 2: tipo e intervalo unidos com pontos --}}
                 <tr>
                     <td colspan="2" style="padding: 4px;">
-                        {{ $quantidadeTipo }} {{ str_repeat('.', 30) }} {{ $intervalo }}
+                        {{ $quantidadeTipo }} {{ $linhaPontos2 }} {{ $intervalo }}
                     </td>
                 </tr>
+
+                @if(($med['tipo'] ?? '') === 'Injetável' && !empty($med['instrucao']))
+                    <tr>
+                        <td colspan="2" style="padding: 4px;">
+                            <strong>Instruções de Aplicação:</strong> {{ $med['instrucao'] }}
+                        </td>
+                    </tr>
+                @endif
 
             @endforeach
         </table>
     </div>
+
 
 
     <div class="assinatura">
