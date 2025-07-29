@@ -29,7 +29,7 @@
         }
 
         .info {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
 
         .info p {
@@ -37,17 +37,46 @@
         }
 
         .medicamentos {
-            margin-top: 20px;
+            margin-top: 30px;
         }
 
-        .medicamento-item {
-            margin-bottom: 20px;
+        .linha-medicamento {
+            margin-bottom: 15px;
         }
 
-        .linha {
-            border-bottom: 1px solid #000;
-            display: inline-block;
+        .linha-texto,
+        .linha-detalhes {
+            display: flex;
+            justify-content: space-between;
             width: 100%;
+        }
+
+        .linha-texto .esquerda,
+        .linha-detalhes .esquerda {
+            width: 25%;
+            border-bottom: 1px solid #000;
+            padding-right: 10px;
+        }
+
+        .linha-texto .direita,
+        .linha-detalhes .direita {
+            width: 20%;
+            text-align: right;
+            border-bottom: 1px solid #000;
+            padding-left: 10px;
+        }
+
+        .linha-detalhes .esquerda {
+            border-bottom: 1px dotted #000;
+        }
+
+        .linha-detalhes .direita {
+            border-bottom: 1px dotted #000;
+        }
+
+        .assinatura {
+            margin-top: 60px;
+            text-align: right;
         }
 
         .footer {
@@ -58,11 +87,6 @@
             font-size: 11px;
             text-align: center;
             line-height: 1.4;
-        }
-
-        .assinatura {
-            margin-top: 60px;
-            text-align: right;
         }
     </style>
 </head>
@@ -83,30 +107,42 @@
     </div>
 
     <div class="medicamentos">
-        @foreach($medicamentos as $med)
-            <div class="medicamento-item">
-                <p><strong>Nome/Remédio:</strong> <span class="linha">&nbsp;&nbsp;{{ $med['nome'] }}&nbsp;&nbsp;</span></p>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; font-family: DejaVu Sans, sans-serif;">
+            @foreach($medicamentos as $med)
+                @php
+                    $quantidadeTipo = '';
+                    if (!empty($med['detalhes']['comprimidos'])) {
+                        $quantidadeTipo = $med['detalhes']['comprimidos'] . ' Comp.';
+                    } elseif (!empty($med['detalhes']['gotas'])) {
+                        $quantidadeTipo = $med['detalhes']['gotas'] . ' Gotas';
+                    } elseif (!empty($med['detalhes']['ml'])) {
+                        $quantidadeTipo = $med['detalhes']['ml'] . ' ml';
+                    } elseif (!empty($med['detalhes']['ampolas'])) {
+                        $quantidadeTipo = $med['detalhes']['ampolas'] . ' Amp';
+                    }
 
-                <p>
-                    <strong>Qnt Caixas:</strong> <span class="linha" style="width: 120px;">&nbsp;&nbsp;{{ $med['quantidade'] }}&nbsp;&nbsp;</span>
-                    &nbsp;&nbsp;&nbsp;&nbsp;
-                    <strong>Nº Comprimidos/Gotas/Ml/Ampolas:</strong> 
-                    <span class="linha" style="width: 200px;">
-                        &nbsp;&nbsp;
-                        {{ $med['detalhes']['comprimidos'] ?? $med['detalhes']['gotas'] ?? $med['detalhes']['ml'] ?? $med['detalhes']['ampolas'] ?? '' }}
-                        &nbsp;&nbsp;
-                    </span>
-                </p>
+                    $intervalo = $med['intervaloHoras'] ?? $med['intervalo'] ?? '';
+                    $linhaPontos = str_repeat('.', 40);
+                @endphp
 
-                <p>
-                    <strong>Quantidade de vezes ao dia:</strong> 
-                    <span class="linha" style="width: 150px;">
-                        &nbsp;&nbsp;{{ implode(' / ', $med['vezesPorDia']) }}x&nbsp;&nbsp;
-                    </span>
-                </p>
-            </div>
-        @endforeach
+                {{-- Linha 1: Nome e Cx unidos com pontos --}}
+                <tr>
+                    <td colspan="2" style="padding: 4px;">
+                        {{ $med['nome'] }} {{ $linhaPontos }} {{ $med['quantidade'] }} {{ $med['quantidade'] > 1 ? 'Cxs' : 'Cx' }}
+                    </td>
+                </tr>
+
+                {{-- Linha 2: tipo e intervalo unidos com pontos --}}
+                <tr>
+                    <td colspan="2" style="padding: 4px;">
+                        {{ $quantidadeTipo }} {{ str_repeat('.', 30) }} {{ $intervalo }}
+                    </td>
+                </tr>
+
+            @endforeach
+        </table>
     </div>
+
 
     <div class="assinatura">
         ___________________________<br>
@@ -121,3 +157,4 @@
 
 </body>
 </html>
+
