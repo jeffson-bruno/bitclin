@@ -82,6 +82,14 @@
       @close="mostrarModalReceita = false"
     />
 
+    <ModalAtestado
+      v-if="mostrarModalAtestado"
+      :paciente="pacienteSelecionado"
+      :medico="medico"  
+      @close="mostrarModalAtestado = false"
+    />
+
+
   </div>
 </template>
 
@@ -93,10 +101,12 @@ import { useToast } from '@/Composables/useToast'
 import Toast from '@/Components/Toast.vue'
 import { toastRef } from '@/Composables/useGlobalToast'
 import ModalReceita from '@/Components/ModalReceita.vue'
+import ModalAtestado from '@/Components/ModalAtestado.vue'
 
 const { success, error } = useToast()
 const globalToast = ref(null)
 
+const mostrarModalAtestado = ref(false)
 const mostrarModalReceita = ref(false)
 const pacienteSelecionado = ref(null)
 
@@ -152,7 +162,13 @@ function emitirReceita(paciente) {
   mostrarModalReceita.value = true
 }
 
-function emitirAtestado(paciente) { console.log('Emitir atestado para:', paciente) }
+function emitirAtestado(paciente) {
+  pacienteSelecionado.value = paciente
+  mostrarModalAtestado.value = true
+}
+
 function solicitarExames(paciente) { console.log('Solicitar exames para:', paciente) }
 function criarProntuario(paciente) { console.log('Criar prontuário para:', paciente) }
 </script>
+
+

@@ -23,6 +23,7 @@ use App\Models\User;
 use App\Models\Exame;
 use App\Http\Controllers\Api\CadastroDadosController;
 use App\Http\Controllers\Medico\ChamadaSenhaController;
+use App\Http\Controllers\Medico\AtestadoController;
 
 
 Route::get('/', function () {
@@ -124,6 +125,7 @@ Route::middleware(['auth', 'role:doctor'])->prefix('medico')->name('medico.')->g
     Route::post('/chamar-senha/{paciente_id}', [ChamadaSenhaController::class, 'chamar'])->name('chamar.senha');
 
     Route::post('/gerar-receita', [MedicoController::class, 'gerarReceita'])->name('gerar-receita');
+    Route::post('/gerar-atestado', [AtestadoController::class, 'gerarAtestado'])->name('gerar-atestado');
 
 
 });
