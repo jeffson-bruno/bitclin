@@ -24,6 +24,7 @@ use App\Models\Exame;
 use App\Http\Controllers\Api\CadastroDadosController;
 use App\Http\Controllers\Medico\ChamadaSenhaController;
 use App\Http\Controllers\Medico\AtestadoController;
+use App\Http\Controllers\Medico\ExameController;
 
 
 Route::get('/', function () {
@@ -126,7 +127,7 @@ Route::middleware(['auth', 'role:doctor'])->prefix('medico')->name('medico.')->g
 
     Route::post('/gerar-receita', [MedicoController::class, 'gerarReceita'])->name('gerar-receita');
     Route::post('/gerar-atestado', [AtestadoController::class, 'gerarAtestado'])->name('gerar-atestado');
-
+    Route::post('/gerar-solicitacao-exames', [ExameController::class, 'gerarSolicitacaoExames'])->name('gerar-solicitacao-exames');
 
 });
 
