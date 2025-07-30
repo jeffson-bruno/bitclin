@@ -11,92 +11,71 @@
       </button>
     </div>
 
-    <!-- Lista de Pacientes -->
-    <div class="bg-white p-6 rounded shadow">
-      <h2 class="text-lg font-semibold mb-4">📋 Pacientes Agendados para Hoje</h2>
+    <!-- Cards lado a lado -->
+    <div class="flex flex-col md:flex-row gap-6">
+      <!-- Pacientes Agendados -->
+      <div class="bg-white p-6 rounded shadow flex-1">
+        <h2 class="text-lg font-semibold mb-4">📋 Pacientes Agendados para Hoje</h2>
 
-      <div v-if="pacientes.length">
-        <div
-          v-for="paciente in pacientes"
-          :key="paciente.id"
-          class="border rounded p-4 mb-4 shadow-sm"
-        >
-          <div class="flex justify-between items-center mb-2">
-            <div>
-              <p class="text-lg font-bold">{{ paciente.nome }}</p>
-              <p class="text-sm text-gray-600">
-                Idade: {{ paciente.idade }} |
-                Estado Civil: {{ paciente.estado_civil }} |
-                Data da Consulta: {{ formatarData(paciente.data) }}
-              </p>
-              <p class="text-sm text-gray-500" v-if="paciente.senha">
-                Senha: <span class="font-semibold">{{ paciente.senha }}</span>
-              </p>
-            </div>
+        <div v-if="pacientesAgendados.length">
+          <div
+            v-for="paciente in pacientesAgendados"
+            :key="paciente.id"
+            class="border rounded p-4 mb-4 shadow-sm"
+          >
+            <div class="flex justify-between items-center mb-2">
+              <div>
+                <p class="text-lg font-bold">{{ paciente.nome }}</p>
+                <p class="text-sm text-gray-600">
+                  Idade: {{ paciente.idade }} |
+                  Estado Civil: {{ paciente.estado_civil }} |
+                  Data da Consulta: {{ formatarData(paciente.data) }}
+                </p>
+                <p class="text-sm text-gray-500" v-if="paciente.senha">
+                  Senha: <span class="font-semibold">{{ paciente.senha }}</span>
+                </p>
+              </div>
 
-            <div class="flex gap-2">
-              <button
-                class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
-                @click="chamarSenha(paciente)"
-              >
-                Chamar Senha
-              </button>
-              <button
-                class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm"
-                @click="emitirReceita(paciente)"
-              >
-                Receita
-              </button>
-              <button
-                class="bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1 rounded text-sm"
-                @click="emitirAtestado(paciente)"
-              >
-                Atestado
-              </button>
-              <button
-                class="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded text-sm"
-                @click="solicitarExames(paciente)"
-              >
-                Exames
-              </button>
-              <button
-                class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm"
-                @click="criarProntuario(paciente)"
-              >
-                Prontuário
-              </button>
+              <div class="flex flex-col gap-2">
+                <button
+                  class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
+                  @click="chamarSenha(paciente)"
+                >
+                  Chamar Senha
+                </button>
+                <button
+                  class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm"
+                  @click="iniciarAtendimento(paciente)"
+                >
+                  Iniciar Atendimento
+                </button>
+              </div>
             </div>
           </div>
         </div>
+        <p v-else class="text-gray-500 text-sm">Nenhum paciente agendado para hoje.</p>
       </div>
-      <p v-else class="text-gray-500 text-sm">Nenhum paciente agendado para hoje.</p>
+
+      <!-- Pacientes Atendidos -->
+      <div class="bg-white p-6 rounded shadow flex-1">
+        <h2 class="text-lg font-semibold mb-4">✅ Pacientes Atendidos</h2>
+        <div v-if="pacientesAtendidos.length">
+          <ul class="space-y-2">
+            <li
+              v-for="paciente in pacientesAtendidos"
+              :key="paciente.id"
+              class="text-green-700 font-medium"
+            >
+              {{ paciente.nome }}
+            </li>
+          </ul>
+        </div>
+        <p v-else class="text-gray-500 text-sm">Nenhum paciente atendido ainda.</p>
+      </div>
     </div>
 
     <!-- TOAST VISUAL -->
     <Toast ref="globalToast" />
-
-    <ModalReceita
-      v-if="mostrarModalReceita"
-      :paciente="pacienteSelecionado"
-      :medico="medicoLogado"
-      @close="mostrarModalReceita = false"
-    />
-
-    <ModalAtestado
-      v-if="mostrarModalAtestado"
-      :paciente="pacienteSelecionado"
-      :medico="medico"  
-      @close="mostrarModalAtestado = false"
-    />
-
-    <ModalExame
-      v-if="mostrarModalExame"
-      :paciente="pacienteSelecionado"
-      :medico="medicoLogado"
-      @close="mostrarModalExame = false"
-    />
-
-
   </div>
 </template>
 
@@ -107,49 +86,40 @@ import axios from 'axios'
 import { useToast } from '@/Composables/useToast'
 import Toast from '@/Components/Toast.vue'
 import { toastRef } from '@/Composables/useGlobalToast'
-import ModalReceita from '@/Components/ModalReceita.vue'
-import ModalAtestado from '@/Components/ModalAtestado.vue'
-import ModalExame from '@/Components/ModalExames.vue'
 
 const { success, error } = useToast()
 const globalToast = ref(null)
-
-const mostrarModalAtestado = ref(false)
-const mostrarModalReceita = ref(false)
-const mostrarModalExame = ref(false)
-const pacienteSelecionado = ref(null)
 
 onMounted(() => {
   toastRef.value = globalToast.value
 })
 
-//Chamar senha Paciente
-const chamarSenha = async (paciente) => {
-  try {
-    const response = await axios.post(`/medico/chamar-senha/${paciente.id}`)
-    if (response.data.success) {
-      success(response.data.mensagem)
-    } else {
-      error(response.data.mensagem)
-    }
-  } catch (err) {
-    if (err.response?.status === 403) {
-      error(err.response.data.erro || 'Limite de chamadas atingido.')
-    } else {
-      error('Erro ao chamar a senha.')
-    }
-  }
-}
-
 // Props
-const { pacientes } = defineProps({
-  pacientes: {
+const props = defineProps({
+  pacientesAgendados: {
+    type: Array,
+    default: () => []
+  },
+  pacientesAtendidos: {
     type: Array,
     default: () => []
   }
 })
 
-// Utilitários
+// Ações
+const chamarSenha = async (paciente) => {
+  try {
+    const response = await axios.post(`/medico/chamar-senha/${paciente.id}`)
+    response.data.success ? success(response.data.mensagem) : error(response.data.mensagem)
+  } catch (err) {
+    error(err.response?.data?.erro || 'Erro ao chamar a senha.')
+  }
+}
+
+const iniciarAtendimento = (paciente) => {
+  router.get(`/medico/atendimento/${paciente.id}`)
+}
+
 function formatarData(data) {
   if (!data) return '—'
   const [ano, mes, dia] = data.split('-')
@@ -159,29 +129,5 @@ function formatarData(data) {
 function logout() {
   router.post('/logout')
 }
-
-// Simulando médico logado (em produção, substitua pelos dados reais)
-const medicoLogado = {
-  nome: 'Dcoctor3'
-}
-
-// Ações do médico
-function emitirReceita(paciente) {
-  pacienteSelecionado.value = paciente
-  mostrarModalReceita.value = true
-}
-
-function emitirAtestado(paciente) {
-  pacienteSelecionado.value = paciente
-  mostrarModalAtestado.value = true
-}
-
-function solicitarExames(paciente) {
-  pacienteSelecionado.value = paciente
-  mostrarModalExame.value = true 
-}
-
-function criarProntuario(paciente) { console.log('Criar prontuário para:', paciente) }
 </script>
-
 
