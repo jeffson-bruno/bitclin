@@ -13,12 +13,14 @@ class ExameController extends Controller
     {
         $request->validate([
             'paciente_id' => 'required|exists:pacientes,id',
-            'exames' => 'required|string' // Recebido como JSON string
+            'exames' => 'required|array|min:1',
+            'exames.*' => 'string|required'
         ]);
+
 
         $paciente = Paciente::findOrFail($request->paciente_id);
         $medico = auth()->user();
-        $exames = json_decode($request->exames, true);
+        $exames = $request->input('exames');
         $dataAtual = now()->format('d/m/Y');
 
         $pdf = Pdf::loadView('pdfs.solicitacao-exames', [

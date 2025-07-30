@@ -78,7 +78,8 @@ const props = defineProps({
   medico: Object
 })
 
-const exames = ref(['']) // começa com um campo vazio
+// Lista reativa de exames
+const exames = ref(['']) // começa com um campo
 
 const calcularIdade = (dataNasc) => {
   if (!dataNasc) return '—'
@@ -103,9 +104,9 @@ const gerarPdf = () => {
   const form = document.createElement('form')
   form.method = 'POST'
   form.action = '/medico/gerar-solicitacao-exames'
-  form.target = '_blank'
+  form.target = '_blank' // Abre em nova aba
 
-  // CSRF Token
+  // Token CSRF
   const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
   if (token) {
     const csrf = document.createElement('input')
@@ -115,18 +116,22 @@ const gerarPdf = () => {
     form.appendChild(csrf)
   }
 
-  const campos = {
-    paciente_id: props.paciente.id,
-    exames: JSON.stringify(exames.value),
-  }
+  // Campo paciente_id
+  const pacienteInput = document.createElement('input')
+  pacienteInput.type = 'hidden'
+  pacienteInput.name = 'paciente_id'
+  pacienteInput.value = props.paciente.id
+  form.appendChild(pacienteInput)
 
-  for (const key in campos) {
-    const input = document.createElement('input')
-    input.type = 'hidden'
-    input.name = key
-    input.value = campos[key]
-    form.appendChild(input)
-  }
+  // Campos dos exames (como array[] separado)
+  exames.value.forEach(exame => {
+  const input = document.createElement('input')
+  input.setAttribute('type', 'hidden')
+  input.setAttribute('name', 'exames[]') // com colchetes
+  input.setAttribute('value', exame)
+  form.appendChild(input)
+})
+
 
   document.body.appendChild(form)
   form.submit()
@@ -135,6 +140,7 @@ const gerarPdf = () => {
   emit('close')
 }
 </script>
+
 
 <style scoped>
 .input-form {
