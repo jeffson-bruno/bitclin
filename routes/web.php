@@ -25,6 +25,11 @@ use App\Http\Controllers\Api\CadastroDadosController;
 use App\Http\Controllers\Medico\ChamadaSenhaController;
 use App\Http\Controllers\Medico\AtestadoController;
 use App\Http\Controllers\Medico\ExameController;
+use App\Http\Controllers\Medico\AtendimentoController;
+use App\Http\Controllers\Medico\AnamneseController;
+use App\Http\Controllers\Medico\ProntuarioController;
+
+
 
 
 Route::get('/', function () {
@@ -128,6 +133,12 @@ Route::middleware(['auth', 'role:doctor'])->prefix('medico')->name('medico.')->g
     Route::post('/gerar-receita', [MedicoController::class, 'gerarReceita'])->name('gerar-receita');
     Route::post('/gerar-atestado', [AtestadoController::class, 'gerarAtestado'])->name('gerar-atestado');
     Route::post('/gerar-solicitacao-exames', [ExameController::class, 'gerarSolicitacaoExames'])->name('gerar-solicitacao-exames');
+    Route::post('/salvar-anamnese', [AnamneseController::class, 'store'])->name('salvar-anamnese');
+    Route::get('/atendimento/{paciente}', [AtendimentoController::class, 'atender'])->name('medico.atendimento');
+
+    // Rotas do prontuário
+    Route::post('/salvar-prontuario', [\App\Http\Controllers\Medico\ProntuarioController::class, 'store'])->name('salvar-prontuario');
+    Route::get('/prontuario/{paciente}', [\App\Http\Controllers\Medico\ProntuarioController::class, 'visualizar'])->name('visualizar-prontuario');
 
 });
 
