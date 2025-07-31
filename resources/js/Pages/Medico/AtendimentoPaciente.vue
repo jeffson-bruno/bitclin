@@ -45,6 +45,7 @@
     <ModalAnamnese
       v-if="mostrarModalAnamnese"
       :paciente="paciente"
+      :medico="medico"
       @close="mostrarModalAnamnese = false"
     />
 
@@ -69,11 +70,11 @@
       @close="mostrarModalExame = false"
     />
 
-    <ModalProntuario
+   <!--- <ModalProntuario
       v-if="mostrarModalProntuario"
       :paciente="paciente"
       @close="mostrarModalProntuario = false"
-    />
+    /> --->
   </div>
 </template>
 
@@ -97,13 +98,18 @@ const mostrarModalAnamnese = ref(false)
 const mostrarModalReceita = ref(false)
 const mostrarModalAtestado = ref(false)
 const mostrarModalExame = ref(false)
-const mostrarModalProntuario = ref(false)
+//const mostrarModalProntuario = ref(false)
 
 // Métodos de navegação
 const abrirReceita = () => mostrarModalReceita.value = true
 const abrirAtestado = () => mostrarModalAtestado.value = true
 const abrirExames = () => mostrarModalExame.value = true
-const abrirProntuario = () => mostrarModalProntuario.value = true
+//const abrirProntuario = () => mostrarModalProntuario.value = true
+
+const abrirProntuario = () => {
+  router.get(`/medico/prontuario/${props.paciente.id}`)
+}
+
 
 const finalizarAtendimento = () => {
   // Aqui você pode implementar a lógica de salvar o atendimento ou apenas redirecionar

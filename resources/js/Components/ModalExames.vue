@@ -71,6 +71,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import axios from 'axios'
 
 const emit = defineEmits(['close'])
 const props = defineProps({
@@ -78,8 +79,7 @@ const props = defineProps({
   medico: Object
 })
 
-// Lista reativa de exames
-const exames = ref(['']) // começa com um campo
+const exames = ref([''])
 
 const calcularIdade = (dataNasc) => {
   if (!dataNasc) return '—'
@@ -100,50 +100,58 @@ const removerExame = (index) => {
   exames.value.splice(index, 1)
 }
 
-const gerarPdf = () => {
-  const form = document.createElement('form')
-  form.method = 'POST'
-  form.action = '/medico/gerar-solicitacao-exames'
-  form.target = '_blank' // Abre em nova aba
+const gerarPdf = async () => {
+  try {
+    // Envio do PDF (como já era feito)
+    const form = document.createElement('form')
+    form.method = 'POST'
+    form.action = '/medico/gerar-solicitacao-exames'
+    form.target = '_blank'
 
-  // Token CSRF
-  const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-  if (token) {
-    const csrf = document.createElement('input')
-    csrf.type = 'hidden'
-    csrf.name = '_token'
-    csrf.value = token
-    form.appendChild(csrf)
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+    if (token) {
+      const csrf = document.createElement('input')
+      csrf.type = 'hidden'
+      csrf.name = '_token'
+      csrf.value = token
+      form.appendChild(csrf)
+    }
+
+    const pacienteInput = document.createElement('input')
+    pacienteInput.type = 'hidden'
+    pacienteInput.name = 'paciente_id'
+    pacienteInput.value = props.paciente.id
+    form.appendChild(pacienteInput)
+
+    exames.value.forEach(exame => {
+      const input = document.createElement('input')
+      input.type = 'hidden'
+      input.name = 'exames[]'
+      input.value = exame
+      form.appendChild(input)
+    })
+
+    document.body.appendChild(form)
+    form.submit()
+    document.body.removeChild(form)
+
+    // Envio para o prontuário
+    await axios.post('/medico/salvar-prontuario', {
+      paciente_id: props.paciente.id,
+      medico_id: props.medico.id,
+      data_atendimento: new Date().toISOString().split('T')[0],
+      exames: exames.value,
+      receitas: [],
+      atestados: [],
+    })
+
+    alert('Exames salvos no prontuário com sucesso!')
+    emit('close')
+
+  } catch (error) {
+    console.error(error)
+    alert('Erro ao gerar e salvar a solicitação de exames.')
   }
-
-  // Campo paciente_id
-  const pacienteInput = document.createElement('input')
-  pacienteInput.type = 'hidden'
-  pacienteInput.name = 'paciente_id'
-  pacienteInput.value = props.paciente.id
-  form.appendChild(pacienteInput)
-
-  // Campos dos exames (como array[] separado)
-  exames.value.forEach(exame => {
-  const input = document.createElement('input')
-  input.setAttribute('type', 'hidden')
-  input.setAttribute('name', 'exames[]') // com colchetes
-  input.setAttribute('value', exame)
-  form.appendChild(input)
-})
-
-
-  document.body.appendChild(form)
-  form.submit()
-  document.body.removeChild(form)
-
-  emit('close')
 }
 </script>
 
-
-<style scoped>
-.input-form {
-  @apply w-full rounded border border-gray-300 px-3 py-2 text-sm;
-}
-</style>

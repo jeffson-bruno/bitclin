@@ -61,6 +61,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import axios from 'axios'
 
 const emit = defineEmits(['close'])
 const props = defineProps({
@@ -82,44 +83,66 @@ const calcularIdade = (dataNasc) => {
   return idade
 }
 
-const enviarAtestado = () => {
-  const form = document.createElement('form')
-  form.method = 'POST'
-  form.action = '/medico/gerar-atestado'
-  form.target = '_blank'
+const enviarAtestado = async () => {
+  try {
+    // Enviar o PDF
+    const form = document.createElement('form')
+    form.method = 'POST'
+    form.action = '/medico/gerar-atestado'
+    form.target = '_blank'
 
-  // CSRF Token
-  const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-  if (token) {
-    const csrf = document.createElement('input')
-    csrf.type = 'hidden'
-    csrf.name = '_token'
-    csrf.value = token
-    form.appendChild(csrf)
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+    if (token) {
+      const csrf = document.createElement('input')
+      csrf.type = 'hidden'
+      csrf.name = '_token'
+      csrf.value = token
+      form.appendChild(csrf)
+    }
+
+    const campos = {
+      paciente_id: props.paciente.id,
+      texto: texto.value,
+      cid: cid.value
+    }
+
+    for (const key in campos) {
+      const input = document.createElement('input')
+      input.type = 'hidden'
+      input.name = key
+      input.value = campos[key]
+      form.appendChild(input)
+    }
+
+    document.body.appendChild(form)
+    form.submit()
+    document.body.removeChild(form)
+
+    // Salvar no prontuário
+    await axios.post('/medico/salvar-prontuario', {
+      paciente_id: props.paciente.id,
+      medico_id: props.medico.id,
+      data_atendimento: new Date().toISOString().split('T')[0],
+      atestados: [
+        {
+          texto: texto.value,
+          cid: cid.value
+        }
+      ],
+      receitas: [],
+      exames: [],
+    })
+
+    alert('Atestado salvo no prontuário com sucesso!')
+    emit('close')
+
+  } catch (error) {
+    console.error(error)
+    alert('Erro ao gerar e salvar o atestado.')
   }
-
-  const campos = {
-    paciente_id: props.paciente.id,
-    texto: texto.value,
-    cid: cid.value
-  }
-
-  for (const key in campos) {
-    const input = document.createElement('input')
-    input.type = 'hidden'
-    input.name = key
-    input.value = campos[key]
-    form.appendChild(input)
-  }
-
-  document.body.appendChild(form)
-  form.submit()
-  document.body.removeChild(form)
-
-  emit('close')
 }
-
 </script>
+
 
 <style scoped>
 .input-form {

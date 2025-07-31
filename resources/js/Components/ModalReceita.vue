@@ -142,6 +142,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import axios from 'axios'
 
 const emit = defineEmits(['close'])
 const props = defineProps({
@@ -157,6 +158,7 @@ const medicamentos = ref([
     quantidade: '',
     tipo: '',
     intervaloHoras: '',
+    miligramas: '',
     dosagem: '',
     instrucao: '',
     detalhes: {
@@ -168,20 +170,21 @@ const medicamentos = ref([
   }
 ])
 
-
 const adicionarMedicamento = () => {
   medicamentos.value.push({
     nome: '',
     quantidade: '',
     tipo: '',
     intervaloHoras: '',
+    miligramas: '',
+    dosagem: '',
+    instrucao: '',
     detalhes: {
       gotas: '',
       ml: '',
       comprimidos: '',
       ampolas: ''
-    },
-    vezesPorDia: []
+    }
   })
 }
 
@@ -200,48 +203,61 @@ const calcularIdade = (dataNasc) => {
 
 const prepararMedicamentos = () => {
   return medicamentos.value.map((med) => {
-    let miligramaFormatada = med.miligramas;
+    let miligramaFormatada = med.miligramas
 
     if (med.tipo === 'Líquido' || med.tipo === 'Gotas') {
       if (miligramaFormatada && !miligramaFormatada.toLowerCase().includes('ml')) {
-        miligramaFormatada += ' ml';
+        miligramaFormatada += ' ml'
       }
     } else if (med.tipo === 'Comprimido') {
       if (miligramaFormatada && !miligramaFormatada.toLowerCase().includes('mg')) {
-        miligramaFormatada += ' mg';
+        miligramaFormatada += ' mg'
       }
     }
 
     return {
       ...med,
       mg: miligramaFormatada
-    };
-  });
-};
+    }
+  })
+}
 
 const enviarReceita = async () => {
   try {
+    const dadosMedicamentos = prepararMedicamentos()
+
+    // Gerar PDF
     const response = await axios.post('/medico/gerar-receita', {
       paciente_id: props.paciente.id,
       crm: crm.value,
-      medicamentos: prepararMedicamentos()
-    });
+      medicamentos: dadosMedicamentos
+    })
 
     if (response.data.success) {
-      window.open(response.data.url, '_blank');
-      emit('close');
+      window.open(response.data.url, '_blank')
+
+      // Salvar no prontuário
+      await axios.post('/medico/salvar-prontuario', {
+        paciente_id: props.paciente.id,
+        medico_id: props.medico.id,
+        data_atendimento: new Date().toISOString().split('T')[0],
+        receitas: dadosMedicamentos,
+        exames: [],
+        atestados: []
+      })
+
+      alert('Receita salva no prontuário com sucesso!')
+      emit('close')
     } else {
-      alert('Erro ao salvar a receita');
+      alert('Erro ao salvar a receita.')
     }
   } catch (err) {
-    console.error(err);
-    alert('Erro ao enviar dados da receita.');
+    console.error(err)
+    alert('Erro ao enviar a receita.')
   }
-};
-
-
-
+}
 </script>
+
 
 <style scoped>
 .input-form {

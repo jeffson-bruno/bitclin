@@ -28,7 +28,7 @@
 
           <div>
             <label class="font-semibold">Histórico Médico Progressivo</label>
-            <textarea v-model="form.historico_medico" class="w-full border p-2 rounded" rows="3"></textarea>
+            <textarea v-model="form.historico_progressivo" class="w-full border p-2 rounded" rows="3"></textarea>
           </div>
 
           <div>
@@ -47,14 +47,9 @@
           </div>
         </div>
 
-        <div>
-          <label class="font-semibold">Observações Gerais</label>
-          <textarea v-model="form.observacoes" class="w-full border p-2 rounded" rows="3"></textarea>
-        </div>
-
         <div class="flex justify-end mt-4">
           <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
-            Salvar Anamnese
+            💾 Salvar Anamnese
           </button>
         </div>
       </form>
@@ -68,7 +63,8 @@ import axios from 'axios'
 
 // Props
 const props = defineProps({
-  paciente: Object
+  paciente: Object,
+  medico: Object,
 })
 
 const emit = defineEmits(['close'])
@@ -77,32 +73,34 @@ const emit = defineEmits(['close'])
 const form = ref({
   queixa_principal: '',
   historia_doenca: '',
-  historico_medico: '',
+  historico_progressivo: '',
   historico_familiar: '',
   habitos_vida: '',
   revisao_sistemas: '',
-  observacoes: ''
 })
 
-// Função salvar
+// Salvar anamnese diretamente no prontuário
 const salvarAnamnese = async () => {
   try {
-    const payload = {
+    await axios.post('/medico/salvar-prontuario', {
       paciente_id: props.paciente.id,
-      ...form.value
-    }
+      medico_id: props.medico.id,
+      data_atendimento: new Date().toISOString().split('T')[0], // yyyy-mm-dd
+      ...form.value,
+      receitas: [],
+      exames: [],
+      atestados: [],
+    })
 
-    await axios.post('/medico/salvar-anamnese', payload)
-
-    alert('Anamnese salva com sucesso!')
+    alert('Anamnese salva no prontuário com sucesso!')
     emit('close')
   } catch (error) {
     console.error(error)
-    alert('Erro ao salvar anamnese.')
+    alert('Erro ao salvar anamnese no prontuário.')
   }
 }
 
-// Função auxiliar
+// Calcular idade do paciente
 const calcularIdade = (dataNasc) => {
   if (!dataNasc) return '—'
   const nasc = new Date(dataNasc)
@@ -113,4 +111,3 @@ const calcularIdade = (dataNasc) => {
   return idade
 }
 </script>
-
