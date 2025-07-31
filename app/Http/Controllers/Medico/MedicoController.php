@@ -16,6 +16,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
 
 
+
 class MedicoController extends Controller
 {
     public function index()
@@ -119,6 +120,15 @@ class MedicoController extends Controller
             'receita_id' => $receita->id,
             'url' => asset('storage/receitas/' . $fileName),
         ]);
+    }
+
+    public function finalizarAtendimento(Request $request)
+    {
+        $paciente = Paciente::findOrFail($request->paciente_id);
+        $paciente->status_atendimento = 'atendido';
+        $paciente->save();
+
+        return response()->json(['success' => true]);
     }
 
 

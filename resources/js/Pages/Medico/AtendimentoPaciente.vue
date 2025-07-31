@@ -79,6 +79,7 @@
 </template>
 
 <script setup>
+import axios from 'axios'
 import { router } from '@inertiajs/vue3'
 import { ref } from 'vue'
 import ModalAnamnese from '@/Components/ModalAnamnese.vue'
@@ -111,10 +112,20 @@ const abrirProntuario = () => {
 }
 
 
-const finalizarAtendimento = () => {
-  // Aqui você pode implementar a lógica de salvar o atendimento ou apenas redirecionar
-  router.get('/medico/dashboard')
+const finalizarAtendimento = async () => {
+  try {
+    await axios.post('/medico/finalizar-atendimento', {
+      paciente_id: props.paciente.id
+    })
+
+    alert('Atendimento finalizado com sucesso!')
+    router.get('/medico/dashboard') // Redireciona para o dashboard
+  } catch (error) {
+    console.error(error)
+    alert('Erro ao finalizar atendimento')
+  }
 }
+
 
 const calcularIdade = (dataNasc) => {
   if (!dataNasc) return '—'
