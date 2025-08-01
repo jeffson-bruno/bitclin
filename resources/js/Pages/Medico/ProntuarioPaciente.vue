@@ -1,5 +1,6 @@
 <template>
   <div class="p-8 bg-gray-100 min-h-screen">
+    <!-- Cabeçalho -->
     <div class="mb-6">
       <h1 class="text-3xl font-bold mb-2">📁 Prontuário Médico</h1>
       <div class="bg-white rounded shadow p-4 space-y-1">
@@ -9,42 +10,71 @@
       </div>
     </div>
 
-    <div v-if="Object.keys(prontuariosPorData).length > 0">
+    <!-- Prontuários -->
+    <div v-if="prontuarios.length > 0">
       <div
-        v-for="(lista, data) in prontuariosPorData"
-        :key="data"
-        class="mb-8"
+        v-for="(registro, index) in prontuarios"
+        :key="index"
+        class="bg-white shadow-md rounded-lg p-6 mb-8 border border-gray-300"
       >
-        <h2 class="text-xl font-semibold text-blue-700 mb-4 border-b pb-2">
-          Atendimento em {{ data }}
-        </h2>
+        <!-- Cabeçalho do Atendimento -->
+        <div class="mb-4 border-b pb-2">
+          <h2 class="text-xl font-bold mb-2">📅 Atendimento em {{ formatarData(registro.data_atendimento) }}</h2>
+          <p><strong>Nome:</strong> {{ paciente.nome }}</p>
+          <p><strong>CPF:</strong> {{ paciente.cpf }}</p>
+          <p><strong>Idade:</strong> {{ calcularIdade(paciente.data_nascimento) }} anos</p>
+        </div>
 
-        <div
-          v-for="(item, index) in lista"
-          :key="index"
-          class="bg-white rounded shadow p-6 space-y-2 mb-6 border-l-4 border-blue-500"
-        >
-          <p><strong>Dr(a):</strong> {{ item.medico.name }}</p>
-          <p><strong>Queixa Principal:</strong> {{ item.queixa_principal || '—' }}</p>
-          <p><strong>História da Doença:</strong> {{ item.historia_doenca || '—' }}</p>
-          <p><strong>Histórico Progressivo:</strong> {{ item.historico_progressivo || '—' }}</p>
-          <p><strong>Histórico Familiar:</strong> {{ item.historico_familiar || '—' }}</p>
-          <p><strong>Hábitos de Vida:</strong> {{ item.habitos_vida || '—' }}</p>
-          <p><strong>Revisão de Sistemas:</strong> {{ item.revisao_sistemas || '—' }}</p>
+        <!-- Anamnese -->
+        <div v-if="registro.anamnese" class="mb-6">
+          <h3 class="text-lg font-semibold mb-2 text-blue-700">📝 Anamnese</h3>
+          <p><strong>Queixa Principal:</strong> {{ registro.anamnese.queixa_principal }}</p>
+          <p><strong>História da Doença:</strong> {{ registro.anamnese.historia_doenca }}</p>
+          <p><strong>Histórico Médico Progressivo:</strong> {{ registro.anamnese.historico_progressivo }}</p>
+          <p><strong>Histórico Familiar:</strong> {{ registro.anamnese.historico_familiar }}</p>
+          <p><strong>Hábitos de Vida:</strong> {{ registro.anamnese.habitos_vida }}</p>
+          <p><strong>Revisão de Sistemas:</strong> {{ registro.anamnese.revisao_sistemas }}</p>
+        </div>
 
-          <div class="mt-4">
-            <p><strong>Receitas:</strong> {{ item.receitas?.length || 0 }}</p>
-            <p><strong>Atestados:</strong> {{ item.atestados?.length || 0 }}</p>
-            <p><strong>Exames:</strong> {{ item.exames?.length || 0 }}</p>
-          </div>
+        <!-- Exames -->
+        <div v-if="registro.exames?.length" class="mb-6">
+          <h3 class="text-lg font-semibold mb-2 text-purple-700">🧪 Exames Solicitados</h3>
+          <ul class="list-disc list-inside text-sm">
+            <li v-for="(exame, idx) in registro.exames" :key="idx">{{ exame }}</li>
+          </ul>
+        </div>
+
+        <!-- Receita -->
+        <div v-if="registro.receita?.medicamentos?.length" class="mb-6">
+          <h3 class="text-lg font-semibold mb-2 text-green-700">💊 Receita</h3>
+          <ul class="list-disc list-inside text-sm">
+            <li v-for="(med, idx) in registro.receita.medicamentos" :key="idx">
+              <strong>{{ med.nome }}</strong> - {{ med.mg }} - {{ med.intervaloHoras }}
+              <br />
+              Dosagem:
+              <span v-if="med.tipo === 'Gotas'">{{ med.detalhes.gotas }} gotas</span>
+              <span v-else-if="med.tipo === 'Líquido'">{{ med.detalhes.ml }} ml</span>
+              <span v-else-if="med.tipo === 'Comprimido'">{{ med.detalhes.comprimidos }} comprimidos</span>
+              <span v-else-if="med.tipo === 'Injetável'">{{ med.detalhes.ampolas }} ampolas</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Atestado -->
+        <div v-if="registro.atestado" class="mb-6">
+          <h3 class="text-lg font-semibold mb-2 text-red-700">📄 Atestado</h3>
+          <p class="text-sm whitespace-pre-line">{{ registro.atestado.conteudo }}</p>
+          <p class="text-sm mt-1"><strong>CID(s):</strong> {{ registro.atestado.cids }}</p>
         </div>
       </div>
     </div>
 
+    <!-- Nenhum registro -->
     <div v-else class="text-center text-gray-500 mt-10">
-      Nenhum prontuário encontrado para este paciente.
+      <p class="text-gray-600 italic">Este paciente ainda não possui atendimentos registrados no sistema.</p>
     </div>
 
+    <!-- Botões -->
     <div class="mt-8 flex gap-4">
       <button
         @click="voltar"
@@ -65,10 +95,16 @@
 
 <script setup>
 import { router } from '@inertiajs/vue3'
+import { computed } from 'vue'
 
 const props = defineProps({
   paciente: Object,
   prontuariosPorData: Object
+})
+
+// Converte o objeto de registros agrupados por data em uma lista simples
+const prontuarios = computed(() => {
+  return Object.values(props.prontuariosPorData).flat()
 })
 
 const voltar = () => {
@@ -77,6 +113,7 @@ const voltar = () => {
 
 const gerarPDF = () => {
   alert('🚧 Em breve: Geração de PDF!')
+  // router.get(`/medico/gerar-pdf-prontuario/${props.paciente.id}`)
 }
 
 const calcularIdade = (data) => {
@@ -86,5 +123,11 @@ const calcularIdade = (data) => {
   const m = hoje.getMonth() - nascimento.getMonth()
   if (m < 0 || (m === 0 && hoje.getDate() < nascimento.getDate())) idade--
   return idade
+}
+
+const formatarData = (data) => {
+  if (!data) return '—'
+  const [ano, mes, dia] = data.split('-')
+  return `${dia}/${mes}/${ano}`
 }
 </script>
