@@ -28,27 +28,26 @@ class MedicoController extends Controller
         $hoje = Carbon::today()->toDateString();
 
         // Buscar pacientes com consulta para hoje e médico correspondente
-        $pacientes = Paciente::where('procedimento', 'consulta')
+        $agendados = Paciente::where('procedimento', 'consulta')
             ->where('medico_id', $medicoId)
             ->whereDate('data_consulta', $hoje)
+            ->where('foi_atendido', false)
             ->orderBy('data_consulta')
-            ->get()
-            ->map(function ($p) {
-                return [
-                    'id' => $p->id,
-                    'nome' => $p->nome,
-                    'data_nascimento' => $p->data_nascimento,
-                    'idade' => Carbon::parse($p->data_nascimento)->age,
-                    'estado_civil' => $p->estado_civil,
-                    'data' => $p->data_consulta,
-                    'telefone' => $p->telefone,
-                    'senha' => $p->senha ?? null,
-                ];
-            });
+            ->get();
+
+        $atendidos = Paciente::where('procedimento', 'consulta')
+            ->where('medico_id', $medicoId)
+            ->whereDate('data_consulta', $hoje)
+            ->where('foi_atendido', true)
+            ->orderBy('data_consulta')
+            ->get();
 
         return Inertia::render('Medico/Dashboard', [
-            'pacientes' => $pacientes,
+            'pacientesAgendados' => $agendados,
+            'pacientesAtendidos' => $atendidos,
         ]);
+
+        
     }
 
     public function chamarSenha($senhaId)
@@ -125,11 +124,12 @@ class MedicoController extends Controller
     public function finalizarAtendimento(Request $request)
     {
         $paciente = Paciente::findOrFail($request->paciente_id);
-        $paciente->status_atendimento = 'atendido';
+        $paciente->foi_atendido = true;
         $paciente->save();
 
         return response()->json(['success' => true]);
     }
+
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
