@@ -27,4 +27,10 @@ class Receita extends Model
     {
         return $this->belongsTo(User::class, 'medico_id');
     }
+
+    public function prontuario()
+    {
+        return $this->belongsTo(Prontuario::class);
+    }
+
 }

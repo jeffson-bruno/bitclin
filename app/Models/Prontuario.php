@@ -29,6 +29,8 @@ class Prontuario extends Model
         'exames' => 'array',
     ];
 
+    
+
     public function paciente()
     {
         return $this->belongsTo(Paciente::class);
@@ -38,4 +40,6 @@ class Prontuario extends Model
     {
         return $this->belongsTo(User::class, 'medico_id');
     }
+
+
 }

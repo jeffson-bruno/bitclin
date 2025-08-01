@@ -140,6 +140,8 @@ Route::middleware(['auth', 'role:doctor'])->prefix('medico')->name('medico.')->g
     Route::post('/salvar-prontuario', [\App\Http\Controllers\Medico\ProntuarioController::class, 'store'])->name('salvar-prontuario');
     Route::get('/prontuario/{paciente}', [\App\Http\Controllers\Medico\ProntuarioController::class, 'visualizar'])->name('visualizar-prontuario');
     Route::post('/finalizar-atendimento', [MedicoController::class, 'finalizarAtendimento']);
+    
+    Route::get('/prontuario/{id}/pdf', [ProntuarioController::class, 'gerarPdf']);
 
 });
 

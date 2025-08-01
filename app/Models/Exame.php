@@ -12,7 +12,13 @@ class Exame extends Model
     protected $fillable = ['nome', 'valor', 'turno', 'dias_semana'];
 
     protected $casts = [
-    'dias_semana' => 'array',
-];
+        'dias_semana' => 'array',
+    ];
+
+    public function prontuario()
+    {
+        return $this->belongsTo(Prontuario::class);
+    }
+
 
 }

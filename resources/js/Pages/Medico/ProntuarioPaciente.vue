@@ -1,8 +1,7 @@
 <template>
   <div class="p-8 bg-gray-100 min-h-screen">
-    <!-- Cabeçalho -->
     <div class="mb-6">
-      <h1 class="text-3xl font-bold mb-2">📁 Prontuário Médico</h1>
+      <h1 class="text-3xl font-bold mb-2">📁 Histórico Clínico</h1>
       <div class="bg-white rounded shadow p-4 space-y-1">
         <p><strong>Nome:</strong> {{ paciente.nome }}</p>
         <p><strong>CPF:</strong> {{ paciente.cpf }}</p>
@@ -10,23 +9,23 @@
       </div>
     </div>
 
-    <!-- Prontuários -->
-    <div v-if="prontuarios.length > 0">
+    <!-- Apenas Anamneses -->
+    <div v-if="registrosValidos.length > 0">
       <div
-        v-for="(registro, index) in prontuarios"
+        v-for="(registro, index) in registrosValidos"
         :key="index"
         class="bg-white shadow-md rounded-lg p-6 mb-8 border border-gray-300"
       >
-        <!-- Cabeçalho do Atendimento -->
+
+        <!-- Cabeçalho -->
         <div class="mb-4 border-b pb-2">
-          <h2 class="text-xl font-bold mb-2">📅 Atendimento em {{ formatarData(registro.data_atendimento) }}</h2>
-          <p><strong>Nome:</strong> {{ paciente.nome }}</p>
-          <p><strong>CPF:</strong> {{ paciente.cpf }}</p>
-          <p><strong>Idade:</strong> {{ calcularIdade(paciente.data_nascimento) }} anos</p>
+          <h2 class="text-xl font-bold mb-2">
+            📅 Atendimento em {{ formatarData(registro.data_atendimento) }}
+          </h2>
         </div>
 
         <!-- Anamnese -->
-        <div v-if="registro.anamnese" class="mb-6">
+        <div v-if="registro.anamnese && registro.anamnese.queixa_principal">
           <h3 class="text-lg font-semibold mb-2 text-blue-700">📝 Anamnese</h3>
           <p><strong>Queixa Principal:</strong> {{ registro.anamnese.queixa_principal }}</p>
           <p><strong>História da Doença:</strong> {{ registro.anamnese.historia_doenca }}</p>
@@ -35,58 +34,18 @@
           <p><strong>Hábitos de Vida:</strong> {{ registro.anamnese.habitos_vida }}</p>
           <p><strong>Revisão de Sistemas:</strong> {{ registro.anamnese.revisao_sistemas }}</p>
         </div>
-
-        <!-- Exames -->
-        <div v-if="registro.exames?.length" class="mb-6">
-          <h3 class="text-lg font-semibold mb-2 text-purple-700">🧪 Exames Solicitados</h3>
-          <ul class="list-disc list-inside text-sm">
-            <li v-for="(exame, idx) in registro.exames" :key="idx">{{ exame }}</li>
-          </ul>
-        </div>
-
-        <!-- Receita -->
-        <div v-if="registro.receita?.medicamentos?.length" class="mb-6">
-          <h3 class="text-lg font-semibold mb-2 text-green-700">💊 Receita</h3>
-          <ul class="list-disc list-inside text-sm">
-            <li v-for="(med, idx) in registro.receita.medicamentos" :key="idx">
-              <strong>{{ med.nome }}</strong> - {{ med.mg }} - {{ med.intervaloHoras }}
-              <br />
-              Dosagem:
-              <span v-if="med.tipo === 'Gotas'">{{ med.detalhes.gotas }} gotas</span>
-              <span v-else-if="med.tipo === 'Líquido'">{{ med.detalhes.ml }} ml</span>
-              <span v-else-if="med.tipo === 'Comprimido'">{{ med.detalhes.comprimidos }} comprimidos</span>
-              <span v-else-if="med.tipo === 'Injetável'">{{ med.detalhes.ampolas }} ampolas</span>
-            </li>
-          </ul>
-        </div>
-
-        <!-- Atestado -->
-        <div v-if="registro.atestado" class="mb-6">
-          <h3 class="text-lg font-semibold mb-2 text-red-700">📄 Atestado</h3>
-          <p class="text-sm whitespace-pre-line">{{ registro.atestado.conteudo }}</p>
-          <p class="text-sm mt-1"><strong>CID(s):</strong> {{ registro.atestado.cids }}</p>
-        </div>
       </div>
     </div>
 
-    <!-- Nenhum registro -->
     <div v-else class="text-center text-gray-500 mt-10">
-      <p class="text-gray-600 italic">Este paciente ainda não possui atendimentos registrados no sistema.</p>
+      <p class="italic">Nenhum atendimento registrado ainda.</p>
     </div>
 
-    <!-- Botões -->
     <div class="mt-8 flex gap-4">
-      <button
-        @click="voltar"
-        class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded"
-      >
+      <button @click="voltar" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded">
         🔙 Voltar
       </button>
-
-      <button
-        @click="gerarPDF"
-        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded"
-      >
+      <button @click="gerarPDF" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded">
         📄 Gerar PDF
       </button>
     </div>
@@ -99,22 +58,26 @@ import { computed } from 'vue'
 
 const props = defineProps({
   paciente: Object,
-  prontuariosPorData: Object
+  prontuarios: Array
 })
 
-// Converte o objeto de registros agrupados por data em uma lista simples
-const prontuarios = computed(() => {
-  return Object.values(props.prontuariosPorData).flat()
+const registrosValidos = computed(() => {
+  return props.prontuarios.filter(registro => {
+    return registro.anamnese && registro.anamnese.queixa_principal?.trim()
+  })
 })
+
+
 
 const voltar = () => {
   router.get(`/medico/atendimento/${props.paciente.id}`)
 }
 
 const gerarPDF = () => {
-  alert('🚧 Em breve: Geração de PDF!')
-  // router.get(`/medico/gerar-pdf-prontuario/${props.paciente.id}`)
+  window.open(`/medico/prontuario/${props.paciente.id}/pdf`, '_blank');
+
 }
+
 
 const calcularIdade = (data) => {
   const nascimento = new Date(data)
@@ -126,7 +89,7 @@ const calcularIdade = (data) => {
 }
 
 const formatarData = (data) => {
-  if (!data) return '—'
+  if (!data || typeof data !== 'string' || !data.includes('-')) return '—'
   const [ano, mes, dia] = data.split('-')
   return `${dia}/${mes}/${ano}`
 }

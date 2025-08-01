@@ -7,7 +7,7 @@
         <button @click="abrirAtestado" class="block w-full text-left px-4 py-2 bg-blue-100 hover:bg-blue-200 rounded">📝 Emitir Atestado</button>
         <button @click="abrirExames" class="block w-full text-left px-4 py-2 bg-purple-100 hover:bg-purple-200 rounded">🧪 Solicitar Exames</button>
         <button @click="abrirReceita" class="block w-full text-left px-4 py-2 bg-green-100 hover:bg-green-200 rounded">💊 Emitir Receita</button>
-        <button @click="abrirProntuario" class="block w-full text-left px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded">📁 Prontuário</button>
+        <button @click="abrirProntuario" class="block w-full text-left px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded">📁 Histórico</button>
       </nav>
     </aside>
 

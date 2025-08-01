@@ -7,6 +7,8 @@ use App\Models\Prontuario;
 use App\Models\Paciente;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 
 class ProntuarioController extends Controller
 {
@@ -61,17 +63,54 @@ class ProntuarioController extends Controller
     public function visualizar(Paciente $paciente)
     {
         $prontuarios = Prontuario::where('paciente_id', $paciente->id)
-            ->with('medico')
             ->orderBy('data_atendimento', 'desc')
+            ->get()
+            ->map(function ($p) {
+                return [
+                    'data_atendimento' => \Carbon\Carbon::parse($p->data_atendimento)->format('Y-m-d'),
+                    'anamnese' => [
+                        'queixa_principal' => $p->queixa_principal,
+                        'historia_doenca' => $p->historia_doenca,
+                        'historico_progressivo' => $p->historico_progressivo,
+                        'historico_familiar' => $p->historico_familiar,
+                        'habitos_vida' => $p->habitos_vida,
+                        'revisao_sistemas' => $p->revisao_sistemas,
+                    ],
+                    'receita' => $p->receitas ?? null,      // Pode conter múltiplos medicamentos
+                    'exames' => $p->exames ?? null,          // Array de exames solicitados
+                    'atestados' => $p->atestados ?? null,    // Array de atestados completos (não apenas o primeiro)
+                ];
+            });
+
+        return Inertia::render('Medico/ProntuarioPaciente', [
+            'paciente' => $paciente,
+            'prontuarios' => $prontuarios,
+        ]);
+    }
+
+    public function gerarPdf($id)
+    {
+        $paciente = Paciente::findOrFail($id);
+        
+        // Busca os prontuários agrupados por data
+        $prontuariosPorData = Prontuario::where('paciente_id', $id)
             ->get()
             ->groupBy(function ($item) {
                 return \Carbon\Carbon::parse($item->data_atendimento)->format('d/m/Y');
             });
 
-        return Inertia::render('Medico/ProntuarioPaciente', [
+
+        $pdf = Pdf::loadView('pdfs.historico-clinico', [
             'paciente' => $paciente,
-            'prontuariosPorData' => $prontuarios,
+            'prontuariosPorData' => $prontuariosPorData
         ]);
+
+
+        return $pdf->download('historico_clinico_' . $paciente->nome . '.pdf');
     }
+
+
+
+
 
 }
