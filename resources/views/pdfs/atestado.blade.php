@@ -5,26 +5,28 @@
     <style>
     body {
         font-family: "Times New Roman", Times, serif;
-        margin: 40px;
         font-size: 14px;
         position: relative;
+        margin: 0;
+        padding: 0;
+        position: relative;
+        height: 100%;
     }
 
     .header {
         position: absolute;
-        top: 10px;
+        top: 20px;
         right: 30px;
         z-index: 2;
-    }
-
-    .header img {
-        max-height: 90px;
     }
 
     .header-wave {
         margin-top: -50px;
         margin-left: -50px;
+    }
 
+    .header img {
+        max-height: 90px;
     }
 
 
