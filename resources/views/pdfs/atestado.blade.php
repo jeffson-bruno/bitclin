@@ -60,7 +60,7 @@
     .assinatura hr {
         border: none;
         border-top: 1px solid #000;
-        width: 250px;
+        width: 80px;
         margin: 0 auto;
     }
 

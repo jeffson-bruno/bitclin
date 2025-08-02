@@ -135,12 +135,18 @@ class MedicoController extends Controller
 
     public function finalizarAtendimento(Request $request)
     {
+        $request->validate([
+            'paciente_id' => 'required|exists:pacientes,id',
+        ]);
+
         $paciente = Paciente::findOrFail($request->paciente_id);
         $paciente->foi_atendido = true;
+        $paciente->status_atendimento = 'atendido'; // use se for necessário também
         $paciente->save();
 
         return response()->json(['success' => true]);
     }
+
 
 
 
