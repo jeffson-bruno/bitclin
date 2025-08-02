@@ -11,19 +11,26 @@
         }
 
         .header {
-            text-align: center;
-            margin-bottom: 10px;
+            position: absolute;
+            top: 10px;
+            right: 30px;
+            z-index: 2;
         }
 
         .header img {
-            max-height: 100px;
-            margin-bottom: 5px;
+            max-height: 90px;
+        }
+
+        .header-wave {
+            margin-top: -50px;
+            margin-left: -50px;
+
         }
 
         .title {
             font-size: 20px;
             font-weight: bold;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
             text-align: center;
             text-transform: uppercase;
         }
@@ -74,26 +81,56 @@
             border-bottom: 1px dotted #000;
         }
 
+        .watermark {
+            position: fixed;
+            top: 53%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0.05;
+            z-index: -1;
+        }
+
+        .watermark img {
+            width: 500px;
+        }
+
         .assinatura {
             margin-top: 60px;
             text-align: right;
         }
 
+        .footer-wave {
+            position: fixed;
+            bottom: -47px;
+            left: 0;
+            width: 220%;
+            margin-left: -50%;
+            z-index: -1;
+        }
+
         .footer {
-            position: absolute;
+            position: fixed;
             bottom: 30px;
             left: 0;
             width: 100%;
-            font-size: 11px;
             text-align: center;
-            line-height: 1.4;
+            font-size: 11px;
+            color: #444;
         }
     </style>
 </head>
 <body>
 
+    <div class="watermark">
+        <img src="{{ public_path('images/logo.png') }}" alt="Marca d'água">
+    </div>
+
+    <div class="header-wave">
+        <img src="{{ public_path('images/header-wave.png') }}" width="100%" alt="Onda vermelha">
+    </div>
+
     <div class="header">
-        <img src="{{ public_path('logo-clinica.png') }}" alt="Logo da Clínica">
+        <img src="{{ public_path('images/logo.png') }}" width = "180" alt="Logo da Clínica">
     </div>
 
     <div class="title">Receita Médica</div>
@@ -196,6 +233,10 @@
         Rua Projetada 01, Nº 123, Centro – Cocal-PI<br>
         CEP 64230-000 – Telefone: (86) 9 9907-8090<br>
         @bitclin.oficial | www.bitclin.com.br
+    </div>
+
+    <div class="footer-wave">
+        <img src="{{ public_path('images/footer-wave.png') }}" width="100%" alt="Onda azul">
     </div>
 
 </body>
