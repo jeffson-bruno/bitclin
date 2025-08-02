@@ -5,9 +5,12 @@
     <style>
         body {
             font-family: DejaVu Sans, sans-serif;
-            margin: 30px;
             font-size: 13px;
             position: relative;
+            margin: 0;
+            padding: 0;
+            position: relative;
+            height: 100%;
         }
 
         .header {
