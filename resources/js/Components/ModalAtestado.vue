@@ -133,7 +133,7 @@ const enviarAtestado = async () => {
       exames: [],
     })
 
-    alert('Atestado salvo no prontuário com sucesso!')
+    //alert('Atestado salvo no prontuário com sucesso!')
     emit('close')
 
   } catch (error) {

@@ -83,54 +83,36 @@ class MedicoController extends Controller
     ////////////////////////////////////////////////////////////////////////////////////////
     public function gerarReceita(Request $request)
     {
-        $medicoId = Auth::id();
-
         $request->validate([
             'paciente_id' => 'required|exists:pacientes,id',
             'crm' => 'required|string',
             'medicamentos' => 'required|array',
         ]);
 
+        $medico = auth()->user();
         $paciente = Paciente::findOrFail($request->paciente_id);
-        $medico = \App\Models\User::findOrFail($medicoId);
         $medicamentos = $request->medicamentos;
 
-        // 🔎 Validação básica dos medicamentos
-        foreach ($medicamentos as $index => $med) {
-            if (empty($med['nome']) || !is_string($med['nome'])) {
-                return response()->json(['message' => "Medicamento inválido na posição $index"], 422);
-            }
+        // Salva apenas os dados (sem salvar o PDF)
+    Receita::create([
+        'paciente_id' => $paciente->id,
+        'medico_id' => $medico->id,
+        'crm' => $request->crm,
+        'conteudo' => json_encode($medicamentos),
+        'data_receita' => now(),
+    ]);
 
-            if (!isset($med['tipo']) || !is_string($med['tipo'])) {
-                return response()->json(['message' => "Tipo do medicamento inválido na posição $index"], 422);
-            }
-        }
+        // Gera e retorna o PDF diretamente
+        $pdf = Pdf::loadView('pdfs.receita', [
+            'paciente' => $paciente,
+            'medico' => $medico,
+            'medicamentos' => $medicamentos,
+            'crm' => $request->crm,
+        ])->setPaper('A4', 'portrait');
 
-        $data = now()->format('Y-m-d_H-i-s');
-        $fileName = 'receita_' . $paciente->id . '_' . $data . '.pdf';
-        $crm = $request->crm;
-
-        // 🧾 Gerar PDF
-        $pdf = Pdf::loadView('pdfs.receita', compact('paciente', 'medico', 'medicamentos', 'crm'))
-            ->setPaper('A4', 'portrait')
-            ->setOption('isHtml5ParserEnabled', true)
-            ->setOption('isPhpEnabled', true);
-
-        // 🗃️ Salvar PDF
-        Storage::disk('public')->put('receitas/' . $fileName, $pdf->output());
-
-        // 💾 Criar receita e salvar medicamentos como JSON
-        Receita::create([
-            'paciente_id' => $paciente->id,
-            'medico_id' => $medico->id,
-            'arquivo' => 'receitas/' . $fileName,
-            'crm' => $crm,
-            'data_receita' => now(),
-            'conteudo' => json_encode($medicamentos),
-        ]);
-
-        return response()->json(['message' => 'Receita gerada com sucesso.']);
+        return $pdf->stream('receita.pdf');
     }
+
 
 
     public function finalizarAtendimento(Request $request)

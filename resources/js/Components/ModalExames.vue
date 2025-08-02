@@ -145,7 +145,7 @@ const gerarPdf = async () => {
       atestados: [],
     })
 
-    alert('Exames salvos no prontuário com sucesso!')
+    //alert('Exames salvos no prontuário com sucesso!')
     emit('close')
 
   } catch (error) {

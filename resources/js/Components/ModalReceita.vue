@@ -128,7 +128,7 @@
           <!-- Botão Gerar PDF -->
           <div class="flex justify-end mt-6">
             <button
-              @click="enviarReceita"
+              @click.prevent="enviarReceita"
               class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded"
             >
               Gerar PDF e Salvar
@@ -226,36 +226,40 @@ const enviarReceita = async () => {
   try {
     const dadosMedicamentos = prepararMedicamentos()
 
-    // Gerar PDF
-    const response = await axios.post('/medico/gerar-receita', {
+    // Requisição para gerar PDF
+    const pdfResponse = await axios.post('/medico/gerar-receita', {
       paciente_id: props.paciente.id,
       crm: crm.value,
       medicamentos: dadosMedicamentos
+    }, {
+      responseType: 'blob' // <- IMPORTANTE: PDF como blob
     })
 
-    if (response.data.success) {
-      window.open(response.data.url, '_blank')
+    // Abre o PDF em nova aba
+    const file = new Blob([pdfResponse.data], { type: 'application/pdf' })
+    const fileURL = URL.createObjectURL(file)
+    window.open(fileURL)
 
-      // Salvar no prontuário
-      await axios.post('/medico/salvar-prontuario', {
-        paciente_id: props.paciente.id,
-        medico_id: props.medico.id,
-        data_atendimento: new Date().toISOString().split('T')[0],
-        receitas: dadosMedicamentos,
-        exames: [],
-        atestados: []
-      })
+    // Salvar no prontuário
+    await axios.post('/medico/salvar-prontuario', {
+      paciente_id: props.paciente.id,
+      medico_id: props.medico.id,
+      data_atendimento: new Date().toISOString().split('T')[0],
+      receitas: dadosMedicamentos,
+      exames: [],
+      atestados: []
+    })
 
-      alert('Receita salva no prontuário com sucesso!')
-      emit('close')
-    } else {
-      alert('Erro ao salvar a receita.')
-    }
+    //alert('Receita salva no prontuário com sucesso!')
+    emit('close')
+
   } catch (err) {
     console.error(err)
     alert('Erro ao enviar a receita.')
   }
 }
+
+
 </script>
 
 
