@@ -133,6 +133,11 @@
                                 @if ($frequencia)
                                     – {{ $frequencia }}
                                 @endif
+
+                                @if (!empty($receita['intervaloHoras']))
+                                    – a cada {{ $receita['intervaloHoras'] }} horas
+                                @endif
+
                             @else
                                 {{ $receita }}
                             @endif

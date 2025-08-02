@@ -83,7 +83,7 @@ class MedicoController extends Controller
     ////////////////////////////////////////////////////////////////////////////////////////
     public function gerarReceita(Request $request)
     {
-        $medicoId = Auth::id(); // Pega o ID do médico logado
+        $medicoId = Auth::id();
 
         $request->validate([
             'paciente_id' => 'required|exists:pacientes,id',
@@ -92,34 +92,46 @@ class MedicoController extends Controller
         ]);
 
         $paciente = Paciente::findOrFail($request->paciente_id);
-        $medico = \App\Models\User::findOrFail($medicoId); // Usa o médico logado
+        $medico = \App\Models\User::findOrFail($medicoId);
         $medicamentos = $request->medicamentos;
+
+        // 🔎 Validação básica dos medicamentos
+        foreach ($medicamentos as $index => $med) {
+            if (empty($med['nome']) || !is_string($med['nome'])) {
+                return response()->json(['message' => "Medicamento inválido na posição $index"], 422);
+            }
+
+            if (!isset($med['tipo']) || !is_string($med['tipo'])) {
+                return response()->json(['message' => "Tipo do medicamento inválido na posição $index"], 422);
+            }
+        }
 
         $data = now()->format('Y-m-d_H-i-s');
         $fileName = 'receita_' . $paciente->id . '_' . $data . '.pdf';
-
         $crm = $request->crm;
 
+        // 🧾 Gerar PDF
         $pdf = Pdf::loadView('pdfs.receita', compact('paciente', 'medico', 'medicamentos', 'crm'))
-            ->setPaper('A4', 'portrait');
+            ->setPaper('A4', 'portrait')
+            ->setOption('isHtml5ParserEnabled', true)
+            ->setOption('isPhpEnabled', true);
 
+        // 🗃️ Salvar PDF
         Storage::disk('public')->put('receitas/' . $fileName, $pdf->output());
 
-        $receita = Receita::create([
+        // 💾 Criar receita e salvar medicamentos como JSON
+        Receita::create([
             'paciente_id' => $paciente->id,
             'medico_id' => $medico->id,
             'arquivo' => 'receitas/' . $fileName,
-            'crm' => $request->crm,
-            'data_receita' => now()
+            'crm' => $crm,
+            'data_receita' => now(),
+            'conteudo' => json_encode($medicamentos),
         ]);
 
-
-        return response()->json([
-            'success' => true,
-            'receita_id' => $receita->id,
-            'url' => asset('storage/receitas/' . $fileName),
-        ]);
+        return response()->json(['message' => 'Receita gerada com sucesso.']);
     }
+
 
     public function finalizarAtendimento(Request $request)
     {
