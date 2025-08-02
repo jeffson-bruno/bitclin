@@ -60,24 +60,23 @@
 </div>
 
   <!-- Pacientes Atendidos -->
-  <div class="bg-white p-6 rounded shadow flex-1">
-    <h2 class="text-lg font-semibold mb-4">✅ Pacientes Atendidos</h2>
-    <div
-      v-if="pacientesAtendidos.length"
-      class="max-h-[400px] overflow-y-auto pr-2"
-    >
-      <ul class="space-y-2">
-        <li
-          v-for="paciente in pacientesAtendidos"
-          :key="paciente.id"
-          class="text-green-700 font-medium"
-        >
-          {{ paciente.nome }}
-        </li>
-      </ul>
-    </div>
-    <p v-else class="text-gray-500 text-sm">Nenhum paciente atendido ainda.</p>
+<div class="bg-white p-6 rounded shadow flex-1">
+  <h2 class="text-lg font-semibold mb-4">✅ Pacientes Atendidos</h2>
+  <div v-if="pacientesAtendidos.length" class="max-h-[400px] overflow-y-auto pr-2">
+    <ul class="space-y-2">
+      <li
+        v-for="paciente in pacientesAtendidos"
+        :key="paciente.id"
+        class="text-green-700 font-medium cursor-pointer hover:underline"
+        @click="abrirHistorico(paciente.id)"
+      >
+        {{ paciente.nome }}
+      </li>
+    </ul>
   </div>
+  <p v-else class="text-gray-500 text-sm">Nenhum paciente atendido ainda.</p>
+</div>
+
 </div>
 
 
@@ -133,6 +132,11 @@ function formatarData(data) {
   const [ano, mes, dia] = data.split('-')
   return `${dia}/${mes}/${ano}`
 }
+
+const abrirHistorico = (id) => {
+  router.get(`/medico/prontuario/${id}`)
+}
+
 
 function logout() {
   router.post('/logout')
