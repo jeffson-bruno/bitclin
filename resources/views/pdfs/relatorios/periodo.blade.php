@@ -11,6 +11,14 @@
             position: relative;
         }
 
+        .header {
+            position: absolute;
+            top: 2px;
+            right: 20px;
+            margin-top: -50px;
+            z-index: 2;
+        }
+
         .logo-marca {
             position: absolute;
             top: 40%;
@@ -47,7 +55,11 @@
     </style>
 </head>
 <body>
-    <img class="logo-marca" src="{{ public_path('logo_clinica.png') }}" width="400" alt="Marca d'água">
+    <div class="header">
+        <img src="{{ public_path('images/logo.png') }}" width = "180" alt="Logo da Clínica">
+    </div>
+
+    <img class="logo-marca" src="{{ public_path('images/logo.png') }}" width="400" alt="Marca d'água">
 
     <h1>Relatório Financeiro - {{ ucfirst($periodo) }}</h1>
 
