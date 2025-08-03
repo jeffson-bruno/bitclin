@@ -158,12 +158,12 @@ const pieChartData = {
     <!-- Gráficos -->
     
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10">
-      <div class="bg-white rounded-xl p-6 shadow">
+      <div class="bg-white rounded-md p-3 shadow-sm min-h-[260px]">
         <h2 class="text-xl font-semibold mb-4">Faturamento (últimos 7 dias)</h2>
         <BarChart :chartData="barChartData" :chartOptions="barChartOptions" />
       </div>
 
-      <div class="bg-white rounded-xl p-6 shadow">
+      <div class="bg-white rounded-md p-3 shadow-sm min-h-[150px]">
         <h2 class="text-xl font-semibold mb-4">Lucro vs Despesas (mês atual)</h2>
         <PieChart :chartData="pieChartData" :chartOptions="pieChartOptions" />
       </div>
