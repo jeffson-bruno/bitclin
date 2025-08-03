@@ -19,11 +19,12 @@ watch(openFinanceiro, (val) => localStorage.setItem('openFinanceiro', JSON.strin
     <!-- ============ SIDEBAR ============ -->
     <aside class="w-64 shrink-0 bg-white border-r border-gray-200 flex flex-col">
       <!-- Logo -->
-      <div class="h-16 px-4 flex items-center border-b border-gray-200">
-        <Link :href="route('admin.dashboard')" class="text-xl font-bold text-gray-800">
-          BitClin
+      <div class="h-20 px-4 flex items-center justify-center border-b border-gray-200">
+        <Link :href="route('admin.dashboard')">
+          <img src="/images/bitclin_logo.png" alt="Logo da BitClin" class="h-44" />
         </Link>
       </div>
+
 
       <!-- Menus -->
       <nav class="flex-1 overflow-y-auto p-4 space-y-2 text-sm">
