@@ -45,10 +45,13 @@
 <script setup>
 import { ref, computed, defineProps } from 'vue'
 
+
 const props = defineProps({
   show: Boolean,
   pacientes: Array
 })
+
+
 
 const filtro = ref('')
 
@@ -57,4 +60,6 @@ const pacientesFiltrados = computed(() => {
     p.nome.toLowerCase().includes(filtro.value.toLowerCase())
   )
 })
+
+
 </script>

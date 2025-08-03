@@ -46,12 +46,22 @@ class AdminController extends Controller
                     'hora_fim' => $agenda->hora_fim,
                 ];
             });
+        $diasDaSemana = [
+            'segunda',
+            'terça',
+            'quarta',
+            'quinta',
+            'sexta',
+            'sábado',
+            'domingo'
+        ];
+        $diasNoBanco = ['segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado', 'domingo'];
         // Definir início e fim da semana
         $inicioSemana = Carbon::now()->startOfWeek(); // segunda-feira
         $fimSemana = Carbon::now()->endOfWeek(); // domingo
 
         $examesSemana = Paciente::where('procedimento', 'exame')
-            ->whereBetween('created_at', [$inicioSemana, $fimSemana])
+            ->whereBetween('dia_semana_exame', $diasNoBanco)//('dia_semana_exame', [$inicioSemana, $fimSemana])
             ->count();
 
         // Pacientes para consulta cadastrados hoje
