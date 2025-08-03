@@ -79,42 +79,20 @@ class CadastroDadosController extends Controller
         try {
             Carbon::setLocale('pt_BR');
 
-            // Map com chaves em minúsculo
-            $diasMap = [
-                'domingo' => Carbon::SUNDAY,
-                'segunda' => Carbon::MONDAY,
-                'terça'   => Carbon::TUESDAY,
-                'quarta'  => Carbon::WEDNESDAY,
-                'quinta'  => Carbon::THURSDAY,
-                'sexta'   => Carbon::FRIDAY,
-                'sabado'  => Carbon::SATURDAY,
-            ];
+            $inicioSemana = Carbon::now()->startOfWeek(); // segunda-feira
+            $fimSemana = Carbon::now()->endOfWeek(); // domingo
 
             $pacientes = Paciente::with('exame')
                 ->where('procedimento', 'exame')
+                ->whereBetween('data_exame', [$inicioSemana, $fimSemana])
                 ->get()
-                ->map(function ($p) use ($diasMap) {
-                    $diaSemana = strtolower(trim($p->dia_semana_exame ?? ''));
-
-                    if (!isset($diasMap[$diaSemana])) {
-                        $dataFormatada = 'Não informada';
-                    } else {
-                        $hoje = Carbon::today();
-                        $carbonDia = Carbon::now()->next($diasMap[$diaSemana]);
-
-                        // Garante que seja a próxima ocorrência se o dia for hoje
-                        if ($carbonDia->lt($hoje)) {
-                            $carbonDia->addWeek();
-                        }
-
-                        $dataFormatada = $carbonDia->translatedFormat('d/m/Y – l');
-                    }
-
+                ->map(function ($p) {
                     return [
                         'id' => $p->id,
                         'nome' => $p->nome,
-                        'dia_semana_exame' => ucfirst($diaSemana),
-                        'data' => $dataFormatada,
+                        'data' => $p->data_exame
+                            ? Carbon::parse($p->data_exame)->translatedFormat('d/m/Y – l')
+                            : 'Não informada',
                         'exame' => optional($p->exame)->nome ?? 'Não informado',
                         'turno' => ucfirst($p->turno_exame) ?? '-',
                         'telefone' => $p->telefone,
@@ -127,6 +105,8 @@ class CadastroDadosController extends Controller
             return response()->json(['error' => 'Erro ao buscar exames'], 500);
         }
     }
+
+
 
     public function pacientesConsultaHoje()
     {

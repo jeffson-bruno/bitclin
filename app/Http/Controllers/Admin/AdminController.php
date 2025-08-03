@@ -61,7 +61,7 @@ class AdminController extends Controller
         $fimSemana = Carbon::now()->endOfWeek(); // domingo
 
         $examesSemana = Paciente::where('procedimento', 'exame')
-            ->whereBetween('dia_semana_exame', $diasNoBanco)//('dia_semana_exame', [$inicioSemana, $fimSemana])
+            ->whereBetween('data_exame', [$inicioSemana, $fimSemana])//('dia_semana_exame', [$inicioSemana, $fimSemana])
             ->count();
 
         // Pacientes para consulta cadastrados hoje

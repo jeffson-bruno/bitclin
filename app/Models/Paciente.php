@@ -24,6 +24,7 @@ class Paciente extends Model
     'turno_exame',
     'dia_semana_exame',
     'data_consulta',
+    'data_exame',
 ];
 public function medico()
 {

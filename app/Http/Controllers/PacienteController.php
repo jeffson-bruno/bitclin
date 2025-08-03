@@ -60,6 +60,8 @@ class PacienteController extends Controller
             'data_consulta' => 'nullable|string', // ← corrigido aqui
             'turno_exame' => 'nullable|in:manha,tarde,ambos',
             'dia_semana_exame' => 'nullable|string|max:20',
+            'data_exame' => 'nullable|date',
+
         ]);
 
         if ($validated['pago'] && empty($validated['data_pagamento'])) {
@@ -88,9 +90,7 @@ class PacienteController extends Controller
 
         if ($validated['procedimento'] === 'exame' && !empty($validated['exame_id'])) {
             // Se já existe em $validated, não mexe
-            if (isset($validated['dia_semana_exame']) && $validated['dia_semana_exame']) {
-                // já está pronto, não precisa fazer nada
-            } else {
+            if (empty($validated['dia_semana_exame'])) {
                 // fallback: tenta pegar o primeiro dia do exame
                 $exame = Exame::find($validated['exame_id']);
                 if ($exame && $exame->dias_semana) {
@@ -98,8 +98,17 @@ class PacienteController extends Controller
                     $validated['dia_semana_exame'] = is_array($dias) ? $dias[0] ?? null : null;
                 }
             }
-        }
 
+            // Se o dia da semana foi definido, calcula a data_exame
+            if (!empty($validated['dia_semana_exame'])) {
+                try {
+                    $validated['data_exame'] = getProximaDataExame($validated['dia_semana_exame']);
+                } catch (\Exception $e) {
+                    \Log::error("Erro ao calcular data_exame: " . $e->getMessage());
+                    $validated['data_exame'] = null;
+                }
+            }
+        }
 
 
 
@@ -131,6 +140,8 @@ class PacienteController extends Controller
             'data_pagamento' => 'nullable|required_if:pago,true|date',
             'turno_exame' => 'nullable|in:manha,tarde,ambos',
             'dia_semana_exame' => 'nullable|string|max:20',
+            'data_exame' => 'nullable|date',
+
         ]);
 
         $paciente->update($validated);
