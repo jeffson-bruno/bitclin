@@ -33,5 +33,25 @@ class AtestadoController extends Controller
     return $pdf->stream('atestado.pdf');
 }
 
+public function gerarPdf($paciente_id, $cid, $texto)
+{
+    $texto = urldecode($texto);
+    $cid = urldecode($cid);
+
+    $paciente = \App\Models\Paciente::findOrFail($paciente_id);
+    $medico = auth()->user();
+
+    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdfs.atestado', [
+        'paciente' => $paciente,
+        'medico' => $medico,
+        'texto' => $texto,
+        'cid' => $cid,
+        'data' => now()->format('d/m/Y'),
+    ])->setPaper('a4');
+
+    return $pdf->stream("atestado-{$paciente->nome}.pdf");
+}
+
+
 }
 

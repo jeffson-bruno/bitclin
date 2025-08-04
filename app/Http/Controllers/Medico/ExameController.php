@@ -32,4 +32,23 @@ class ExameController extends Controller
 
         return $pdf->stream('solicitacao-exames.pdf');
     }
+
+    public function gerarPdf($paciente_id, $exames)
+    {
+        $paciente = \App\Models\Paciente::findOrFail($paciente_id);
+        $medico = auth()->user();
+
+        // Converter string separada por vírgula em array
+        $listaExames = explode(',', urldecode($exames));
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdfs.solicitacao-exames', [
+            'paciente' => $paciente,
+            'medico' => $medico,
+            'exames' => $listaExames,
+            'data' => now()->format('d/m/Y'),
+        ])->setPaper('a4');
+
+        return $pdf->stream("solicitacao-exames-{$paciente->nome}.pdf");
+    }
+
 }

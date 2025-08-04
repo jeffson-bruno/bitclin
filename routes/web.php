@@ -128,8 +128,8 @@ Route::middleware(['auth', 'role:doctor'])->prefix('medico')->name('medico.')->g
     Route::post('/chamar-senha/{paciente_id}', [ChamadaSenhaController::class, 'chamar'])->name('chamar.senha');
 
     Route::post('/gerar-receita', [MedicoController::class, 'gerarReceita'])->name('gerar-receita');
-    Route::post('/gerar-atestado', [AtestadoController::class, 'gerarAtestado'])->name('gerar-atestado');
-    Route::post('/gerar-solicitacao-exames', [ExameController::class, 'gerarSolicitacaoExames'])->name('gerar-solicitacao-exames');
+    Route::get('/gerar-atestado/{paciente_id}/{cid}/{texto}', [AtestadoController::class, 'gerarPdf']);
+    Route::get('/gerar-solicitacao-exames/{paciente_id}/{exames}', [ExameController::class, 'gerarPdf'])->name('gerar-solicitacao-exames');
     Route::post('/salvar-anamnese', [AnamneseController::class, 'store'])->name('salvar-anamnese');
     Route::get('/atendimento/{paciente}', [AtendimentoController::class, 'atender'])->name('medico.atendimento');
 

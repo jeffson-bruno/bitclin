@@ -99,43 +99,9 @@ const adicionarExame = () => {
 const removerExame = (index) => {
   exames.value.splice(index, 1)
 }
-
 const gerarPdf = async () => {
   try {
-    // Envio do PDF (como já era feito)
-    const form = document.createElement('form')
-    form.method = 'POST'
-    form.action = '/medico/gerar-solicitacao-exames'
-    form.target = '_blank'
-
-    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-    if (token) {
-      const csrf = document.createElement('input')
-      csrf.type = 'hidden'
-      csrf.name = '_token'
-      csrf.value = token
-      form.appendChild(csrf)
-    }
-
-    const pacienteInput = document.createElement('input')
-    pacienteInput.type = 'hidden'
-    pacienteInput.name = 'paciente_id'
-    pacienteInput.value = props.paciente.id
-    form.appendChild(pacienteInput)
-
-    exames.value.forEach(exame => {
-      const input = document.createElement('input')
-      input.type = 'hidden'
-      input.name = 'exames[]'
-      input.value = exame
-      form.appendChild(input)
-    })
-
-    document.body.appendChild(form)
-    form.submit()
-    document.body.removeChild(form)
-
-    // Envio para o prontuário
+    // Salva no prontuário
     await axios.post('/medico/salvar-prontuario', {
       paciente_id: props.paciente.id,
       medico_id: props.medico.id,
@@ -145,13 +111,18 @@ const gerarPdf = async () => {
       atestados: [],
     })
 
-    //alert('Exames salvos no prontuário com sucesso!')
-    emit('close')
+    // Gera o PDF via GET (corrigido!)
+    const examesFormatados = encodeURIComponent(exames.value.join(','))
+    window.open(`/medico/gerar-solicitacao-exames/${props.paciente.id}/${examesFormatados}`, '_blank')
 
+    emit('close')
   } catch (error) {
     console.error(error)
     alert('Erro ao gerar e salvar a solicitação de exames.')
   }
 }
+
+
+
 </script>
 

@@ -92,7 +92,7 @@ const salvarAnamnese = async () => {
       atestados: [],
     })
 
-    alert('Anamnese salva no prontuário com sucesso!')
+    //alert('Anamnese salva no prontuário com sucesso!')
     emit('close')
   } catch (error) {
     console.error(error)
