@@ -59,7 +59,7 @@
     <div class="header">
         <img src="{{ public_path('images/logo.png') }}" width = "180" alt="Logo da Clínica">
     </div>
-    <img class="logo-marca" src="{{ public_path(''images/logo.png') }}" width="400" alt="Marca d'água">
+    <img class="logo-marca" src="{{ public_path('images/logo.png') }}" width="400" alt="Marca d'água">
 
     <h1>Relatório Financeiro Anual - {{ $ano }}</h1>
 
