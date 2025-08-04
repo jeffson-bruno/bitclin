@@ -288,6 +288,18 @@ class RecepcaoController extends Controller
         return response()->json(['success' => true]);
     }
 
+    public function buscarPaciente(Request $request)
+    {
+        $termo = $request->input('termo');
+
+        $pacientes = Paciente::where('nome', 'like', "%$termo%")
+            ->orderBy('nome')
+            ->get(['id', 'nome']);
+
+        return response()->json($pacientes);
+    }
+
+
 
 
 }

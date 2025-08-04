@@ -38,25 +38,29 @@
 
         <!-- Card - Buscar Prontuário (placeholder) -->
         <div class="bg-white p-6 rounded shadow text-center">
-          <h3 class="text-gray-500 text-sm uppercase mb-4">Buscar Prontuário</h3>
+          <h3 class="text-gray-500 text-sm uppercase mb-4">🔍 Buscar Prontuário</h3>
+            <input
+              type="text"
+              v-model="busca"
+              @input="buscar"
+              placeholder="Digite o nome do paciente"
+              class="border px-3 py-2 rounded w-full mb-4"
+            />
 
-          <p class="text-gray-400 italic">Funcionalidade em desenvolvimento...</p>
+            <ul v-if="resultados.length">
+              <li
+                v-for="paciente in resultados"
+                :key="paciente.id"
+                class="mb-2 text-blue-600 hover:underline cursor-pointer"
+              >
+                <a :href="`/recepcao/historico-clinico/${paciente.id}`" target="_blank">
+                  {{ paciente.nome }}
+                </a>
+              </li>
+            </ul>
 
-          <!-- Código futuro: busca por nome -->
-          <!--
-          <input
-            type="text"
-            v-model="buscaPaciente"
-            placeholder="Digite o nome do paciente"
-            class="w-full p-2 border border-gray-300 rounded mt-4"
-          />
-          <button
-            class="mt-3 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-            @click="buscarProntuario"
-          >
-            Buscar
-          </button>
-          -->
+            <p v-else-if="busca.length > 2" class="text-gray-500">Nenhum paciente encontrado.</p>
+          
         </div>
 
       </div>
@@ -81,9 +85,14 @@ import CardConsultasHoje from '@/Components/CardConsultasHoje.vue' // novo compo
 
 import { ref } from 'vue'
 
+import axios from 'axios'
+
 const showModalHorarios = ref(false)
 const horariosDoDia = ref([])
 const dataSelecionada = ref('')
+
+const busca = ref('')
+const resultados = ref([])
 
 const props = defineProps({
   medicosHoje: {
@@ -96,6 +105,19 @@ const formatarHorario = (horario) => {
   if (!horario) return 'N/D'
   const [hora, minuto] = horario.split(':')
   return `${hora}:${minuto}`
+}
+
+const buscar = async () => {
+  if (busca.value.length < 3) {
+    resultados.value = []
+    return
+  }
+
+  const response = await axios.get('/recepcao/buscar-paciente', {
+    params: { termo: busca.value }
+  })
+
+  resultados.value = response.data
 }
 
 </script>

@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Medico;
 
+use Illuminate\Support\Collection;
 use App\Http\Controllers\Controller;
 use App\Models\Prontuario;
 use App\Models\Paciente;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\View;
 use Inertia\Inertia;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -109,7 +111,22 @@ class ProntuarioController extends Controller
         return $pdf->download('historico_clinico_' . $paciente->nome . '.pdf');
     }
 
+    public function gerarPdfRecepcao($id)
+    {
+        $paciente = Paciente::with('prontuarios')->findOrFail($id);
 
+        // Agrupar prontuários por data
+        $prontuariosPorData = $paciente->prontuarios
+            ->sortByDesc('created_at')
+            ->groupBy(function ($item) {
+                return \Carbon\Carbon::parse($item->created_at)->format('d/m/Y');
+            });
+
+        $pdf = Pdf::loadView('pdfs.historico-clinico', compact('paciente', 'prontuariosPorData'))
+            ->setPaper('a4');
+
+        return $pdf->stream("historico-clinico-{$paciente->nome}.pdf");
+    }
 
 
 

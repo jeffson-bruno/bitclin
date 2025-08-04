@@ -54,6 +54,12 @@ public function scopeExamesSemana($query)
                  ->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
 }
 
+public function prontuarios()
+{
+    return $this->hasMany(Prontuario::class);
+}
+
+
 
 
 }
