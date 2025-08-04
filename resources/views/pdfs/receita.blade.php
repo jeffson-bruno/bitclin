@@ -233,9 +233,8 @@
     </div>
 
     <div class="footer">
-        Rua Projetada 01, Nº 123, Centro – Cocal-PI<br>
-        CEP 64230-000 – Telefone: (86) 9 9907-8090<br>
-        @bitclin.oficial | www.bitclin.com.br
+        R. Areolino de Abreu, 346 – São Pedro – CEP 64235-000 – Cocal - PI<br>
+        Tel: (86) 99918-8366 • @pontoclinico_eulila
     </div>
 
     <div class="footer-wave">

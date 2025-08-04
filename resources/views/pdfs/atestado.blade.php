@@ -152,8 +152,8 @@
 
 
     <div class="footer">
-        Rua das Clínicas, 123 – Centro – CEP 12345-678 – Cidade/UF<br>
-        Tel: (00) 0000-0000 • @clinicaexemplo
+        R. Areolino de Abreu, 346 – São Pedro – CEP 64235-000 – Cocal - PI<br>
+        Tel: (86) 99918-8366 • @pontoclinico_eulila
     </div>
 
     <div class="footer-wave">

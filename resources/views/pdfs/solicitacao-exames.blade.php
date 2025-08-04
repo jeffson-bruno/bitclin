@@ -168,8 +168,8 @@
 
   <!-- Rodapé fixo -->
   <div class="footer">
-    Clínica Santa Esperança - Rua da Saúde, 123 - Centro, Cidade/UF - CEP: 12345-678<br>
-    Tel: (99) 99999-9999 • Instagram: @clinicasantaesperanca
+    R. Areolino de Abreu, 346 – São Pedro – CEP 64235-000 – Cocal - PI<br>
+    Tel: (86) 99918-8366 • @pontoclinico_eulila
   </div>
 
   <div class="footer-wave">
