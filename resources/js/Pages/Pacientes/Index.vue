@@ -53,13 +53,13 @@
                                             Gerar Senha
                                         </button>
 
-                                        <!--Reagendar-->
+                                        <!--Reagendar
                                         <button 
                                           @click="abrirReagendamento(paciente)"
                                         >
                                           🔄
                                         </button>
-
+                                        ------------------>
                                            <!-- Novo: Imprimir Ficha -->
                                         <button @click="imprimirFicha(paciente.id)" title="Imprimir Ficha">
                                             📝
