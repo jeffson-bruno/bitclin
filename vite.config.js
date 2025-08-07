@@ -17,9 +17,14 @@ export default defineConfig({
             },
         }),
     ],
-    server: {
-    hmr: {
-      overlay: false, 
+    build: {
+        outDir: 'public/build',
+        manifest: true,
+        emptyOutDir: true,
     },
-  },
+    server: {
+        hmr: {
+            overlay: false,
+        },
+    },
 });
