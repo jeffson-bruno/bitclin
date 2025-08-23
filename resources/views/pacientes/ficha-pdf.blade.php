@@ -124,6 +124,30 @@
     }
 @endphp
 
+@php
+    // Helpers de formatação para PDF (sem JS)
+    function soDigitos($v) {
+        return preg_replace('/\D+/', '', (string) $v);
+    }
+
+    function formatCPF($v) {
+        $d = soDigitos($v);
+        if (strlen($d) !== 11) return $v;
+        return substr($d,0,3).'.'.substr($d,3,3).'.'.substr($d,6,3).'-'.substr($d,9,2);
+    }
+
+    function formatTelefoneBR($v) {
+        $d = soDigitos($v);
+        if (strlen($d) === 10) { // fixo: (AA) NNNN-NNNN
+            return '('.substr($d,0,2).') '.substr($d,2,4).'-'.substr($d,6,4);
+        } elseif (strlen($d) === 11) { // celular: (AA) NNNNN-NNNN
+            return '('.substr($d,0,2).') '.substr($d,2,5).'-'.substr($d,7,4);
+        }
+        return $v; // mantém como veio se não bater com 10/11
+    }
+@endphp
+
+
 <!-- VIA DO PACIENTE -->
 <div class="via">
     <img src="{{ public_path('images/marca-dagua.png') }}" class="marca-dagua-1" alt="Marca d'água">
@@ -143,14 +167,14 @@
     <table width="100%">
         <tr class="linha">
             <td><strong>Nome:</strong> {{ $paciente->nome }}</td>
-            <td><strong>CPF:</strong> {{ $paciente->cpf }}</td>
+            <td><strong>CPF:</strong> {{ formatCPF($paciente->cpf) }}</td>
             <td><strong>Data de Nascimento:</strong> {{ \Carbon\Carbon::parse($paciente->data_nascimento)->format('d/m/Y') }}</td>
         </tr>
         <tr class="linha espaco"><td colspan="3"></td></tr>
 
         <tr class="linha">
             <td><strong>Estado Civil:</strong> {{ $paciente->estado_civil }}</td>
-            <td><strong>Telefone:</strong> {{ $paciente->telefone }}</td>
+            <td><strong>Telefone:</strong> {{ formatTelefoneBR($paciente->telefone) }}</td>
             <td></td>
         </tr>
         <tr class="linha espaco"><td colspan="3"></td></tr>
@@ -207,14 +231,14 @@
     <table width="100%">
         <tr class="linha">
             <td><strong>Nome:</strong> {{ $paciente->nome }}</td>
-            <td><strong>CPF:</strong> {{ $paciente->cpf }}</td>
+            <td><strong>CPF:</strong> {{ formatCPF($paciente->cpf) }}</td>
             <td><strong>Data de Nascimento:</strong> {{ \Carbon\Carbon::parse($paciente->data_nascimento)->format('d/m/Y') }}</td>
         </tr>
         <tr class="linha espaco"><td colspan="3"></td></tr>
 
         <tr class="linha">
             <td><strong>Estado Civil:</strong> {{ $paciente->estado_civil }}</td>
-            <td><strong>Telefone:</strong> {{ $paciente->telefone }}</td>
+            <td><strong>Telefone:</strong> {{ formatTelefoneBR($paciente->telefone) }}</td>
             <td></td>
         </tr>
         <tr class="linha espaco"><td colspan="3"></td></tr>
