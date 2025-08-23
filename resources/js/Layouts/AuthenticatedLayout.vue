@@ -43,7 +43,7 @@ const isDoctor       = computed(() => roles.includes('doctor'))
           <!-- LOGO -->
           <div class="flex items-center">
             <Link :href="route('dashboard')" class="flex items-center">
-              <ApplicationLogo class="block h-32 w-auto fill-current text-gray-800" />
+              <ApplicationLogo class="block h-24 w-auto fill-current text-gray-800" />
             </Link>
           </div>
 

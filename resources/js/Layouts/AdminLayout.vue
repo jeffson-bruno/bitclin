@@ -21,7 +21,7 @@ watch(openFinanceiro, (val) => localStorage.setItem('openFinanceiro', JSON.strin
       <!-- Logo -->
       <div class="h-20 px-4 flex items-center justify-center border-b border-gray-200">
         <Link :href="route('admin.dashboard')">
-          <img src="/images/bitclin_logo.png" alt="Logo da BitClin" class="h-44" />
+          <img src="/images/marca-dagua.png" alt="Logo da BitClin" class="h-28" />
         </Link>
       </div>
 

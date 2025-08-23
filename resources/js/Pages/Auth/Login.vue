@@ -34,7 +34,7 @@ const submit = () => {
   <div class="min-h-screen flex flex-col items-center justify-center bg-gray-100 px-4">
     <!-- Logo -->
     <div class="mb-2">
-      <img src="/images/bitclin_logo.png" alt="Logo da Clínica" class="h-56" />
+      <img src="/images/marca-dagua.png" alt="Logo da Clínica" class="h-56" />
     </div>
 
     <!-- Formulário -->
