@@ -8,14 +8,19 @@
             font-family: Arial, sans-serif;
             font-size: 12px;
             margin: 0;
-            padding: 20px;
+            padding: 16px;
         }
 
         .via {
             position: relative;
-            margin-bottom: 90px;
-            padding: 40px;
+            margin-bottom: 28px;
+            padding: 28px;
             border: 1px solid #000;
+            page-break-inside: avoid;
+        }
+
+        .via-clinica { 
+            margin-top: -12px;   
         }
 
         .marca-dagua-1,
@@ -64,7 +69,7 @@
         }
 
         .espaco {
-            height: 15px;
+            height: 10px;
         }
 
         .linha td {
@@ -184,7 +189,7 @@
 </div>
 
 <!-- VIA DA CLÍNICA -->
-<div class="via">
+<div class="via via-clinica">
     <img src="{{ public_path('images/marca-dagua.png') }}" class="marca-dagua-2" alt="Marca d'água">
 
     <table class="cabecalho">
