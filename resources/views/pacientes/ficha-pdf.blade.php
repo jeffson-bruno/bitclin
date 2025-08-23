@@ -4,6 +4,28 @@
     <meta charset="UTF-8">
     <title>Ficha de Atendimento</title>
     <style>
+
+        /* Garante que o PDF tenha exatamente o tamanho do papel A4 */
+        @page {
+            size: A4 portrait;
+            margin: 10mm;               /* ajuste de borda */
+        }
+
+        /* Usa milímetros para casar com a página física */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 210mm;               /* largura do A4 */
+            /* */
+        }
+
+        /* Centraliza e mantém o conteúdo dentro da área útil (A4 - margens) */
+        .wrapper-pagina {
+            width: 190mm;               /* 210 - (10mm x 2) de margem @page */
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: Arial, sans-serif;
             font-size: 12px;
@@ -128,6 +150,12 @@
     // Helpers de formatação para PDF
     use Carbon\Carbon;
 
+    function dataBR($data) {
+        if (empty($data)) return '—';
+        try { return Carbon::parse($data)->format('d/m/Y'); }
+        catch (\Throwable $e) { return '—'; }
+    }
+
     function idade($dataNasc) {
         if (empty($dataNasc)) return '—';
         try {
@@ -160,132 +188,141 @@
 
 
 <!-- VIA DO PACIENTE -->
-<div class="via">
-    <img src="{{ public_path('images/marca-dagua.png') }}" class="marca-dagua-1" alt="Marca d'água">
+<div class="wrapper-pagina">
+    <div class="via">
+        <img src="{{ public_path('images/marca-dagua.png') }}" class="marca-dagua-1" alt="Marca d'água">
 
-    <table class="cabecalho">
-        <tr>
-            <td><img src="{{ public_path('images/logo.jpg') }}" class="logo" alt="Logo"></td>
-            <td>
-                <div class="titulo">Ficha de Atendimento</div>
-                <div class="data-impressao">{{ \Carbon\Carbon::now()->format('d/m/Y') }}</div>
-            </td>
-        </tr>
-    </table>
-
-    <div class="subtitulo">Via do Paciente</div>
-
-    <table width="100%">
-        <tr class="linha">
-            <td><strong>Nome:</strong> {{ $paciente->nome }}</td>
-            <td><strong>CPF:</strong> {{ formatCPF($paciente->cpf) }}</td>
-            <td><strong>Idade:</strong> {{ idade($paciente->data_nascimento) }}</td>
-        </tr>
-        <tr class="linha espaco"><td colspan="3"></td></tr>
-
-        <tr class="linha">
-            <td><strong>Estado Civil:</strong> {{ $paciente->estado_civil }}</td>
-            <td><strong>Telefone:</strong> {{ formatTelefoneBR($paciente->telefone) }}</td>
-            <td></td>
-        </tr>
-        <tr class="linha espaco"><td colspan="3"></td></tr>
-
-        <tr class="linha">
-            <td colspan="3"><strong>Endereço:</strong> {{ $paciente->endereco }}</td>
-        </tr>
-        <tr class="linha espaco"><td colspan="3"></td></tr>
-
-        <tr class="linha">
-            <td colspan="3" class="procedimento">Procedimento: {{ $textoProcedimento }}</td>
-        </tr>
-
-        @if ($paciente->procedimento === 'exame')
-            <tr class="linha">
-                <td><strong>Turno:</strong> {{ ucfirst($paciente->turno_exame) }}</td>
-                <td><strong>Dia da Semana:</strong>
-                    @php
-                        $dias = is_array(json_decode($paciente->dia_semana_exame))
-                            ? json_decode($paciente->dia_semana_exame)
-                            : [$paciente->dia_semana_exame];
-                    @endphp
-
-                    {{ implode(', ', array_map(fn($d) => ucfirst($d), $dias)) }}
+        <table class="cabecalho">
+            <tr>
+                <td><img src="{{ public_path('images/logo.jpg') }}" class="logo" alt="Logo"></td>
+                <td>
+                    <div class="titulo">Ficha de Atendimento</div>
+                    <div class="data-impressao">{{ \Carbon\Carbon::now()->format('d/m/Y') }}</div>
                 </td>
-
-                <td></td>
             </tr>
-        @endif
-    </table>
+        </table>
 
-    <div class="rodape">
-        Rua das Clínicas, 123 - Bairro Saúde - São Paulo/SP - CEP: 01234-567<br>
-        (11) 91234-5678 | @clinica.exemplo
-    </div>
-</div>
+        <div class="subtitulo">Via do Paciente</div>
 
-<!-- VIA DA CLÍNICA -->
-<div class="via via-clinica">
-    <img src="{{ public_path('images/marca-dagua.png') }}" class="marca-dagua-2" alt="Marca d'água">
-
-    <table class="cabecalho">
-        <tr>
-            <td><img src="{{ public_path('images/logo.jpg') }}" class="logo" alt="Logo"></td>
-            <td>
-                <div class="titulo">Ficha de Atendimento</div>
-                <div class="data-impressao">{{ \Carbon\Carbon::now()->format('d/m/Y') }}</div>
-            </td>
-        </tr>
-    </table>
-
-    <div class="subtitulo">Via da Clínica</div>
-
-    <table width="100%">
-        <tr class="linha">
-            <td><strong>Nome:</strong> {{ $paciente->nome }}</td>
-            <td><strong>CPF:</strong> {{ formatCPF($paciente->cpf) }}</td>
-            <td><strong>Idade:</strong> {{ idade($paciente->data_nascimento) }}</td>
-        </tr>
-        <tr class="linha espaco"><td colspan="3"></td></tr>
-
-        <tr class="linha">
-            <td><strong>Estado Civil:</strong> {{ $paciente->estado_civil }}</td>
-            <td><strong>Telefone:</strong> {{ formatTelefoneBR($paciente->telefone) }}</td>
-            <td></td>
-        </tr>
-        <tr class="linha espaco"><td colspan="3"></td></tr>
-
-        <tr class="linha">
-            <td colspan="3"><strong>Endereço:</strong> {{ $paciente->endereco }}</td>
-        </tr>
-        <tr class="linha espaco"><td colspan="3"></td></tr>
-
-        <tr class="linha">
-            <td colspan="3" class="procedimento">Procedimento: {{ $textoProcedimento }}</td>
-        </tr>
-
-        @if ($paciente->procedimento === 'exame')
+        <table width="100%">
             <tr class="linha">
-                <td><strong>Turno:</strong> {{ ucfirst($paciente->turno_exame) }}</td>
-                <td><strong>Dia da Semana:</strong> {{ ucfirst($paciente->dia_semana_exame) }}</td>
+                <td><strong>Nome:</strong> {{ $paciente->nome }}</td>
+                <td><strong>CPF:</strong> {{ formatCPF($paciente->cpf) }}</td>
+                <td>
+                    <strong>Dat.Nasc.:</strong> {{ dataBR($paciente->data_nascimento) }}
+                    &nbsp;—&nbsp;
+                    <strong>Idade:</strong> {{ idade($paciente->data_nascimento) }}
+                </td>
+            </tr>
+            <tr class="linha espaco"><td colspan="3"></td></tr>
+
+            <tr class="linha">
+                <td><strong>Estado Civil:</strong> {{ $paciente->estado_civil }}</td>
+                <td><strong>Telefone:</strong> {{ formatTelefoneBR($paciente->telefone) }}</td>
                 <td></td>
             </tr>
-        @endif
+            <tr class="linha espaco"><td colspan="3"></td></tr>
 
-        <tr class="linha">
-            <td colspan="3">
-                <strong>Valor:</strong> R$ {{ number_format($paciente->preco, 2, ',', '.') }} - 
-                <strong>Status:</strong> {{ $status }}
-            </td>
-        </tr>
-    </table>
+            <tr class="linha">
+                <td colspan="3"><strong>Endereço:</strong> {{ $paciente->endereco }}</td>
+            </tr>
+            <tr class="linha espaco"><td colspan="3"></td></tr>
 
-    <div class="rodape">
-        Rua das Clínicas, 123 - Bairro Saúde - São Paulo/SP - CEP: 01234-567<br>
-        (11) 91234-5678 | @clinica.exemplo
+            <tr class="linha">
+                <td colspan="3" class="procedimento">Procedimento: {{ $textoProcedimento }}</td>
+            </tr>
+
+            @if ($paciente->procedimento === 'exame')
+                <tr class="linha">
+                    <td><strong>Turno:</strong> {{ ucfirst($paciente->turno_exame) }}</td>
+                    <td><strong>Dia da Semana:</strong>
+                        @php
+                            $dias = is_array(json_decode($paciente->dia_semana_exame))
+                                ? json_decode($paciente->dia_semana_exame)
+                                : [$paciente->dia_semana_exame];
+                        @endphp
+
+                        {{ implode(', ', array_map(fn($d) => ucfirst($d), $dias)) }}
+                    </td>
+
+                    <td></td>
+                </tr>
+            @endif
+        </table>
+
+        <div class="rodape">
+            R. Aristides de Abreu, 396 – São bernardo – CEP 61285-700 – São Paulo - SP<br>
+            Tel: (11) 99999-8100 • @clinica_medica
+        </div>
     </div>
+
+    <!-- VIA DA CLÍNICA -->
+    <div class="via">
+        <img src="{{ public_path('images/marca-dagua.png') }}" class="marca-dagua-2" alt="Marca d'água">
+
+        <table class="cabecalho">
+            <tr>
+                <td><img src="{{ public_path('images/logo.jpg') }}" class="logo" alt="Logo"></td>
+                <td>
+                    <div class="titulo">Ficha de Atendimento</div>
+                    <div class="data-impressao">{{ \Carbon\Carbon::now()->format('d/m/Y') }}</div>
+                </td>
+            </tr>
+        </table>
+
+        <div class="subtitulo">Via da Clínica</div>
+
+        <table width="100%">
+            <tr class="linha">
+                <td><strong>Nome:</strong> {{ $paciente->nome }}</td>
+                <td><strong>CPF:</strong> {{ formatCPF($paciente->cpf) }}</td>
+                <td>
+                    <strong>Dat.Nasc.:</strong> {{ dataBR($paciente->data_nascimento) }}
+                    &nbsp;—&nbsp;
+                    <strong>Idade:</strong> {{ idade($paciente->data_nascimento) }}
+                </td>
+            </tr>
+            <tr class="linha espaco"><td colspan="3"></td></tr>
+
+            <tr class="linha">
+                <td><strong>Estado Civil:</strong> {{ $paciente->estado_civil }}</td>
+                <td><strong>Telefone:</strong> {{ formatTelefoneBR($paciente->telefone) }}</td>
+                <td></td>
+            </tr>
+            <tr class="linha espaco"><td colspan="3"></td></tr>
+
+            <tr class="linha">
+                <td colspan="3"><strong>Endereço:</strong> {{ $paciente->endereco }}</td>
+            </tr>
+            <tr class="linha espaco"><td colspan="3"></td></tr>
+
+            <tr class="linha">
+                <td colspan="3" class="procedimento">Procedimento: {{ $textoProcedimento }}</td>
+            </tr>
+
+            @if ($paciente->procedimento === 'exame')
+                <tr class="linha">
+                    <td><strong>Turno:</strong> {{ ucfirst($paciente->turno_exame) }}</td>
+                    <td><strong>Dia da Semana:</strong> {{ ucfirst($paciente->dia_semana_exame) }}</td>
+                    <td></td>
+                </tr>
+            @endif
+
+            <tr class="linha">
+                <td colspan="3">
+                    <strong>Valor:</strong> R$ {{ number_format($paciente->preco, 2, ',', '.') }} - 
+                    <strong>Status:</strong> {{ $status }}
+                </td>
+            </tr>
+        </table>
+
+        <div class="rodape">
+            R. Aristides de Abreu, 396 – São bernardo – CEP 61285-700 – São Paulo - SP<br>
+            Tel: (11) 99999-8100 • @clinica_medica
+        </div>
+    </div>
+
 </div>
-
-
 
 </body>
 </html>
