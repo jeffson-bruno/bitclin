@@ -125,7 +125,18 @@
 @endphp
 
 @php
-    // Helpers de formatação para PDF (sem JS)
+    // Helpers de formatação para PDF
+    use Carbon\Carbon;
+
+    function idade($dataNasc) {
+        if (empty($dataNasc)) return '—';
+        try {
+            return Carbon::parse($dataNasc)->age . ' anos';
+        } catch (\Exception $e) {
+            return '—';
+        }
+    }
+
     function soDigitos($v) {
         return preg_replace('/\D+/', '', (string) $v);
     }
@@ -168,7 +179,7 @@
         <tr class="linha">
             <td><strong>Nome:</strong> {{ $paciente->nome }}</td>
             <td><strong>CPF:</strong> {{ formatCPF($paciente->cpf) }}</td>
-            <td><strong>Data de Nascimento:</strong> {{ \Carbon\Carbon::parse($paciente->data_nascimento)->format('d/m/Y') }}</td>
+            <td><strong>Idade:</strong> {{ idade($paciente->data_nascimento) }}</td>
         </tr>
         <tr class="linha espaco"><td colspan="3"></td></tr>
 
@@ -232,7 +243,7 @@
         <tr class="linha">
             <td><strong>Nome:</strong> {{ $paciente->nome }}</td>
             <td><strong>CPF:</strong> {{ formatCPF($paciente->cpf) }}</td>
-            <td><strong>Data de Nascimento:</strong> {{ \Carbon\Carbon::parse($paciente->data_nascimento)->format('d/m/Y') }}</td>
+            <td><strong>Idade:</strong> {{ idade($paciente->data_nascimento) }}</td>
         </tr>
         <tr class="linha espaco"><td colspan="3"></td></tr>
 
