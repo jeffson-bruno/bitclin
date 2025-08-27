@@ -61,7 +61,7 @@ class PacienteController extends Controller
             'turno_exame' => 'nullable|in:manha,tarde,ambos',
             'dia_semana_exame' => 'nullable|string|max:20',
             'data_exame' => 'nullable|date',
-
+            'profissao' => 'nullable|string|max:120',
         ]);
 
         if ($validated['pago'] && empty($validated['data_pagamento'])) {

@@ -111,6 +111,15 @@
             <!-- Coluna Direita -->
             
             <div class="space-y-4">
+            
+              <!-- Profissão (novo campo) -->
+              <div>
+                <label class="block font-medium">Profissão</label>
+                <input type="text"
+                      v-model="paciente.profissao"
+                      placeholder="Ex.: Professor(a), Pedreiro, Doméstica"
+                      class="mt-1 w-full rounded border-gray-300" />
+              </div>
 
             <!-- Procedimento -->
               <div>
@@ -157,25 +166,16 @@
                       {{ exame.nome }}
                     </option>
                   </select>
+                  <div v-if="exameSelecionado" class="text-sm mt-2">
+                    Exame selecionado: {{ exameSelecionado.nome }}
+                  </div>
                 </div>
               </div>
 
-              <!-- Turno do exame -->
-              <div v-if="form.procedimento === 'exame' && exameSelecionado">
+              <!-- Turno do exame: só mostra o SELECT se o exame oferece ambos os turnos -->
+              <div v-if="form.procedimento === 'exame' && exameInfo && exameInfo.turno === 'ambos'">
                 <label class="block font-medium">Turno</label>
-
-                <!-- Exibir texto se turno for fixo -->
-                <input
-                  v-if="exameSelecionado.turno !== 'ambos'"
-                  type="text"
-                  class="mt-1 w-full rounded border-gray-300 bg-gray-100"
-                  :value="exameSelecionado.turno === 'manha' ? 'Manhã' : 'Tarde'"
-                  disabled
-                />
-
-                <!-- Exibir select se for ambos -->
                 <select
-                  v-else
                   v-model="form.turno_exame"
                   class="mt-1 w-full rounded border-gray-300"
                   required
@@ -185,6 +185,7 @@
                   <option value="tarde">Tarde</option>
                 </select>
               </div>
+
 
               <!-- Dia da Semana para Exame -->
               <div v-if="form.procedimento === 'exame' && diasPermitidosExame.length">
@@ -271,24 +272,15 @@
 
 <script setup>
 import axios from 'axios'
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { router, usePage } from '@inertiajs/vue3'
-import {
-  mascaraCPF,
-  mascaraTelefone,
-  mascaraData
-} from '@/utils/masks'
+import { mascaraCPF, mascaraTelefone, mascaraData } from '@/utils/masks'
 
+const exameInfo = ref(null) // { turno: 'manha'|'tarde'|'ambos', dias_semana: [...], preco: ... }
 // Props recebidas
 const props = defineProps({
-  medicos: {
-    type: Array,
-    default: () => [],
-  },
-  exames: {
-    type: Array,
-    default: () => [],
-  },
+  medicos: { type: Array, default: () => [] },
+  exames:  { type: Array, default: () => [] },
 })
 
 // Usuário logado
@@ -300,8 +292,8 @@ const emit = defineEmits(['close'])
 const isVisible = ref(true)
 const msgSucesso = ref(false)
 
-// Formulário
-const form = ref({
+// Estado base do formulário
+const formDefaults = () => ({
   nome: '',
   cpf: '',
   telefone: '',
@@ -319,96 +311,147 @@ const form = ref({
   turno_exame: '',
   dia_semana_exame: '',
   data_exame: '',
+  profissao: '',
+})
+
+const form = ref(formDefaults())
+
+const exameSelecionado = computed(() => {
+  const id = Number(form.value.exame_id)
+  if (!id) return null
+  return props.exames.find(e => Number(e.id) === id) || null
+})
+
+
+// 🔁 Alias de compatibilidade: permite usar `paciente.*` no template apontando para `form.*`
+const paciente = computed({
+  get: () => form.value,
+  set: (v) => { form.value = { ...form.value, ...(v || {}) } },
+})
+
+// Máscaras nos inputs (use @input no template)
+function onCPFInput(e)      { form.value.cpf = mascaraCPF(e.target.value || '') }
+function onTelefoneInput(e) { form.value.telefone = mascaraTelefone(e.target.value || '') }
+function onDataNascInput(e) { form.value.data_nascimento = mascaraData(e.target.value || '') }
+
+// 🔄 Reset quando troca o procedimento
+watch(() => form.value.procedimento, (p) => {
+  if (p === 'consulta') {
+    form.value.exame_id = null
+    form.value.turno_exame = ''
+    form.value.dia_semana_exame = ''
+    form.value.data_exame = ''
+    diasPermitidosExame.value = []
+  } else if (p === 'exame') {
+    form.value.medico_id = null
+    form.value.data_consulta = ''
+    agendaDisponivel.value = []
+  }
 })
 
 // 🔄 Watch para seleção de médico em consultas
-watch(() => form.value.medico_id, (medicoId) => {
-  if (form.value.procedimento === 'consulta' && medicoId) {
-    axios.get(`/cadastro/agenda-medica/medico/${medicoId}/dias`).then(response => {
-      agendaDisponivel.value = response.data
-    })
+watch(() => form.value.medico_id, async (medicoId) => {
+  if (form.value.procedimento !== 'consulta') return
+  if (!medicoId) { agendaDisponivel.value = []; form.value.preco = ''; return }
 
-    axios.get(`/cadastro/agenda-medica/medico/${medicoId}/preco`)
-      .then(response => {
-        form.value.preco = response.data.preco
-      })
-      .catch(() => {
-        form.value.preco = ''
-      })
+  try {
+    const [dias, preco] = await Promise.all([
+      axios.get(`/cadastro/agenda-medica/medico/${medicoId}/dias`),
+      axios.get(`/cadastro/agenda-medica/medico/${medicoId}/preco`)
+    ])
+    agendaDisponivel.value = dias.data || []
+    form.value.preco = preco.data?.preco ?? ''
+  } catch {
+    agendaDisponivel.value = []
+    form.value.preco = ''
   }
 })
 
 // 🔄 Watch para seleção de exame
-watch(() => form.value.exame_id, (exameId) => {
-  if (form.value.procedimento === 'exame' && exameId) {
-    axios.get(`/cadastro/exames/${exameId}/info`).then(response => {
-      form.value.preco = response.data.preco
+watch(() => form.value.exame_id, async (exameId) => {
+  if (form.value.procedimento !== 'exame') return
 
-      // Corrigir turno
-      if (response.data.turno === 'manha' || response.data.turno === 'tarde') {
-        form.value.turno_exame = response.data.turno
-      } else {
-        form.value.turno_exame = ''
-      }
+  if (!exameId) {
+    form.value.preco = ''
+    form.value.turno_exame = ''
+    diasPermitidosExame.value = []
+    exameInfo.value = null
+    return
+  }
 
-      // Corrigir dias da semana
-      try {
-        diasPermitidosExame.value = Array.isArray(response.data.dias_semana)
-          ? response.data.dias_semana
-          : JSON.parse(response.data.dias_semana || '[]')
-      } catch (e) {
-        diasPermitidosExame.value = []
-      }
-    })
+  try {
+    const { data } = await axios.get(`/cadastro/exames/${exameId}/info`)
+
+    // Preço
+    form.value.preco = data?.preco ?? ''
+
+    // Turno vindo do cadastro do exame
+    exameInfo.value = {
+      turno: data?.turno || '', // 'manha' | 'tarde' | 'ambos'
+      dias_semana: (() => {
+        try {
+          return Array.isArray(data?.dias_semana)
+            ? data.dias_semana
+            : JSON.parse(data?.dias_semana || '[]')
+        } catch { return [] }
+      })()
+    }
+
+    // Se o exame tem turno fixo, já define no form; se for "ambos", exige escolha do usuário
+    if (exameInfo.value.turno === 'manha' || exameInfo.value.turno === 'tarde') {
+      form.value.turno_exame = exameInfo.value.turno
+    } else if (exameInfo.value.turno === 'ambos') {
+      form.value.turno_exame = '' // força selecionar no select
+    } else {
+      form.value.turno_exame = ''
+    }
+
+    diasPermitidosExame.value = exameInfo.value.dias_semana
+  } catch {
+    form.value.preco = ''
+    form.value.turno_exame = ''
+    diasPermitidosExame.value = []
+    exameInfo.value = null
   }
 })
+
 
 // Fecha a modal
 function fecharModal() {
   isVisible.value = false
-  setTimeout(() => {
-    emit('close')
-  }, 300)
+  setTimeout(() => emit('close'), 300)
 }
 
 // Envio do formulário
 function submit() {
   const dadosParaEnviar = { ...form.value }
-  dadosParaEnviar.cpf = dadosParaEnviar.cpf.replace(/\D/g, '')
-  dadosParaEnviar.telefone = dadosParaEnviar.telefone.replace(/\D/g, '')
 
-  // Converte datas
-  if (dadosParaEnviar.data_pagamento && dadosParaEnviar.data_pagamento.includes('/')) {
-    const dp = dadosParaEnviar.data_pagamento.split('/')
-    if (dp.length === 3) {
-      dadosParaEnviar.data_pagamento = `${dp[2]}-${dp[1]}-${dp[0]}`
-    }
-  }
+  // Remove máscaras
+  dadosParaEnviar.cpf = (dadosParaEnviar.cpf || '').replace(/\D/g, '')
+  dadosParaEnviar.telefone = (dadosParaEnviar.telefone || '').replace(/\D/g, '')
 
-  if (dadosParaEnviar.data_nascimento && dadosParaEnviar.data_nascimento.includes('/')) {
-    const dn = dadosParaEnviar.data_nascimento.split('/')
-    if (dn.length === 3) {
-      dadosParaEnviar.data_nascimento = `${dn[2]}-${dn[1]}-${dn[0]}`
-    }
+  // Converte dd/mm/aaaa -> aaaa-mm-dd (se vier mascarado)
+  const toISO = (br) => {
+    if (!br || typeof br !== 'string' || !br.includes('/')) return br
+    const [d, m, a] = br.split('/')
+    return (d && m && a) ? `${a}-${m}-${d}` : br
   }
+  dadosParaEnviar.data_pagamento   = toISO(dadosParaEnviar.data_pagamento)
+  dadosParaEnviar.data_nascimento  = toISO(dadosParaEnviar.data_nascimento)
 
   router.post('/pacientes', dadosParaEnviar, {
     onSuccess: () => {
       window.$toast?.('Paciente salvo com sucesso!')
-      setTimeout(() => {
-        fecharModal()
-        router.visit('/pacientes')
-      }, 900)
+      setTimeout(() => { fecharModal(); router.visit('/pacientes') }, 900)
     },
     onError: (errors) => {
       console.error('Erro ao salvar:', errors)
+      window.$toast?.('Corrija os campos destacados.')
     }
   })
 }
+
 </script>
-
-
-
 
 
 <style>

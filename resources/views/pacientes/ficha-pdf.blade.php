@@ -184,6 +184,11 @@
         }
         return $v; // mantém como veio se não bater com 10/11
     }
+
+    function valor($v) {
+        $v = trim((string) $v);
+        return $v !== '' ? $v : '—';
+    }
 @endphp
 
 
@@ -219,7 +224,7 @@
             <tr class="linha">
                 <td><strong>Estado Civil:</strong> {{ $paciente->estado_civil }}</td>
                 <td><strong>Telefone:</strong> {{ formatTelefoneBR($paciente->telefone) }}</td>
-                <td></td>
+                <td><strong>Profissão:</strong> {{ valor($paciente->profissao) }}</td>
             </tr>
             <tr class="linha espaco"><td colspan="3"></td></tr>
 
@@ -287,7 +292,7 @@
             <tr class="linha">
                 <td><strong>Estado Civil:</strong> {{ $paciente->estado_civil }}</td>
                 <td><strong>Telefone:</strong> {{ formatTelefoneBR($paciente->telefone) }}</td>
-                <td></td>
+                <td><strong>Profissão:</strong> {{ valor($paciente->profissao) }}</td>
             </tr>
             <tr class="linha espaco"><td colspan="3"></td></tr>
 

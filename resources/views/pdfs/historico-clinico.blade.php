@@ -68,35 +68,54 @@
         <div class="divider"></div>
         <h2>Atendimento em {{ $data }}</h2>
 
-        @if ($registro->queixa_principal || $registro->historia_doenca || $registro->historico_progressivo)
+        @php
+            $an = isset($registro->anamnese) && (is_array($registro->anamnese) || is_object($registro->anamnese))
+                ? (object) $registro->anamnese
+                : $registro;
+        @endphp
+
+        @if (
+            !empty($an->queixa_principal) ||
+            !empty($an->historia_doenca) ||
+            !empty($an->historico_progressivo) ||
+            !empty($an->historico_familiar) ||
+            !empty($an->habitos_vida) ||
+            !empty($an->revisao_sistemas) ||
+            !empty($an->outras_observacoes) ||
+            !empty($an->resumo)
+        )
             <div class="section">
                 <h3>Anamnese</h3>
 
-                @if ($registro->queixa_principal)
-                    <p><strong>Queixa Principal:</strong> {{ $registro->queixa_principal }}</p>
+                @if (!empty($an->queixa_principal))
+                    <p><strong>Queixa Principal:</strong> {{ $an->queixa_principal }}</p>
+                @endif
+                @if (!empty($an->historia_doenca))
+                    <p><strong>História da Doença:</strong> {{ $an->historia_doenca }}</p>
+                @endif
+                @if (!empty($an->historico_progressivo))
+                    <p><strong>Histórico Médico Progressivo:</strong> {{ $an->historico_progressivo }}</p>
+                @endif
+                @if (!empty($an->historico_familiar))
+                    <p><strong>Histórico Familiar:</strong> {{ $an->historico_familiar }}</p>
+                @endif
+                @if (!empty($an->habitos_vida))
+                    <p><strong>Hábitos de Vida:</strong> {{ $an->habitos_vida }}</p>
+                @endif
+                @if (!empty($an->revisao_sistemas))
+                    <p><strong>Revisão de Sistemas:</strong> {{ $an->revisao_sistemas }}</p>
                 @endif
 
-                @if ($registro->historia_doenca)
-                    <p><strong>História da Doença:</strong> {{ $registro->historia_doenca }}</p>
+                {{-- NOVOS --}}
+                @if (!empty($an->outras_observacoes))
+                    <p><strong>Outras Observações:</strong> {{ $an->outras_observacoes }}</p>
                 @endif
-
-                @if ($registro->historico_progressivo)
-                    <p><strong>Histórico Médico Progressivo:</strong> {{ $registro->historico_progressivo }}</p>
-                @endif
-
-                @if ($registro->historico_familiar)
-                    <p><strong>Histórico Familiar:</strong> {{ $registro->historico_familiar }}</p>
-                @endif
-
-                @if ($registro->habitos_vida)
-                    <p><strong>Hábitos de Vida:</strong> {{ $registro->habitos_vida }}</p>
-                @endif
-
-                @if ($registro->revisao_sistemas)
-                    <p><strong>Revisão de Sistemas:</strong> {{ $registro->revisao_sistemas }}</p>
+                @if (!empty($an->resumo))
+                    <p><strong>Resumo:</strong> {{ $an->resumo }}</p>
                 @endif
             </div>
         @endif
+
 
 
         @if ($registro->exames && is_array($registro->exames))

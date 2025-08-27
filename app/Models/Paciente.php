@@ -25,6 +25,7 @@ class Paciente extends Model
     'dia_semana_exame',
     'data_consulta',
     'data_exame',
+    'profissao',
 ];
 public function medico()
 {
@@ -58,6 +59,16 @@ public function prontuarios()
 {
     return $this->hasMany(Prontuario::class);
 }
+
+public function getProfissaoTituloAttribute(): string {
+    return $this->profissao ? ucfirst($this->profissao) : '—';
+}
+
+
+public function retornos() { 
+    return $this->hasMany(\App\Models\Retorno::class); 
+}
+
 
 
 

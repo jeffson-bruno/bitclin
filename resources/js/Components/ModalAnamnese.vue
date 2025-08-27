@@ -22,12 +22,12 @@
           </div>
 
           <div>
-            <label class="font-semibold">História da Doença</label>
+            <label class="font-semibold">História da Doença Atual (HDA) - Início, localização, fatores desencadeantes, alívio dos sintomas</label>
             <textarea v-model="form.historia_doenca" class="w-full border p-2 rounded" rows="3"></textarea>
           </div>
 
           <div>
-            <label class="font-semibold">Histórico Médico Progressivo</label>
+            <label class="font-semibold">História Pregressa (Doenças anteriores, hospitalizações, cirurgias, alergias, etc.)</label>
             <textarea v-model="form.historico_progressivo" class="w-full border p-2 rounded" rows="3"></textarea>
           </div>
 
@@ -37,13 +37,24 @@
           </div>
 
           <div>
-            <label class="font-semibold">Hábitos de Vida</label>
+            <label class="font-semibold">Hábitos de Vida (Alimentação, atividade física, sono, uso de substâncias, etc.)</label>
             <textarea v-model="form.habitos_vida" class="w-full border p-2 rounded" rows="3"></textarea>
           </div>
 
           <div>
-            <label class="font-semibold">Revisão de Sistemas</label>
+            <label class="font-semibold">Revisão por Sistemas</label>
             <textarea v-model="form.revisao_sistemas" class="w-full border p-2 rounded" rows="3"></textarea>
+          </div>
+
+          <!-- NOVOS CAMPOS -->
+          <div class="md:col-span-2">
+            <label class="font-semibold">Outras Observações</label>
+            <textarea v-model="form.outras_observacoes" class="w-full border p-2 rounded" rows="3" placeholder="Observações adicionais relevantes..."></textarea>
+          </div>
+
+          <div class="md:col-span-2">
+            <label class="font-semibold">Resumo</label>
+            <textarea v-model="form.resumo" class="w-full border p-2 rounded" rows="3" placeholder="Resumo final da anamnese..."></textarea>
           </div>
         </div>
 
@@ -77,6 +88,9 @@ const form = ref({
   historico_familiar: '',
   habitos_vida: '',
   revisao_sistemas: '',
+  // NOVOS CAMPOS
+  outras_observacoes: '',
+  resumo: '',
 })
 
 // Salvar anamnese diretamente no prontuário
@@ -92,7 +106,6 @@ const salvarAnamnese = async () => {
       atestados: [],
     })
 
-    //alert('Anamnese salva no prontuário com sucesso!')
     emit('close')
   } catch (error) {
     console.error(error)
@@ -111,3 +124,4 @@ const calcularIdade = (dataNasc) => {
   return idade
 }
 </script>
+

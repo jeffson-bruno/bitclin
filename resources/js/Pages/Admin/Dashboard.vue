@@ -5,8 +5,6 @@ import ModalPacientesExameSemana from '@/Components/ModalPacientesExameSemana.vu
 import BarChart from '@/Components/Charts/BarChart.vue'
 import PieChart from '@/Components/Charts/PieChart.vue'
 
-
-
 import { ref, computed } from 'vue'
 import axios from 'axios'
 
@@ -16,75 +14,81 @@ const pacientesConsultaHojeList = ref([])
 const showModalExames = ref(false)
 const pacientesExamesSemanaList = ref([])
 
-
-
-
 const props = defineProps({
   title: String,
   pacientesTotal: Number,
   consultasNoMes: Number,
   examesSemana: Number,
-  despesasHoje: {
-    type: Array,
-    default: () => []
-  },
-  medicosHoje: {
-    type: Array,
-    default: () => [] 
-  },
+  despesasHoje: { type: Array, default: () => [] },
+  medicosHoje:  { type: Array, default: () => [] },
   pacientesConsultaHoje: Number,
-  faturamentoDias: Array,
-  lucroVsDespesas: Object
+  // defaults para evitar acesso a undefined
+  faturamentoDias: { type: Array,  default: () => [] }, // [{data:'2025-08-20', total: 123.45}, ...]
+  lucroVsDespesas:{ type: Object, default: () => ({ entradas: 0, despesas: 0 }) }
 })
 
 function abrirModalConsulta() {
   axios.get('/admin/pacientes/consultas-hoje')
     .then(res => {
       pacientesConsultaHojeList.value = res.data
-      showModalConsultas.value = true  // CORRETO!
+      showModalConsultas.value = true
     })
-    .catch(err => {
-      console.error('Erro ao buscar pacientes:', err)
-    })
+    .catch(err => console.error('Erro ao buscar pacientes:', err))
 }
+
 function abrirModalExames() {
   axios.get('/admin/pacientes/exames-semana')
     .then(res => {
       pacientesExamesSemanaList.value = res.data
       showModalExames.value = true
     })
-    .catch(err => {
-      console.error('Erro ao buscar exames da semana:', err)
-    })
+    .catch(err => console.error('Erro ao buscar exames da semana:', err))
 }
 
 const formatarHorario = (horario) => {
   if (!horario) return 'N/D'
-  const [hora, minuto] = horario.split(':')
+  const [hora, minuto] = String(horario).split(':')
   return `${hora}:${minuto}`
 }
 
-const barChartData = computed(() => {
-  return {
-    labels: props.faturamentoDias.map(d => d.data),
-    datasets: [{
-      label: 'Faturamento',
-      data: props.faturamentoDias.map(d => d.total),
-      backgroundColor: '#4ade80'
-    }]
-  }
+/* ===================== GRÁFICOS ===================== */
+// OPTIONS (eliminam os warnings)
+const barChartOptions = ref({
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { display: false }, tooltip: { enabled: true } },
+  scales: { y: { beginAtZero: true } }
 })
 
-const pieChartData = {
+const pieChartOptions = ref({
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { position: 'bottom' } }
+})
+
+//DATA dos gráficos com fallbacks seguros
+const barChartData = computed(() => ({
+  labels: (props.faturamentoDias || []).map(d => d.data),
+  datasets: [{
+    label: 'Faturamento',
+    data: (props.faturamentoDias || []).map(d => Number(d.total || 0)),
+    backgroundColor: '#4ade80'
+  }]
+}))
+
+const pieChartData = computed(() => ({
   labels: ['Lucro', 'Despesas'],
   datasets: [{
-    data: [props.lucroVsDespesas.entradas, props.lucroVsDespesas.despesas],
+    data: [
+      Number(props.lucroVsDespesas?.entradas || 0),
+      Number(props.lucroVsDespesas?.despesas || 0)
+    ],
     backgroundColor: ['#16a34a', '#f87171']
   }]
-}
-
-
+}))
+/* ==================================================== */
 </script>
+
 
 <template>
   <AdminLayout>
@@ -158,14 +162,18 @@ const pieChartData = {
     <!-- Gráficos -->
     
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10">
-      <div class="bg-white rounded-md p-3 shadow-sm min-h-[260px]">
+      <div class="bg-white rounded-md p-3 shadow-sm">
         <h2 class="text-xl font-semibold mb-4">Faturamento (últimos 7 dias)</h2>
-        <BarChart :chartData="barChartData" :chartOptions="barChartOptions" />
+        <div class="relative h-64 md:h-72">   <!-- altura fixa -->
+          <BarChart :chartData="barChartData" :chartOptions="barChartOptions" />
+        </div>
       </div>
 
-      <div class="bg-white rounded-md p-3 shadow-sm min-h-[150px]">
+      <div class="bg-white rounded-md p-3 shadow-sm">
         <h2 class="text-xl font-semibold mb-4">Lucro vs Despesas (mês atual)</h2>
-        <PieChart :chartData="pieChartData" :chartOptions="pieChartOptions" />
+        <div class="relative h-64 md:h-72">   <!-- altura fixa -->
+          <PieChart :chartData="pieChartData" :chartOptions="pieChartOptions" />
+        </div>
       </div>
     </div>
 

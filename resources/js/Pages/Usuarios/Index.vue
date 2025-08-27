@@ -27,12 +27,14 @@
           <div>
             <label class="block mb-1 text-sm font-medium">Nome</label>
             <input v-model="form.name" type="text" class="w-full border rounded p-2" required />
+            <p v-if="form.errors.name" class="text-red-600 text-sm mt-1">{{ form.errors.name }}</p>
           </div>
 
           <!-- Usuário -->
           <div>
             <label class="block mb-1 text-sm font-medium">Usuário</label>
             <input v-model="form.usuario" type="text" class="w-full border rounded p-2" required />
+            <p v-if="form.errors.usuario" class="text-red-600 text-sm mt-1">{{ form.errors.usuario }}</p>
           </div>
 
           <!-- Senha -->
@@ -52,6 +54,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
               </svg>
             </button>
+            <p v-if="form.errors.password" class="text-red-600 text-sm mt-1">{{ form.errors.password }}</p>
           </div>
 
           <!-- Confirmar senha -->
@@ -82,16 +85,45 @@
               <option value="receptionist">Recepcionista</option>
               <option value="doctor">Médico</option>
             </select>
+            <p v-if="form.errors.role" class="text-red-600 text-sm mt-1">{{ form.errors.role }}</p>
           </div>
 
           <!-- Especialidade (somente para médicos) -->
           <div v-if="form.role === 'doctor'" class="md:col-span-2">
             <label class="block mb-1 text-sm font-medium mt-2">Especialidade</label>
-            <select v-model="form.especialidade_id" class="w-full border rounded p-2" required>
+            <select v-model="form.especialidade_id" class="w-full border rounded p-2" :required="form.role === 'doctor'">
               <option disabled value="">Selecione...</option>
               <option v-for="esp in props.especialidades" :key="esp.id" :value="esp.id">{{ esp.nome }}</option>
             </select>
+            <p v-if="form.errors.especialidade_id" class="text-red-600 text-sm mt-1">{{ form.errors.especialidade_id }}</p>
           </div>
+
+          <!-- Registro profissional (somente para médicos) -->
+          <template v-if="form.role === 'doctor'">
+            <div>
+              <label class="block mb-1 text-sm font-medium">Tipo de Registro</label>
+              <select v-model="form.registro_tipo" class="w-full border rounded p-2" :required="form.role === 'doctor'">
+                <option disabled value="">Selecione...</option>
+                <option v-for="t in tiposConselho" :key="t" :value="t">{{ t }}</option>
+              </select>
+              <p v-if="form.errors.registro_tipo" class="text-red-600 text-sm mt-1">{{ form.errors.registro_tipo }}</p>
+            </div>
+
+            <div>
+              <label class="block mb-1 text-sm font-medium">Número</label>
+              <input v-model="form.registro_numero" type="text" class="w-full border rounded p-2" :required="form.role === 'doctor'" />
+              <p v-if="form.errors.registro_numero" class="text-red-600 text-sm mt-1">{{ form.errors.registro_numero }}</p>
+            </div>
+
+            <div>
+              <label class="block mb-1 text-sm font-medium">UF</label>
+              <select v-model="form.registro_uf" class="w-full border rounded p-2" :required="form.role === 'doctor'">
+                <option disabled value="">UF</option>
+                <option v-for="uf in UFs" :key="uf" :value="uf">{{ uf }}</option>
+              </select>
+              <p v-if="form.errors.registro_uf" class="text-red-600 text-sm mt-1">{{ form.errors.registro_uf }}</p>
+            </div>
+          </template>
 
           <!-- Botão Salvar -->
           <div class="md:col-span-2 flex justify-end mt-2">
@@ -179,15 +211,24 @@
 
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useForm, router } from '@inertiajs/vue3'
 import Toast from '@/Components/Toast.vue'
+import { Head } from '@inertiajs/vue3'
 
 /* Props */
 const props = defineProps({
   usuarios: Array,
   especialidades: Array
 })
+
+/* Listas auxiliares */
+const UFs = [
+  'AC','AL','AP','AM','BA','CE','DF','ES','GO','MA',
+  'MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN',
+  'RS','RO','RR','SC','SP','SE','TO'
+]
+const tiposConselho = ['CRM','CRP','COREN','CREFITO','CRO','CRN','CRFa','CREFONO','CRBM']
 
 /* Toast */
 const toastRef = ref(null)
@@ -210,6 +251,8 @@ const fecharFormulario = () => {
   showForm.value = false
   editando.value = false
   usuarioEditandoId.value = null
+  showPassword.value = false
+  showConfirm.value = false
   form.reset()
 }
 
@@ -220,7 +263,21 @@ const form = useForm({
   password: '',
   password_confirmation: '',
   role: '',
-  especialidade_id: null
+  especialidade_id: null,
+  // novos campos
+  registro_tipo: '',
+  registro_numero: '',
+  registro_uf: '',
+})
+
+/* Limpa campos de médico quando muda a função */
+watch(() => form.role, (val) => {
+  if (val !== 'doctor') {
+    form.especialidade_id = null
+    form.registro_tipo = ''
+    form.registro_numero = ''
+    form.registro_uf = ''
+  }
 })
 
 /* Visualizar usuário */
@@ -267,11 +324,16 @@ const editarUsuario = (usuario) => {
   editando.value = true
   usuarioEditandoId.value = usuario.id
 
-  form.name = usuario.name
-  form.usuario = usuario.usuario
-  form.role = usuario.role
-  form.especialidade_id = usuario.especialidade_id
+  form.name = usuario.name ?? ''
+  form.usuario = usuario.usuario ?? ''
+  form.role = usuario.role ?? ''
   form.password = ''
   form.password_confirmation = ''
+
+  // Estes podem não vir do backend no index(); se vierem, preenche; senão, ficam vazios.
+  form.especialidade_id = usuario.especialidade_id ?? null
+  form.registro_tipo    = usuario.registro_tipo ?? ''
+  form.registro_numero  = usuario.registro_numero ?? ''
+  form.registro_uf      = usuario.registro_uf ?? ''
 }
 </script>

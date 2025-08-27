@@ -109,31 +109,57 @@ class CadastroDadosController extends Controller
 
 
     public function pacientesConsultaHoje()
-    {
-        try {
-            $hoje = Carbon::today()->toDateString();
+{
+    try {
+        $hoje = \Carbon\Carbon::today();
 
-            $pacientes = Paciente::with('medico.especialidade')
-                ->where('procedimento', 'consulta')
-                ->whereDate('data_consulta', $hoje)
-                ->get()
-                ->map(function ($p) {
-                    return [
-                        'id' => $p->id,
-                        'nome' => $p->nome,
-                        'data_consulta' => $p->data_consulta ? Carbon::parse($p->data_consulta)->format('d/m/Y') : 'Não informada',
-                        'especialidade' => optional($p->medico->especialidade)->nome ?? 'Não informada',
-                        'medico' => optional($p->medico)->name ?? 'Não informado',
-                        'telefone' => $p->telefone,
-                    ];
-                });
+        // Consultas do dia (como já fazia)
+        $consultas = \App\Models\Paciente::with('medico.especialidade')
+            ->where('procedimento', 'consulta')
+            ->whereDate('data_consulta', $hoje)
+            ->get()
+            ->map(function ($p) {
+                return [
+                    'tipo' => 'consulta',
+                    'id' => 'C'.$p->id,
+                    'nome' => $p->nome,
+                    'data_consulta' => $p->data_consulta
+                        ? \Carbon\Carbon::parse($p->data_consulta)->format('d/m/Y')
+                        : 'Não informada',
+                    'especialidade' => optional(optional($p->medico)->especialidade)->nome ?? 'Não informada',
+                    'medico' => optional($p->medico)->name ?? 'Não informado',
+                    'telefone' => $p->telefone,
+                ];
+            });
 
-            return response()->json($pacientes);
-        } catch (\Throwable $e) {
-            \Log::error('Erro ao buscar pacientesConsultaHoje: '.$e->getMessage());
-            return response()->json(['error' => 'Erro interno ao buscar pacientes'], 500);
-        }
+        // ➕ Retornos do dia
+        $retornos = \App\Models\Retorno::with(['paciente', 'medico.especialidade'])
+            ->whereDate('data_retorno', $hoje)
+            ->get()
+            ->map(function ($r) {
+                return [
+                    'tipo' => 'retorno',
+                    'id' => 'R'.$r->id,
+                    'nome' => $r->paciente->nome,
+                    // usa o MESMO campo 'data_consulta' p/ front reaproveitar a tabela sem mudar nada
+                    'data_consulta' => $r->data_retorno
+                        ? \Carbon\Carbon::parse($r->data_retorno)->format('d/m/Y')
+                        : 'Não informada',
+                    'especialidade' => optional(optional($r->medico)->especialidade)->nome ?? 'Não informada',
+                    'medico' => optional($r->medico)->name ?? 'Não informado',
+                    'telefone' => $r->paciente->telefone,
+                ];
+            });
+
+        // Junta e retorna
+        $lista = $consultas->concat($retornos)->values();
+
+        return response()->json($lista);
+    } catch (\Throwable $e) {
+        \Log::error('Erro ao buscar pacientesConsultaHoje: '.$e->getMessage());
+        return response()->json(['error' => 'Erro interno ao buscar pacientes'], 500);
     }
+}
 
 
 

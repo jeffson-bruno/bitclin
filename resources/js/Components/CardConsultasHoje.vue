@@ -12,14 +12,24 @@
     <ul v-if="consultasFiltradas.length > 0" class="space-y-3">
       <li
         v-for="consulta in consultasFiltradas"
-        :key="consulta.id"
+        :key="`${consulta.tipo ?? 'consulta'}-${consulta.id}`"
         class="p-3 border rounded shadow-sm flex flex-col gap-1"
       >
-        <p class="font-semibold">{{ consulta.paciente }}</p>
+        <p class="font-semibold flex items-center gap-2">
+          {{ consulta.paciente || 'N/D' }}
+          <span
+            class="px-2 py-0.5 text-xs rounded"
+            :class="(consulta.tipo === 'retorno') ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'"
+          >
+            {{ consulta.tipo === 'retorno' ? 'Retorno' : 'Consulta' }}
+          </span>
+        </p>
+
         <p class="text-sm text-gray-600">
           <span class="font-medium">Consulta com:</span>
-          {{ consulta.medico }}
+          {{ consulta.medico || 'Não informado' }}
         </p>
+
         <p class="text-sm text-gray-500">
           Data: {{ formatarData(consulta.data) }}
         </p>
@@ -44,7 +54,9 @@
       </li>
     </ul>
 
-    <p v-else class="text-gray-500 text-center mt-4">Nenhuma consulta para hoje encontrada.</p>
+    <p v-else class="text-gray-500 text-center mt-4">
+      Nenhuma consulta para hoje encontrada.
+    </p>
   </div>
 
   <!-- Modal para gerar senha -->
@@ -65,17 +77,38 @@ import ModalSenha from '@/Components/ModalSenha.vue'
 const consultas = ref([])
 const busca = ref('')
 
-// Filtro por nome do paciente
+// Filtro por nome do paciente (tolerante a null)
 const consultasFiltradas = computed(() => {
+  const termo = (busca.value || '').toLowerCase()
   return consultas.value.filter(c =>
-    c.paciente.toLowerCase().includes(busca.value.toLowerCase())
+    ((c.paciente || '').toLowerCase()).includes(termo)
   )
 })
 
-// Formata data YYYY-MM-DD para DD/MM/YYYY
+// Formata data com tolerância a null/formatos variados
 function formatarData(data) {
-  const [ano, mes, dia] = data.split('-')
-  return `${dia}/${mes}/${ano}`
+  if (!data) return 'Não informada'
+
+  // já está dd/mm/aaaa
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(data)) return data
+
+  // ISO com hora
+  if (typeof data === 'string' && data.includes('T')) {
+    const d = new Date(data)
+    if (isNaN(d)) return 'Data inválida'
+    const dia = String(d.getDate()).padStart(2, '0')
+    const mes = String(d.getMonth() + 1).padStart(2, '0')
+    const ano = d.getFullYear()
+    return `${dia}/${mes}/${ano}`
+  }
+
+  // yyyy-mm-dd
+  if (/^\d{4}-\d{2}-\d{2}$/.test(data)) {
+    const [ano, mes, dia] = data.split('-')
+    return `${dia}/${mes}/${ano}`
+  }
+
+  return 'Não informada'
 }
 
 // ---------------------------
@@ -95,7 +128,7 @@ async function confirmarGeracaoSenha(tipo) {
   tipoSenha.value = tipo
   try {
     const { data } = await axios.post('/senhas', {
-      paciente_id: pacienteSelecionado.value.id,
+      paciente_id: pacienteSelecionado.value.id, // id é sempre o paciente_id
       tipo: tipoSenha.value
     })
     window.open(`/senhas/imprimir/${data.senha.id}`, '_blank')
@@ -106,14 +139,24 @@ async function confirmarGeracaoSenha(tipo) {
 }
 
 // ---------------------------
-// Buscar consultas do dia
+// Buscar consultas/retornos do dia
 // ---------------------------
 onMounted(async () => {
   try {
     const { data } = await axios.get('/recepcao/consultas-hoje')
-    consultas.value = data.map(c => ({ ...c, presente: false }))
+    // Garante campos mínimos e adiciona 'presente'
+    consultas.value = (Array.isArray(data) ? data : []).map(c => ({
+      tipo: c.tipo || 'consulta',
+      id: c.id, // usamos paciente_id para presença
+      paciente: c.paciente || 'N/D',
+      data: c.data || c.data_consulta || null,
+      medico: c.medico || null,
+      telefone: c.telefone || null,
+      presente: false,
+    }))
   } catch (error) {
     console.error('Erro ao carregar consultas de hoje:', error)
+    consultas.value = []
   }
 })
 
@@ -125,5 +168,4 @@ async function registrarPresenca(consulta) {
     alert('Erro ao registrar presença.')
   }
 }
-
 </script>

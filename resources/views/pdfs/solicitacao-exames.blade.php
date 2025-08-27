@@ -159,8 +159,12 @@
     <div class="assinatura-box">
       <div class="linha-assinatura"></div>
       <div class="assinatura-info">
-        <p>{{ $medico->name }}</p>
-        <p>CRM: {{ $medico->crm ?? '__________' }}</p>
+          <p style="font-weight:600; margin-top:6px;">
+              {{ $medico->name }}
+          </p>
+          <p>
+              {{ $registro ?? 'Registro não informado' }}
+          </p>
       </div>
     </div>
 

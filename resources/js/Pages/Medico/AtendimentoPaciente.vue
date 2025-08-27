@@ -24,21 +24,27 @@
         <p><strong>Telefone:</strong> {{ paciente.telefone ?? '—' }}</p>
       </div>
 
-      <!-- Botão para abrir modal da anamnese -->
-      <button
-        @click="mostrarModalAnamnese = true"
-        class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded shadow mb-6"
-      >
-        ➕ Criar Anamnese
-      </button>
+      <div class="flex items-center gap-4 mb-6">
+        <!-- Esquerda -->
+        <button
+          @click="mostrarModalAnamnese = true"
+          class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded shadow"
+        >
+          ➕ Criar Anamnese
+        </button>
 
-      <!-- Botão para finalizar atendimento -->
-      <button
-        @click="finalizarAtendimento"
-        class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded shadow ml-4"
-      >
-        ✅ Finalizar Atendimento
-      </button>
+        <!-- Empurra o próximo conteúdo para a direita -->
+        <div class="ml-auto">
+          <button
+            class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded shadow disabled:opacity-60 disabled:cursor-not-allowed"
+            :disabled="finalizando"
+            @click="finalizarAtendimento"
+          >
+            {{ finalizando ? 'Finalizando...' : 'Finalizar Atendimento' }}
+          </button>
+        </div>
+      </div>
+
     </main>
 
     <!-- Modais (serão criados em breve) -->
@@ -111,20 +117,24 @@ const abrirProntuario = () => {
   router.get(`/medico/prontuario/${props.paciente.id}`)
 }
 
+const finalizando = ref(false)
 
 const finalizarAtendimento = async () => {
+  if (finalizando.value) return
+  finalizando.value = true
   try {
     await axios.post('/medico/finalizar-atendimento', {
       paciente_id: props.paciente.id
     })
-
-    alert('Atendimento finalizado com sucesso!')
-    router.get('/medico/dashboard') // Redireciona para o dashboard
-  } catch (error) {
-    console.error(error)
+    router.get('/medico/dashboard')
+  } catch (e) {
+    console.error(e)
     alert('Erro ao finalizar atendimento')
+  } finally {
+    finalizando.value = false
   }
 }
+
 
 
 const calcularIdade = (dataNasc) => {

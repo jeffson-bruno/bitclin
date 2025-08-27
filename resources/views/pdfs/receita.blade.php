@@ -120,6 +120,17 @@
             font-size: 11px;
             color: #444;
         }
+
+        .assinatura {
+            margin-top: 40px;
+            text-align: center;   
+            }
+
+            .assinatura-linha {
+            width: 220px;        
+            border-top: 1px solid #000;
+            margin: 0 auto 6px;   
+            }
     </style>
 </head>
 <body>
@@ -138,13 +149,22 @@
 
     <div class="title">Receita Médica</div>
 
-    <div class="info">
+   <div class="info">
         <p><strong>Nome do Paciente:</strong> {{ $paciente->nome }}</p>
-        <p><strong>Idade:</strong> {{ \Carbon\Carbon::parse($paciente->data_nascimento)->age }} anos</p>
+        <p><strong>Idade:</strong> {{ optional(\Carbon\Carbon::parse($paciente->data_nascimento))->age ?? '—' }} anos</p>
         <p><strong>Data:</strong> {{ now()->format('d/m/Y') }}</p>
-        <p><strong>Médico:</strong> {{ $medico->name }}</p>
-        <p><strong>CRM:</strong> {{ $crm }}</p>
+
+        {{-- ERA $crm. Trocar por $registro e com fallback pelo próprio usuário --}}
+            @php
+                $reg = $registro
+                    ?? ( ($medico->registro_tipo && $medico->registro_numero)
+                        ? (($medico->registro_uf ? ($medico->registro_tipo.'-'.strtoupper($medico->registro_uf)) : $medico->registro_tipo).' '.$medico->registro_numero)
+                        : null
+                    );
+            @endphp
+        </p>
     </div>
+
 
     <div class="medicamentos">
         <table style="width: 100%; border-collapse: collapse; font-family: DejaVu Sans, sans-serif;">
@@ -227,10 +247,25 @@
 
 
 
-    <div class="assinatura">
-        ___________________________<br>
-        Assinatura / Carimbo Médico
-    </div>
+   <div class="assinatura">
+        <div class="assinatura-linha"></div>
+        <p style="font-weight:600; margin-top:6px;">{{ $medico->name }}</p>
+        <p>
+            @php
+            // Usa $registro passado pelo controller; se não vier, monta pelo usuário
+            $regFinal = $registro
+                ?? ( ($medico->registro_tipo && $medico->registro_numero)
+                    ? (($medico->registro_uf ? ($medico->registro_tipo.'-'.strtoupper($medico->registro_uf)) : $medico->registro_tipo).' '.$medico->registro_numero)
+                    : null
+                );
+            @endphp
+            {{ $regFinal ?? 'Registro não informado' }}
+        </p>
+        {{-- opcional: usuário abaixo da assinatura --}}
+        {{-- <p style="font-size:12px; color:#555;">Usuário: {{ $medico->usuario }}</p> --}}
+        </div>
+
+
 
     <div class="footer">
         R. Areolino de Abreu, 346 – São Pedro – CEP 64235-000 – Cocal - PI<br>

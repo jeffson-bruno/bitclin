@@ -28,7 +28,7 @@ use App\Http\Controllers\Medico\ExameController;
 use App\Http\Controllers\Medico\AtendimentoController;
 use App\Http\Controllers\Medico\AnamneseController;
 use App\Http\Controllers\Medico\ProntuarioController;
-
+use App\Http\Controllers\RetornoController;
 
 
 
@@ -54,6 +54,32 @@ Route::middleware(['auth'])->prefix('cadastro')->group(function () {
     Route::get('/cadastro/exames-semana', [CadastroDadosController::class, 'pacientesExamesSemana']);
 
 });
+
+Route::middleware(['auth', 'role:admin|receptionist'])->group(function () {
+    // Agendar retorno (usado pelo ModalAgendarRetorno.vue -> route('retornos.store'))
+    Route::post('/retornos', [RetornoController::class, 'store'])->name('retornos.store');
+
+    // Listar retornos de um paciente (se quiser exibir histórico/retornos futuros na UI)
+    Route::get('/retornos/paciente/{paciente}', [RetornoController::class, 'porPaciente'])->name('retornos.paciente');
+
+     // descobre o médico que atendeu esse paciente (ou o médico associado)
+    Route::get('/retornos/medico-do-paciente/{paciente}', [RetornoController::class, 'medicoDoPaciente'])
+        ->name('retornos.medicoDoPaciente');
+
+    // (opcional) se quiser encapsular tudo no back: próxima data diretamente
+    Route::get('/retornos/proxima-data/{paciente}', [RetornoController::class, 'proximaData'])
+        ->name('retornos.proximaData');
+    // OPCIONAIS (só adicione se já implementou no controller):
+    // Reagendar (update)
+    // Route::put('/retornos/{retorno}', [RetornoController::class, 'update'])->name('retornos.update');
+
+    // Alterar status (agendado|realizado|cancelado)
+    // Route::post('/retornos/{retorno}/status', [RetornoController::class, 'mudarStatus'])->name('retornos.status');
+
+    // Cancelar retorno
+    // Route::delete('/retornos/{retorno}', [RetornoController::class, 'destroy'])->name('retornos.destroy');
+});
+
 
 //Rotas de recepção
 
@@ -140,6 +166,11 @@ Route::middleware(['auth', 'role:doctor'])->prefix('medico')->name('medico.')->g
     
     Route::get('/prontuario/{id}/pdf', [ProntuarioController::class, 'gerarPdf']);
 
+    Route::get('/agendados-hoje', [\App\Http\Controllers\Medico\MedicoController::class, 'agendadosHoje'])
+        ->name('agendados-hoje');
+    Route::get('/atendidos-hoje', [MedicoController::class, 'atendidosHoje'])
+        ->name('atendidos-hoje');
+
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -199,7 +230,7 @@ Route::middleware('auth')->group(function () {
         return $pdf->download('ficha-atendimento.pdf');
     });
 
-    Route::put('/pacientes/{id}', [PacienteController::class, 'update'])->name('pacientes.update');
+    //Route::put('/pacientes/{id}', [PacienteController::class, 'update'])->name('pacientes.update');
     Route::put('/pacientes/reagendar/{id}', [PacienteController::class, 'reagendar'])->name('pacientes.reagendar');
 });
 

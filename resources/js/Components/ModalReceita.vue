@@ -12,7 +12,7 @@
       <!-- Título -->
       <h2 class="text-2xl font-bold mb-4 text-center">Receita Médica</h2>
 
-      <!-- Pré-visualização da Receita com marca d'água -->
+      <!-- Pré-visualização -->
       <div
         ref="previewRef"
         class="relative bg-white shadow-lg rounded-lg p-8 mt-6 text-gray-800"
@@ -23,9 +23,9 @@
           <img src="/images/logo.png" alt="Marca d'água" class="w-1/2" />
         </div>
 
-        <!-- Conteúdo da Receita -->
+        <!-- Conteúdo -->
         <div class="relative z-10">
-          <!-- Informações do Paciente e Médico -->
+          <!-- Paciente / Médico -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
             <div>
               <label class="text-sm text-gray-600">Nome do Paciente</label>
@@ -35,17 +35,21 @@
               <label class="text-sm text-gray-600">Idade</label>
               <div class="font-semibold">{{ calcularIdade(paciente.data_nascimento) }} anos</div>
             </div>
+
             <div>
               <label class="text-sm text-gray-600">Nome do Médico</label>
-              <div class="font-semibold">{{ medico.nome }}</div>
+              <div class="font-semibold">{{ medico.name || medico.nome }}</div>
             </div>
+
             <div>
-              <label class="text-sm text-gray-600">CRM</label>
-              <input v-model="crm" type="text" class="input-form" placeholder="Digite o número do conselho" />
+              <label class="text-sm text-gray-600">Registro</label>
+              <div class="font-semibold">
+                {{ registroExibicao }}
+              </div> 
             </div>
           </div>
 
-          <!-- Seção de Medicamentos -->
+          <!-- Prescrição -->
           <div class="mt-6 border-t pt-4">
             <h3 class="font-semibold text-lg mb-4">Prescrição</h3>
 
@@ -73,7 +77,7 @@
                     <input v-model="med.quantidade" type="number" class="input-form" />
                   </div>
                   <div>
-                    <label class="text-sm text-gray-600"> (mG - mL )</label>
+                    <label class="text-sm text-gray-600">(mg / ml)</label>
                     <input v-model="med.miligramas" type="text" class="input-form" placeholder="Ex: 500mg" />
                   </div>
                   <div>
@@ -81,7 +85,6 @@
                     <input v-model="med.intervaloHoras" type="text" class="input-form" placeholder="Ex: 8 / 8 horas" />
                   </div>
                 </div>
-
 
                 <!-- Dosagem -->
                 <div>
@@ -141,16 +144,19 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import axios from 'axios'
 
 const emit = defineEmits(['close'])
 const props = defineProps({
-  paciente: Object,
-  medico: Object,
+  paciente: { type: Object, required: true },
+  medico:   { type: Object, required: true },
 })
 
-const crm = ref('')
+// NÃO usamos mais CRM digitado
+// const crm = ref('')
+
+const tipos = ['Gotas', 'Líquido', 'Comprimido', 'Injetável']
 
 const medicamentos = ref([
   {
@@ -161,12 +167,7 @@ const medicamentos = ref([
     miligramas: '',
     dosagem: '',
     instrucao: '',
-    detalhes: {
-      gotas: '',
-      ml: '',
-      comprimidos: '',
-      ampolas: ''
-    }
+    detalhes: { gotas: '', ml: '', comprimidos: '', ampolas: '' }
   }
 ])
 
@@ -179,16 +180,18 @@ const adicionarMedicamento = () => {
     miligramas: '',
     dosagem: '',
     instrucao: '',
-    detalhes: {
-      gotas: '',
-      ml: '',
-      comprimidos: '',
-      ampolas: ''
-    }
+    detalhes: { gotas: '', ml: '', comprimidos: '', ampolas: '' }
   })
 }
 
-const tipos = ['Gotas', 'Líquido', 'Comprimido', 'Injetável']
+// Monta o texto do registro (apenas para exibir)
+const registroExibicao = computed(() => {
+  const tipo = props.medico?.registro_tipo
+  const num  = props.medico?.registro_numero
+  const uf   = (props.medico?.registro_uf || '').toUpperCase()
+  if (!tipo || !num) return '—'
+  return uf ? `${tipo}-${uf} ${num}` : `${tipo} ${num}`
+})
 
 const calcularIdade = (dataNasc) => {
   if (!dataNasc) return '—'
@@ -215,10 +218,7 @@ const prepararMedicamentos = () => {
       }
     }
 
-    return {
-      ...med,
-      mg: miligramaFormatada
-    }
+    return { ...med, mg: miligramaFormatada }
   })
 }
 
@@ -226,14 +226,11 @@ const enviarReceita = async () => {
   try {
     const dadosMedicamentos = prepararMedicamentos()
 
-    // Requisição para gerar PDF
+    // Gera o PDF (agora SEM enviar crm — o backend monta a partir do usuário)
     const pdfResponse = await axios.post('/medico/gerar-receita', {
       paciente_id: props.paciente.id,
-      crm: crm.value,
       medicamentos: dadosMedicamentos
-    }, {
-      responseType: 'blob' // <- IMPORTANTE: PDF como blob
-    })
+    }, { responseType: 'blob' })
 
     // Abre o PDF em nova aba
     const file = new Blob([pdfResponse.data], { type: 'application/pdf' })
@@ -250,22 +247,16 @@ const enviarReceita = async () => {
       atestados: []
     })
 
-    //alert('Receita salva no prontuário com sucesso!')
     emit('close')
-
   } catch (err) {
     console.error(err)
     alert('Erro ao enviar a receita.')
   }
 }
-
-
 </script>
-
 
 <style scoped>
 .input-form {
   @apply w-full rounded border border-gray-300 px-3 py-2 text-sm;
 }
 </style>
-

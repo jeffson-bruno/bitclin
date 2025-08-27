@@ -53,15 +53,14 @@
     }
 
     .assinatura {
-        margin-top: 130px;
-        text-align: center;
+        margin-top: 40px;
+        text-align: center;   
     }
 
-    .assinatura hr {
-        border: none;
+    .assinatura-linha {
+        width: 220px;        
         border-top: 1px solid #000;
-        width: 80px;
-        margin: 0 auto;
+        margin: 0 auto 6px;   
     }
 
     .cid {
@@ -144,10 +143,17 @@
         </div>
     @endif
 
-    <div class="assinatura">
-        <hr>
-        <p>{{ $medico->name }} - CRM: {{ $medico->crm ?? '_____' }}</p>
+    <div class="assinatura" style="text-align:center; margin-top:40px;">
+        <div class="assinatura-linha">
+            <p style="font-weight:600; margin-top:6px;">
+                {{ $medico->name }}
+            </p>
+            <p>
+                {{ $registro ?? 'Registro não informado' }}
+            </p>
+        </div> 
     </div>
+
 
 
 

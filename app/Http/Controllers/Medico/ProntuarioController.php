@@ -29,6 +29,9 @@ class ProntuarioController extends Controller
             'receitas' => 'nullable|array',
             'atestados' => 'nullable|array',
             'exames' => 'nullable|array',
+            'outras_observacoes' => 'nullable|string',
+            'resumo'       => 'nullable|string',
+
         ]);
 
         $dataAtendimento = now()->toDateString(); // yyyy-mm-dd
@@ -71,22 +74,26 @@ class ProntuarioController extends Controller
                 return [
                     'data_atendimento' => \Carbon\Carbon::parse($p->data_atendimento)->format('Y-m-d'),
                     'anamnese' => [
-                        'queixa_principal' => $p->queixa_principal,
-                        'historia_doenca' => $p->historia_doenca,
-                        'historico_progressivo' => $p->historico_progressivo,
-                        'historico_familiar' => $p->historico_familiar,
-                        'habitos_vida' => $p->habitos_vida,
-                        'revisao_sistemas' => $p->revisao_sistemas,
+                        'queixa_principal'     => $p->queixa_principal,
+                        'historia_doenca'      => $p->historia_doenca,
+                        'historico_progressivo'=> $p->historico_progressivo ?? $p->historico_medico, // fallback
+                        'historico_familiar'   => $p->historico_familiar,
+                        'habitos_vida'         => $p->habitos_vida,
+                        'revisao_sistemas'     => $p->revisao_sistemas,
+                        // NOVOS CAMPOS (+ compatibilidade com 'observacoes')
+                        'outras_observacoes'   => $p->outras_observacoes ?? $p->observacoes,
+                        'resumo'               => $p->resumo,
                     ],
-                    'receita' => $p->receitas ?? null,      // Pode conter múltiplos medicamentos
-                    'exames' => $p->exames ?? null,          // Array de exames solicitados
-                    'atestados' => $p->atestados ?? null,    // Array de atestados completos (não apenas o primeiro)
+                    // padronize para 'receitas' (plural)
+                    'receitas'  => $p->receitas ?? null,
+                    'exames'    => $p->exames ?? null,
+                    'atestados' => $p->atestados ?? null,
                 ];
             });
 
         return Inertia::render('Medico/ProntuarioPaciente', [
-            'paciente' => $paciente,
-            'prontuarios' => $prontuarios,
+            'paciente'     => $paciente,
+            'prontuarios'  => $prontuarios,
         ]);
     }
 

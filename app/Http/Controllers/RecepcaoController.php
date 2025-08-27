@@ -10,6 +10,8 @@ use App\Models\User;
 use App\Models\Paciente;
 use Illuminate\Support\Str;
 use App\Models\Exame;
+use App\Models\Retorno;
+
 
 class RecepcaoController extends Controller
 {
@@ -259,25 +261,46 @@ class RecepcaoController extends Controller
 
     public function consultasHoje()
     {
+        // se quiser evitar problemas de fuso: $hoje = Carbon::now('America/Fortaleza')->toDateString();
         $hoje = Carbon::today()->toDateString();
 
-        $consultasHoje = Paciente::with('medico')
+        // Consultas do dia
+        $consultas = Paciente::with('medico')
             ->where('procedimento', 'consulta')
             ->whereDate('data_consulta', $hoje)
             ->orderBy('data_consulta')
             ->get()
             ->map(function ($p) {
                 return [
-                    'id' => $p->id,
+                    'tipo'     => 'consulta',
+                    'id'       => $p->id,                  // mantém paciente_id para presença
                     'paciente' => $p->nome,
-                    'data' => $p->data_consulta,
-                    'medico' => optional($p->medico)->name,
+                    'data'     => optional($p->data_consulta)->format('Y-m-d'),
+                    'medico'   => optional($p->medico)->name,
                     'telefone' => $p->telefone,
                 ];
             });
 
-        return response()->json($consultasHoje);
+        // ➕ Retornos do dia
+        $retornos = Retorno::with(['paciente','medico'])
+            ->whereDate('data_retorno', $hoje)
+            ->orderBy('data_retorno')
+            ->get()
+            ->map(function ($r) {
+                return [
+                    'tipo'     => 'retorno',
+                    'id'       => $r->paciente_id,                         // usa paciente_id para o endpoint de presença
+                    'paciente' => optional($r->paciente)->nome,
+                    'data'     => $r->data_retorno->format('Y-m-d'),
+                    'medico'   => optional($r->medico)->name,
+                    'telefone' => optional($r->paciente)->telefone,
+                ];
+            });
+
+        // Unifica e retorna
+        return response()->json($consultas->concat($retornos)->values());
     }
+
 
     public function marcarPresenca($id)
     {

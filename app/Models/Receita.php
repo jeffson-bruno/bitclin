@@ -13,8 +13,14 @@ class Receita extends Model
         'paciente_id',
         'medico_id',
         'crm',
+        'conteudo',
         'arquivo',
         'data_receita',
+    ];
+
+    protected $casts = [
+        'data_receita' => 'datetime',
+        'conteudo'     => 'array', 
     ];
 
     // Relacionamentos

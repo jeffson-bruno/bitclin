@@ -18,6 +18,8 @@ class Prontuario extends Model
         'historico_familiar',
         'habitos_vida',
         'revisao_sistemas',
+        'outras_observacoes',
+        'resumo',
         'receitas',
         'atestados',
         'exames',

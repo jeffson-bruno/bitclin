@@ -24,16 +24,20 @@
           </h2>
         </div>
 
-        <!-- Anamnese -->
-        <div v-if="registro.anamnese && registro.anamnese.queixa_principal">
-          <h3 class="text-lg font-semibold mb-2 text-blue-700">📝 Anamnese</h3>
-          <p><strong>Queixa Principal:</strong> {{ registro.anamnese.queixa_principal }}</p>
-          <p><strong>História da Doença:</strong> {{ registro.anamnese.historia_doenca }}</p>
-          <p><strong>Histórico Médico Progressivo:</strong> {{ registro.anamnese.historico_progressivo }}</p>
-          <p><strong>Histórico Familiar:</strong> {{ registro.anamnese.historico_familiar }}</p>
-          <p><strong>Hábitos de Vida:</strong> {{ registro.anamnese.habitos_vida }}</p>
-          <p><strong>Revisão de Sistemas:</strong> {{ registro.anamnese.revisao_sistemas }}</p>
-        </div>
+       <!-- Anamnese -->
+      <div v-if="registro.anamnese && temAnamnese(registro.anamnese)">
+        <h3 class="text-lg font-semibold mb-2 text-blue-700">📝 Anamnese</h3>
+
+        <p v-if="registro.anamnese.queixa_principal"><strong>Queixa Principal:</strong> {{ registro.anamnese.queixa_principal }}</p>
+        <p v-if="registro.anamnese.historia_doenca"><strong>História da Doença:</strong> {{ registro.anamnese.historia_doenca }}</p>
+        <p v-if="registro.anamnese.historico_progressivo"><strong>Histórico Médico Progressivo:</strong> {{ registro.anamnese.historico_progressivo }}</p>
+        <p v-if="registro.anamnese.historico_familiar"><strong>Histórico Familiar:</strong> {{ registro.anamnese.historico_familiar }}</p>
+        <p v-if="registro.anamnese.habitos_vida"><strong>Hábitos de Vida:</strong> {{ registro.anamnese.habitos_vida }}</p>
+        <p v-if="registro.anamnese.revisao_sistemas"><strong>Revisão de Sistemas:</strong> {{ registro.anamnese.revisao_sistemas }}</p>
+        <p v-if="registro.anamnese.outras_observacoes"><strong>Outras Observações:</strong> {{ registro.anamnese.outras_observacoes }}</p>
+        <p v-if="registro.anamnese.resumo"><strong>Resumo:</strong> {{ registro.anamnese.resumo }}</p>
+      </div>
+
       </div>
     </div>
 
@@ -61,23 +65,32 @@ const props = defineProps({
   prontuarios: Array
 })
 
-const registrosValidos = computed(() => {
-  return props.prontuarios.filter(registro => {
-    return registro.anamnese && registro.anamnese.queixa_principal?.trim()
-  })
-})
+// devolve true se qualquer campo da anamnese tiver conteúdo
+const temAnamnese = (a = {}) => {
+  const campos = [
+    'queixa_principal',
+    'historia_doenca',
+    'historico_progressivo',
+    'historico_familiar',
+    'habitos_vida',
+    'revisao_sistemas',
+    'outras_observacoes', // novo
+    'resumo'              // novo
+  ]
+  return campos.some(k => (a[k] ?? '').toString().trim().length > 0)
+}
 
-
+const registrosValidos = computed(() =>
+  (props.prontuarios || []).filter(r => r.anamnese && temAnamnese(r.anamnese))
+)
 
 const voltar = () => {
   router.get(`/medico/atendimento/${props.paciente.id}`)
 }
 
 const gerarPDF = () => {
-  window.open(`/medico/prontuario/${props.paciente.id}/pdf`, '_blank');
-
+  window.open(`/medico/prontuario/${props.paciente.id}/pdf`, '_blank')
 }
-
 
 const calcularIdade = (data) => {
   const nascimento = new Date(data)

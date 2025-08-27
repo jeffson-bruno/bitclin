@@ -14,42 +14,99 @@ use App\Models\Chamada;
 use App\Models\SenhaAtendimento;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
-
+use App\Models\Retorno;
 
 
 class MedicoController extends Controller
 {
     public function index()
     {
-        // Obter o ID do médico logado
         $medicoId = Auth::id();
+        $hojeObj  = Carbon::today('America/Sao_Paulo');
+        $hoje     = $hojeObj->toDateString();
 
-        // Obter a data atual (sem hora)
-        $hoje = Carbon::today()->toDateString();
-
-        // Buscar pacientes com consulta para hoje e médico correspondente
-        $agendados = Paciente::where('procedimento', 'consulta')
+        // ------- AGENDADOS (consultas de hoje NÃO atendidas) -------
+        $consultasAgendadas = Paciente::where('procedimento', 'consulta')
             ->where('medico_id', $medicoId)
             ->whereDate('data_consulta', $hoje)
-            ->where('foi_atendido', false)
-            ->orderBy('data_consulta')
-            ->get();
+            ->where(function ($q) {
+                $q->whereNull('foi_atendido')->orWhere('foi_atendido', 0);
+            })
+            ->where(function ($q) {
+                $q->whereNull('status_atendimento')->orWhere('status_atendimento', 'agendado');
+            })
+            ->get()
+            ->map(function ($p) use ($hoje) {
+                return [
+                    'paciente_id'     => $p->id,
+                    'tipo'            => 'consulta',
+                    'nome'            => $p->nome,
+                    'data'            => optional($p->data_consulta)->toDateString() ?? $hoje,
+                    'hora'            => null,
+                    'telefone'        => $p->telefone,
+                    'estado_civil'    => $p->estado_civil,
+                    'data_nascimento' => optional($p->data_nascimento)->toDateString(),
+                    'senha'           => null,
+                ];
+            });
 
-        $atendidos = Paciente::where('procedimento', 'consulta')
+        // ------- AGENDADOS (retornos de hoje com status 'agendado') -------
+        $retornosAgendados = Retorno::with('paciente:id,nome,estado_civil,data_nascimento')
+            ->where('medico_id', $medicoId)
+            ->whereDate('data_retorno', $hoje)
+            ->where('status', 'agendado')
+            ->get()
+            ->map(function ($r) {
+                return [
+                    'paciente_id'     => $r->paciente_id,
+                    'tipo'            => 'retorno',
+                    'nome'            => $r->paciente?->nome,
+                    'data'            => optional($r->data_retorno)->toDateString(),
+                    'hora'            => optional($r->data_retorno)->format('H:i') !== '00:00' ? optional($r->data_retorno)->format('H:i') : null,
+                    'telefone'        => null,
+                    'estado_civil'    => $r->paciente->estado_civil ?? null,
+                    'data_nascimento' => optional($r->paciente?->data_nascimento)->toDateString(),
+                    'senha'           => null,
+                ];
+            });
+
+        $agendados = $consultasAgendadas->concat($retornosAgendados)->values();
+
+        // ======= ATENDIDOS (consultas) =======
+        $consultasAtendidas = Paciente::where('procedimento', 'consulta')
             ->where('medico_id', $medicoId)
             ->whereDate('data_consulta', $hoje)
-            ->where('foi_atendido', true)
-            ->orderBy('data_consulta')
-            ->get();
+            ->where(function ($q) {
+                $q->where('foi_atendido', 1)->orWhere('status_atendimento', 'atendido');
+            })
+            ->get()
+            ->map(fn ($p) => [
+                'id'   => $p->id, // <- id do PACIENTE (o front usa isso)
+                'nome' => $p->nome,
+                'tipo' => 'consulta',
+                'data' => optional($p->data_consulta)->toDateString(),
+            ]);
+
+        // ======= ATENDIDOS (retornos) =======
+        $retornosAtendidos = Retorno::with('paciente:id,nome')
+            ->where('medico_id', $medicoId)
+            ->whereDate('data_retorno', $hoje)
+            ->where('status', 'atendido')
+            ->get()
+            ->map(fn ($r) => [
+                'id'   => $r->paciente_id, // <- id do PACIENTE (pra abrir histórico)
+                'nome' => $r->paciente?->nome,
+                'tipo' => 'retorno',
+                'data' => optional($r->data_retorno)->toDateString(),
+            ]);
+
+        $atendidos = $consultasAtendidas->concat($retornosAtendidos)->values();
 
         return Inertia::render('Medico/Dashboard', [
-            'pacientesAgendados' => $agendados,
-            'pacientesAtendidos' => $atendidos,
+            'pacientesAgendados' => $agendados,  // fallback do card "Agendados"
+            'pacientesAtendidos' => $atendidos,  // fallback do card "Atendidos"
         ]);
-
-        
     }
-
     public function chamarSenha($senhaId)
     {
         $medicoId = Auth::id();
@@ -84,54 +141,218 @@ class MedicoController extends Controller
     public function gerarReceita(Request $request)
     {
         $request->validate([
-            'paciente_id' => 'required|exists:pacientes,id',
-            'crm' => 'required|string',
-            'medicamentos' => 'required|array',
+            'paciente_id'           => ['required','exists:pacientes,id'],
+            'medicamentos'          => ['required','array','min:1'],
+            'medicamentos.*.nome'   => ['required','string'],
         ]);
 
-        $medico = auth()->user();
-        $paciente = Paciente::findOrFail($request->paciente_id);
-        $medicamentos = $request->medicamentos;
+        $medico   = auth()->user();
+        $paciente = \App\Models\Paciente::findOrFail($request->paciente_id);
 
-        // Salva apenas os dados (sem salvar o PDF)
-    Receita::create([
-        'paciente_id' => $paciente->id,
-        'medico_id' => $medico->id,
-        'crm' => $request->crm,
-        'conteudo' => json_encode($medicamentos),
-        'data_receita' => now(),
-    ]);
+        // filtra itens sem nome (por segurança, além da validação)
+        $itens = collect($request->medicamentos)
+            ->filter(fn($m) => !empty(trim($m['nome'] ?? '')))
+            ->values()
+            ->all();
 
-        // Gera e retorna o PDF diretamente
-        $pdf = Pdf::loadView('pdfs.receita', [
-            'paciente' => $paciente,
-            'medico' => $medico,
-            'medicamentos' => $medicamentos,
-            'crm' => $request->crm,
-        ])->setPaper('A4', 'portrait');
+        $registro = $this->montaRegistro($medico); // ex: "CRM-PI 12345"
+
+        \App\Models\Receita::create([
+            'paciente_id'  => $paciente->id,
+            'medico_id'    => $medico->id,
+            'crm'          => $registro,   // salva o texto do registro
+            'conteudo'     => $itens,      // Model faz cast pra JSON
+            'data_receita' => now(),
+        ]);
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdfs.receita', [
+            'paciente'     => $paciente,
+            'medico'       => $medico,
+            'medicamentos' => $itens,
+            'registro'     => $registro,   // <<< PASSANDO 'registro'
+            'data'         => now()->format('d/m/Y'),
+        ])->setPaper('A4','portrait');
 
         return $pdf->stream('receita.pdf');
     }
 
 
-
-    public function finalizarAtendimento(Request $request)
+    /** cole isso dentro do mesmo controller, igual ao do Atestado */
+    private function montaRegistro($medico): ?string
     {
-        $request->validate([
-            'paciente_id' => 'required|exists:pacientes,id',
-        ]);
+        $tipo = $medico->registro_tipo;
+        $num  = $medico->registro_numero;
+        $uf   = $medico->registro_uf ? strtoupper($medico->registro_uf) : null;
 
-        $paciente = Paciente::findOrFail($request->paciente_id);
-        $paciente->foi_atendido = true;
-        $paciente->status_atendimento = 'atendido'; // use se for necessário também
-        $paciente->save();
-
-        return response()->json(['success' => true]);
+        if (!$tipo || !$num) return null;
+        return $uf ? "{$tipo}-{$uf} {$num}" : "{$tipo} {$num}";
     }
 
+    public function finalizarAtendimento(Request $request)
+{
+    $request->validate([
+        'paciente_id' => 'required|integer|exists:pacientes,id',
+    ]);
 
+    try {
+        $medicoId = Auth::id();
+        $hoje     = \Carbon\Carbon::today('America/Sao_Paulo')->toDateString();
+
+        // 1) Tenta marcar a CONSULTA do dia como atendida
+        $p = \App\Models\Paciente::where('id', $request->paciente_id)
+            ->where('medico_id', $medicoId)
+            ->whereDate('data_consulta', $hoje)
+            ->first();
+
+        if ($p) {
+            // Só altera se ainda não estava atendido
+            if (!(bool)$p->foi_atendido) {
+                $p->foi_atendido = 1;
+                // Se você REALMENTE tem a coluna status_atendimento, pode manter a linha abaixo:
+                // $p->status_atendimento = 'atendido';
+                $p->save();
+            }
+
+            return response()->json(['ok' => true, 'tipo' => 'consulta']);
+        }
+
+        // 2) Se não achou consulta, tenta marcar o RETORNO do dia como atendido
+        $update = \App\Models\Retorno::where('paciente_id', $request->paciente_id)
+            ->where('medico_id', $medicoId)
+            ->whereDate('data_retorno', $hoje)
+            ->update(['status' => 'atendido']);
+
+        // Se update > 0, ok. Se não, nada pra finalizar.
+        return response()->json(['ok' => true, 'tipo' => $update ? 'retorno' : 'nenhum']);
+    } catch (\Throwable $e) {
+        \Log::error('finalizarAtendimento ERRO: '.$e->getMessage(), [
+            'paciente_id' => $request->paciente_id,
+            'medico_id'   => Auth::id(),
+            'trace'       => $e->getTraceAsString(),
+        ]);
+
+        return response()->json([
+            'ok'   => false,
+            'erro' => 'Falha ao finalizar atendimento. Verifique os logs.'
+        ], 500);
+    }
+}
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////
+    public function agendadosHoje()
+    {
+        $medico = auth()->user();
+        $hoje   = Carbon::today('America/Sao_Paulo')->toDateString();
+
+        // CONSULTAS de hoje, que ainda NÃO foram atendidas
+        $consultasHoje = Paciente::with('medico:id,name')
+            ->where('procedimento', 'consulta')
+            ->where('medico_id', $medico->id)
+            ->whereDate('data_consulta', $hoje)
+            ->where(function ($q) {
+                $q->whereNull('foi_atendido')->orWhere('foi_atendido', 0);
+            })
+            ->where(function ($q) {
+                $q->whereNull('status_atendimento')->orWhere('status_atendimento', 'agendado');
+            })
+            ->get()
+            ->map(function ($p) use ($hoje) {
+                $data = $p->data_consulta
+                    ? \Illuminate\Support\Carbon::parse($p->data_consulta)->toDateString()
+                    : $hoje;
+
+                return [
+                    'paciente_id'     => $p->id,
+                    'tipo'            => 'consulta',
+                    'nome'            => $p->nome,
+                    'data'            => $data,
+                    'hora'            => null,
+                    'telefone'        => $p->telefone,
+                    'medico'          => $p->medico?->name,
+                    'estado_civil'    => $p->estado_civil,
+                    'data_nascimento' => optional($p->data_nascimento)->format('Y-m-d'),
+                    'senha'           => null,
+                ];
+            });
+
+        // RETORNOS de hoje, que ainda NÃO foram atendidos
+        $retornosHoje = Retorno::with('paciente:id,nome,estado_civil,data_nascimento')
+            ->where('medico_id', $medico->id)
+            ->whereDate('data_retorno', $hoje)
+            ->where('status', 'agendado') // só os não atendidos
+            ->get()
+            ->map(function ($r) {
+                $data = optional($r->data_retorno)->toDateString();
+                $hora = optional($r->data_retorno)->format('H:i');
+                return [
+                    'paciente_id'     => $r->paciente_id,
+                    'tipo'            => 'retorno',
+                    'nome'            => $r->paciente?->nome,
+                    'data'            => $data,
+                    'hora'            => $hora !== '00:00' ? $hora : null,
+                    'telefone'        => null,
+                    'medico'          => null,
+                    'estado_civil'    => $r->paciente->estado_civil ?? null,
+                    'data_nascimento' => optional($r->paciente?->data_nascimento)->format('Y-m-d'),
+                    'senha'           => null,
+                ];
+            });
+
+        $agendados = $consultasHoje->concat($retornosHoje)
+            ->sortBy([
+                fn ($a, $b) => strcmp($a['data'] ?? '', $b['data'] ?? ''),
+                fn ($a, $b) => strcmp($a['hora'] ?? '00:00', $b['hora'] ?? '00:00'),
+            ])->values();
+
+        return response()->json([
+            'itens'               => $agendados,
+            'consultasHojeCount'  => $consultasHoje->count(),
+            'retornosHojeCount'   => $retornosHoje->count(),
+            'totalHoje'           => $consultasHoje->count() + $retornosHoje->count(),
+        ]);
+    }
+    public function atendidosHoje()
+    {
+        $medico = auth()->user();
+        $hoje   = \Carbon\Carbon::today('America/Sao_Paulo');
+
+        // Consultas atendidas hoje
+        $consultas = \App\Models\Paciente::where('medico_id', $medico->id)
+            ->where('procedimento', 'consulta')
+            ->whereDate('data_consulta', $hoje)
+            ->where(function ($q) {
+                $q->where('foi_atendido', 1)
+                ->orWhere('status_atendimento', 'atendido');
+            })
+            ->get()
+            ->map(function ($p) {
+                return [
+                    'id'   => $p->id, // id do paciente (usado para abrir histórico)
+                    'nome' => $p->nome,
+                    'tipo' => 'consulta',
+                    'data' => optional($p->data_consulta)->toDateString(),
+                ];
+            });
+
+        // Retornos atendidos hoje
+        $retornos = \App\Models\Retorno::with('paciente:id,nome')
+            ->where('medico_id', $medico->id)
+            ->whereDate('data_retorno', $hoje)
+            ->where('status', 'atendido')
+            ->get()
+            ->map(function ($r) {
+                return [
+                    'id'   => $r->paciente_id, // também id do paciente
+                    'nome' => $r->paciente?->nome,
+                    'tipo' => 'retorno',
+                    'data' => optional($r->data_retorno)->toDateString(),
+                ];
+            });
+
+        return response()->json([
+            'itens' => $consultas->concat($retornos)->values(),
+        ]);
+    }
 
 }

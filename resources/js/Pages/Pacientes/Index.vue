@@ -53,6 +53,13 @@
                                             Gerar Senha
                                         </button>
 
+                                        <button
+                                            class="px-2 py-1 text-xs rounded bg-blue-600 text-white hover:bg-blue-700"
+                                            @click="abrirModalRetorno(paciente)"
+                                          >
+                                            🔄
+                                        </button>
+
                                         <!--Reagendar
                                         <button 
                                           @click="abrirReagendamento(paciente)"
@@ -158,6 +165,15 @@
   @reagendado="pacienteAtualizado"
 />
 
+<ModalAgendarRetorno
+  :open="showModalRetorno"
+  :paciente="pacienteSelecionado"
+  :medicos="medicos"
+  @close="showModalRetorno = false"
+  @saved="onRetornoSalvo"
+/>
+
+
 
   <Toast ref="toastRef" :type="toastType" />
 
@@ -179,6 +195,7 @@ import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal.vue'
 import SearchBar from '@/Components/SearchBar.vue'
 import Toast from '@/Components/Toast.vue'
 import ModalReagendamento from '@/Components/ModalReagendamento.vue'
+import ModalAgendarRetorno from '@/Components/ModalAgendarRetorno.vue'
 
 
 /* -------- Toast -------- */
@@ -206,6 +223,25 @@ const listaPacientesFiltrada = computed(() => {
     p.nome.toLowerCase().includes(termo) || p.cpf.includes(termo)
   )
 })
+
+/*----------Retorno------------*/ 
+const showModalRetorno = ref(false)
+const props = defineProps({
+  pacientes: Object,
+  medicos: { type: Array, default: () => [] }
+})
+
+function abrirModalRetorno(p) {
+  pacienteSelecionado.value = p
+  showModalRetorno.value = true
+}
+
+function onRetornoSalvo(retorno) {
+  window.$toast?.('Retorno agendado com sucesso!')
+  // opcional: atualizar a lista local / refetch
+}
+
+
 
 /* -------- Paginação -------- */
 function goToPage(pageNum) {
