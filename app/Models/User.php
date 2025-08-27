@@ -81,4 +81,9 @@ class User extends Authenticatable
         return "{$this->registro_tipo}{$uf} {$this->registro_numero}";
     }
 
+    public function setUsuarioAttribute($value)
+    {
+        $this->attributes['usuario'] = preg_replace('/\s+/u', ' ', trim((string) $value));
+    }
+
 }

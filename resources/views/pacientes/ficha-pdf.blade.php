@@ -322,8 +322,8 @@
         </table>
 
         <div class="rodape">
-            R. Aristides de Abreu, 396 – São bernardo – CEP 61285-700 – São Paulo - SP<br>
-            Tel: (11) 99999-8100 • @clinica_medica
+            R. Areolino de Abreu, 346 – Centro – CEP 64.235-000 – Cocal - PI<br>
+            Tel: (86) 9 9918-8366 • @pontoclinico_eulila
         </div>
     </div>
 

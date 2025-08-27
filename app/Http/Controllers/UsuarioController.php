@@ -58,10 +58,18 @@ class UsuarioController extends Controller
      * Cria novo usuário.
      */
     public function store(Request $request)
-    {
+    { 
+        $request->merge([
+            'usuario' => preg_replace('/\s+/u', ' ', trim((string) $request->input('usuario')))
+        ]);
+
         $rules = [
             'name'     => ['required','string','max:255'],
-            'usuario'  => ['required','string','alpha_dash','min:3','max:50','unique:users,usuario'],
+            'usuario'  => [
+                'required','string','min:3','max:50',
+                'regex:/^[\pL\pN._-]+(?: [\pL\pN._-]+)*$/u',
+                'unique:users,usuario',
+            ],
             'password' => ['required','string','confirmed','min:6','max:6'], // exatamente 6
             'role'     => ['required', Rule::in(['admin','receptionist','doctor'])],
 
@@ -69,6 +77,11 @@ class UsuarioController extends Controller
             'registro_tipo'    => ['nullable','string','max:10'],
             'registro_numero'  => ['nullable','string','max:30'],
             'registro_uf'      => ['nullable','string','size:2','regex:/^[A-Za-z]{2}$/'],
+        ];
+
+        $messages = [
+            'usuario.regex'  => 'Use apenas letras, números, ponto (.), hífen (-), underline (_) e espaços simples (sem espaço no início/fim).',
+            'usuario.unique' => 'Este Usuário já está em uso.',
         ];
 
         // Se for médico, os campos de conselho são obrigatórios
@@ -79,7 +92,7 @@ class UsuarioController extends Controller
             $rules['registro_uf']      = ['required','string','size:2','regex:/^[A-Za-z]{2}$/'];
         }
 
-        $data = $request->validate($rules);
+        $data = $request->validate($rules, $messages);
 
         // Normaliza UF
         if (!empty($data['registro_uf'])) {
@@ -112,9 +125,17 @@ class UsuarioController extends Controller
     {
         $user = User::findOrFail($id);
 
+        $request->merge([
+            'usuario' => preg_replace('/\s+/u', ' ', trim((string) $request->input('usuario')))
+        ]);
+
         $rules = [
             'name'     => ['required','string','max:255'],
-            'usuario'  => ['required','string','alpha_dash','min:3','max:50', Rule::unique('users','usuario')->ignore($user->id)],
+            'usuario'  => [
+                'required','string','min:3','max:50',
+                'regex:/^[\pL\pN._-]+(?: [\pL\pN._-]+)*$/u',
+                Rule::unique('users','usuario')->ignore($user->id),
+            ],
             'role'     => ['required', Rule::in(['admin','receptionist','doctor'])],
             'password' => ['nullable','string','confirmed','min:6','max:6'],
 
@@ -124,6 +145,11 @@ class UsuarioController extends Controller
             'registro_uf'      => ['nullable','string','size:2','regex:/^[A-Za-z]{2}$/'],
         ];
 
+        $messages = [
+            'usuario.regex'  => 'Use apenas letras, números, ponto (.), hífen (-), underline (_) e espaços simples (sem espaço no início/fim).',
+            'usuario.unique' => 'Este Usuário já está em uso.',
+        ];
+
         if ($request->input('role') === 'doctor') {
             $rules['especialidade_id'] = ['required','exists:especialidades,id'];
             $rules['registro_tipo']    = ['required','string','max:10'];
@@ -131,7 +157,7 @@ class UsuarioController extends Controller
             $rules['registro_uf']      = ['required','string','size:2','regex:/^[A-Za-z]{2}$/'];
         }
 
-        $data = $request->validate($rules);
+        $data = $request->validate($rules, $messages);
 
         if (!empty($data['password'])) {
             $data['password'] = bcrypt($data['password']);

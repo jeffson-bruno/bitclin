@@ -268,8 +268,8 @@
 
 
     <div class="footer">
-        R. Areolino de Abreu, 346 – São Pedro – CEP 64235-000 – Cocal - PI<br>
-        Tel: (86) 99918-8366 • @pontoclinico_eulila
+        R. Areolino de Abreu, 346 – Centro – CEP 64.235-000 – Cocal - PI<br>
+        Tel: (86) 9 9918-8366 • @pontoclinico_eulila
     </div>
 
     <div class="footer-wave">
