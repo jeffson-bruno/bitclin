@@ -9,15 +9,34 @@ use Illuminate\Validation\Rule;
 
 class UsuarioController extends Controller
 {
+    // Centraliza os papéis válidos (PT-BR conforme seu seeder)
+    private const ALLOWED_ROLES = ['admin','receptionist','doctor','enfermeiro','psicologo'];
+
     public function __construct()
     {
-        // Se você já usa Spatie, prefira hasRole('admin') para consistência
+        // Restringe a Admin (Spatie ou coluna legacy)
         $this->middleware(function ($request, $next) {
-            if (!auth()->user()->hasRole('admin') && auth()->user()->role !== 'admin') {
+            if (!auth()->check() || (!auth()->user()->hasRole('admin') && auth()->user()->role !== 'admin')) {
                 abort(403, 'Acesso não autorizado.');
             }
             return $next($request);
         });
+    }
+
+    /** Helpers **/
+    private function needsCouncil(string $role): bool
+    {
+        return in_array($role, ['doctor','enfermeiro','psicologo'], true);
+    }
+
+    private function councilCodeFor(string $role): ?string
+    {
+        return match ($role) {
+            'doctor'     => 'CRM',
+            'enfermeiro' => 'COREN',
+            'psicologo'  => 'CRP',
+            default      => null,
+        };
     }
 
     /**
@@ -35,14 +54,17 @@ class UsuarioController extends Controller
                     $registro = $user->registro_tipo . $uf . ' ' . $user->registro_numero;
                 }
 
+                // papel preferindo Spatie; fallback coluna legacy
+                $roleKey = $user->getRoleNames()->first() ?? $user->role;
+
                 return [
-                    'id'                   => $user->id,
-                    'name'                 => $user->name,
-                    'usuario'              => $user->usuario,
-                    'role'                 => $user->getRoleNames()->first() ?? $user->role, // prioridade para Spatie
-                    'especialidade'        => $user->especialidade->nome ?? null,
-                    'registro_profissional'=> $registro,
-                    'created_at'           => $user->created_at,
+                    'id'                    => $user->id,
+                    'name'                  => $user->name,
+                    'usuario'               => $user->usuario,
+                    'role'                  => $roleKey,
+                    'especialidade'         => $user->especialidade->nome ?? null,
+                    'registro_profissional' => $registro,
+                    'created_at'            => $user->created_at,
                 ];
             });
 
@@ -58,7 +80,7 @@ class UsuarioController extends Controller
      * Cria novo usuário.
      */
     public function store(Request $request)
-    { 
+    {
         $request->merge([
             'usuario' => preg_replace('/\s+/u', ' ', trim((string) $request->input('usuario')))
         ]);
@@ -71,7 +93,7 @@ class UsuarioController extends Controller
                 'unique:users,usuario',
             ],
             'password' => ['required','string','confirmed','min:6','max:6'], // exatamente 6
-            'role'     => ['required', Rule::in(['admin','receptionist','doctor'])],
+            'role'     => ['required', Rule::in(self::ALLOWED_ROLES)],
 
             'especialidade_id' => ['nullable','exists:especialidades,id'],
             'registro_tipo'    => ['nullable','string','max:10'],
@@ -84,33 +106,39 @@ class UsuarioController extends Controller
             'usuario.unique' => 'Este Usuário já está em uso.',
         ];
 
-        // Se for médico, os campos de conselho são obrigatórios
-        if ($request->input('role') === 'doctor') {
+        $role = (string) $request->input('role');
+
+        // Regras condicionais
+        if ($role === 'doctor') {
             $rules['especialidade_id'] = ['required','exists:especialidades,id'];
-            $rules['registro_tipo']    = ['required','string','max:10'];
-            $rules['registro_numero']  = ['required','string','max:30'];
-            $rules['registro_uf']      = ['required','string','size:2','regex:/^[A-Za-z]{2}$/'];
+        }
+        if ($this->needsCouncil($role)) {
+            $rules['registro_numero'] = ['required','string','max:30'];
+            $rules['registro_uf']     = ['required','string','size:2','regex:/^[A-Za-z]{2}$/'];
+            // registro_tipo será normalizado abaixo (CRM/COREN/CRP) se não vier
         }
 
         $data = $request->validate($rules, $messages);
 
-        // Normaliza UF
+        // Normalizações
         if (!empty($data['registro_uf'])) {
             $data['registro_uf'] = strtoupper($data['registro_uf']);
         }
 
-        // Se não for médico, zera campos
-        if ($data['role'] !== 'doctor') {
+        if ($this->needsCouncil($role)) {
+            $data['registro_tipo'] = strtoupper($data['registro_tipo'] ?? $this->councilCodeFor($role));
+        } else {
+            // Se não precisa de conselho, zera campos de conselho/especialidade
             $data['especialidade_id'] = null;
             $data['registro_tipo'] = null;
             $data['registro_numero'] = null;
             $data['registro_uf'] = null;
         }
 
-        $role = $data['role'];           // mantém coluna role e papel do Spatie em sincronia
         $data['password'] = bcrypt($data['password']);
 
         $user = User::create($data);
+        // Mantém Spatie e a coluna "role" (se existir em $fillable) em sincronia
         $user->syncRoles([$role]);
 
         return redirect()
@@ -136,7 +164,7 @@ class UsuarioController extends Controller
                 'regex:/^[\pL\pN._-]+(?: [\pL\pN._-]+)*$/u',
                 Rule::unique('users','usuario')->ignore($user->id),
             ],
-            'role'     => ['required', Rule::in(['admin','receptionist','doctor'])],
+            'role'     => ['required', Rule::in(self::ALLOWED_ROLES)],
             'password' => ['nullable','string','confirmed','min:6','max:6'],
 
             'especialidade_id' => ['nullable','exists:especialidades,id'],
@@ -150,11 +178,14 @@ class UsuarioController extends Controller
             'usuario.unique' => 'Este Usuário já está em uso.',
         ];
 
-        if ($request->input('role') === 'doctor') {
+        $role = (string) $request->input('role');
+
+        if ($role === 'doctor') {
             $rules['especialidade_id'] = ['required','exists:especialidades,id'];
-            $rules['registro_tipo']    = ['required','string','max:10'];
-            $rules['registro_numero']  = ['required','string','max:30'];
-            $rules['registro_uf']      = ['required','string','size:2','regex:/^[A-Za-z]{2}$/'];
+        }
+        if ($this->needsCouncil($role)) {
+            $rules['registro_numero'] = ['required','string','max:30'];
+            $rules['registro_uf']     = ['required','string','size:2','regex:/^[A-Za-z]{2}$/'];
         }
 
         $data = $request->validate($rules, $messages);
@@ -169,7 +200,9 @@ class UsuarioController extends Controller
             $data['registro_uf'] = strtoupper($data['registro_uf']);
         }
 
-        if ($data['role'] !== 'doctor') {
+        if ($this->needsCouncil($role)) {
+            $data['registro_tipo'] = strtoupper($data['registro_tipo'] ?? $this->councilCodeFor($role));
+        } else {
             $data['especialidade_id'] = null;
             $data['registro_tipo'] = null;
             $data['registro_numero'] = null;
@@ -177,9 +210,7 @@ class UsuarioController extends Controller
         }
 
         $user->update($data);
-
-        // Spatie roles em sincronia com a coluna role
-        $user->syncRoles([$data['role']]);
+        $user->syncRoles([$role]);
 
         return redirect()
             ->route('usuarios.index')
