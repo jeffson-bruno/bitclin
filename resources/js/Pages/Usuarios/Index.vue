@@ -84,47 +84,45 @@
               <option value="admin">Administrador</option>
               <option value="receptionist">Recepcionista</option>
               <option value="doctor">Médico</option>
+              <option value="enfermeiro">Enfermeiro(a)</option>
+              <option value="psicologo">Psicólogo(a)</option>
             </select>
             <p v-if="form.errors.role" class="text-red-600 text-sm mt-1">{{ form.errors.role }}</p>
           </div>
 
           <!-- Especialidade (somente para médicos) -->
-          <div v-if="form.role === 'doctor'" class="md:col-span-2">
+          <div v-if="isDoctor" class="md:col-span-2">
             <label class="block mb-1 text-sm font-medium mt-2">Especialidade</label>
-            <select v-model="form.especialidade_id" class="w-full border rounded p-2" :required="form.role === 'doctor'">
+            <select v-model="form.especialidade_id" class="w-full border rounded p-2" :required="isDoctor">
               <option disabled value="">Selecione...</option>
               <option v-for="esp in props.especialidades" :key="esp.id" :value="esp.id">{{ esp.nome }}</option>
             </select>
             <p v-if="form.errors.especialidade_id" class="text-red-600 text-sm mt-1">{{ form.errors.especialidade_id }}</p>
           </div>
-
           <!-- Registro profissional (somente para médicos) -->
-          <template v-if="form.role === 'doctor'">
+          <template v-if="needsCouncil">
             <div>
               <label class="block mb-1 text-sm font-medium">Tipo de Registro</label>
-              <select v-model="form.registro_tipo" class="w-full border rounded p-2" :required="form.role === 'doctor'">
-                <option disabled value="">Selecione...</option>
-                <option v-for="t in tiposConselho" :key="t" :value="t">{{ t }}</option>
-              </select>
+              <!-- Mostra o tipo já definido pelo papel -->
+              <input v-model="form.registro_tipo" class="w-full border rounded p-2 bg-gray-100" readonly />
               <p v-if="form.errors.registro_tipo" class="text-red-600 text-sm mt-1">{{ form.errors.registro_tipo }}</p>
             </div>
 
             <div>
               <label class="block mb-1 text-sm font-medium">Número</label>
-              <input v-model="form.registro_numero" type="text" class="w-full border rounded p-2" :required="form.role === 'doctor'" />
+              <input v-model="form.registro_numero" type="text" class="w-full border rounded p-2" :required="needsCouncil" />
               <p v-if="form.errors.registro_numero" class="text-red-600 text-sm mt-1">{{ form.errors.registro_numero }}</p>
             </div>
 
             <div>
               <label class="block mb-1 text-sm font-medium">UF</label>
-              <select v-model="form.registro_uf" class="w-full border rounded p-2" :required="form.role === 'doctor'">
+              <select v-model="form.registro_uf" class="w-full border rounded p-2" :required="needsCouncil">
                 <option disabled value="">UF</option>
                 <option v-for="uf in UFs" :key="uf" :value="uf">{{ uf }}</option>
               </select>
               <p v-if="form.errors.registro_uf" class="text-red-600 text-sm mt-1">{{ form.errors.registro_uf }}</p>
             </div>
           </template>
-
           <!-- Botão Salvar -->
           <div class="md:col-span-2 flex justify-end mt-2">
             <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
@@ -211,7 +209,7 @@
 
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { useForm, router } from '@inertiajs/vue3'
 import Toast from '@/Components/Toast.vue'
 import { Head } from '@inertiajs/vue3'
@@ -237,6 +235,8 @@ const showToast = (msg, type = 'success') => {
   toastType.value = type
   toastRef.value?.showToast(msg)
 }
+const isHydrating = ref(false)
+
 
 /* UI States */
 const showForm = ref(false)
@@ -264,21 +264,39 @@ const form = useForm({
   password_confirmation: '',
   role: '',
   especialidade_id: null,
-  // novos campos
   registro_tipo: '',
   registro_numero: '',
   registro_uf: '',
 })
 
+/* Regras dinâmicas de exibição */
+const isDoctor = computed(() => form.role === 'doctor')
+const needsCouncil = computed(() => ['doctor','enfermeiro','psicologo'].includes(form.role))
+const councilLabel = computed(() => ({
+  doctor: 'CRM',
+  enfermeiro: 'COREN',
+  psicologo: 'CRP'
+}[form.role] ?? 'Registro'))
+
 /* Limpa campos de médico quando muda a função */
 watch(() => form.role, (val) => {
+  if (isHydrating.value) return  // <- impede limpar durante a hidratação
+
+  // Especialidade só para médico
   if (val !== 'doctor') {
     form.especialidade_id = null
+  }
+  // Campos de conselho só para doctor/enfermeiro/psicologo
+  if (!['doctor','enfermeiro','psicologo'].includes(val)) {
     form.registro_tipo = ''
     form.registro_numero = ''
     form.registro_uf = ''
+  } else {
+    // Preenche automaticamente CRM/COREN/CRP
+    form.registro_tipo = ({ doctor: 'CRM', enfermeiro: 'COREN', psicologo: 'CRP' }[val])
   }
 })
+
 
 /* Visualizar usuário */
 const selectedUser = ref(null)
@@ -324,16 +342,30 @@ const editarUsuario = (usuario) => {
   editando.value = true
   usuarioEditandoId.value = usuario.id
 
+  // silencia o watch durante a hidratação
+  isHydrating.value = true
+
   form.name = usuario.name ?? ''
   form.usuario = usuario.usuario ?? ''
-  form.role = usuario.role ?? ''
   form.password = ''
   form.password_confirmation = ''
 
-  // Estes podem não vir do backend no index(); se vierem, preenche; senão, ficam vazios.
+  // papel primeiro (watch está silenciado)
+  form.role = usuario.role ?? ''
+
+  // dependentes
   form.especialidade_id = usuario.especialidade_id ?? null
   form.registro_tipo    = usuario.registro_tipo ?? ''
   form.registro_numero  = usuario.registro_numero ?? ''
   form.registro_uf      = usuario.registro_uf ?? ''
+
+  // fim da hidratação
+  isHydrating.value = false
+
+  // se precisa de conselho e não veio tipo, define automaticamente
+  if (['doctor','enfermeiro','psicologo'].includes(form.role) && !form.registro_tipo) {
+    form.registro_tipo = ({ doctor: 'CRM', enfermeiro: 'COREN', psicologo: 'CRP' }[form.role])
+  }
 }
+
 </script>

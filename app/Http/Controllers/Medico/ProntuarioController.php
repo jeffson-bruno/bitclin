@@ -11,6 +11,9 @@ use Illuminate\Support\Facades\View;
 use Inertia\Inertia;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use App\Models\User;
+use Illuminate\Support\Facades\Schema;
 
 class ProntuarioController extends Controller
 {
@@ -67,73 +70,251 @@ class ProntuarioController extends Controller
     // Visualiza o prontuário do paciente
     public function visualizar(Paciente $paciente)
     {
-        $prontuarios = Prontuario::where('paciente_id', $paciente->id)
+        // Prontuários salvos pelo médico (mantém seu mapeamento atual)
+        $prontuarios = \App\Models\Prontuario::where('paciente_id', $paciente->id)
             ->orderBy('data_atendimento', 'desc')
             ->get()
             ->map(function ($p) {
                 return [
-                    'data_atendimento' => \Carbon\Carbon::parse($p->data_atendimento)->format('Y-m-d'),
+                    'data_atendimento' => Carbon::parse($p->data_atendimento)->format('Y-m-d'),
                     'anamnese' => [
-                        'queixa_principal'     => $p->queixa_principal,
-                        'historia_doenca'      => $p->historia_doenca,
-                        'historico_progressivo'=> $p->historico_progressivo ?? $p->historico_medico, // fallback
-                        'historico_familiar'   => $p->historico_familiar,
-                        'habitos_vida'         => $p->habitos_vida,
-                        'revisao_sistemas'     => $p->revisao_sistemas,
-                        // NOVOS CAMPOS (+ compatibilidade com 'observacoes')
-                        'outras_observacoes'   => $p->outras_observacoes ?? $p->observacoes,
-                        'resumo'               => $p->resumo,
+                        'queixa_principal'      => $p->queixa_principal,
+                        'historia_doenca'       => $p->historia_doenca,
+                        'historico_progressivo' => $p->historico_progressivo ?? $p->historico_medico,
+                        'historico_familiar'    => $p->historico_familiar,
+                        'habitos_vida'          => $p->habitos_vida,
+                        'revisao_sistemas'      => $p->revisao_sistemas,
+                        'outras_observacoes'    => $p->outras_observacoes ?? $p->observacoes,
+                        'resumo'                => $p->resumo,
                     ],
-                    // padronize para 'receitas' (plural)
-                    'receitas'  => $p->receitas ?? null,
+                    'receitas'  => $p->receitas ?? null,   // pode conter itens do médico e da enfermagem
                     'exames'    => $p->exames ?? null,
                     'atestados' => $p->atestados ?? null,
                 ];
             });
 
+        // --- TRIAGENS (Enfermagem) -------------------------------------------------
+        // Detecta o nome real da coluna (com ou sem acento)
+        $histCol = null;
+        if (Schema::hasColumn('anamneses', 'historia_doenca')) {
+            $histCol = 'a.historia_doenca';
+        } elseif (Schema::hasColumn('anamneses', 'historia_doença')) {
+            // com acento precisa de crase no raw
+            $histCol = 'a.`historia_doença`';
+        }
+
+        $triagensRaw = DB::table('anamneses as a')
+            ->leftJoin('users as u', 'u.id', '=', 'a.user_id')
+            ->where('a.paciente_id', $paciente->id)
+            ->orderByDesc('a.created_at')
+            ->select([
+                'a.id',
+                'a.pressao_arterial',
+                'a.queixa_principal',
+                // se não houver nenhuma das colunas, devolve NULL
+                DB::raw($histCol ? ($histCol.' as historia_doenca') : 'NULL as historia_doenca'),
+                'a.historico_medico',
+                'a.historico_familiar',
+                'a.habitos_vida',
+                'a.revisao_sistemas',
+                'a.observacoes',
+                'a.origem',
+                'a.created_at',
+                'u.name as profissional_nome',
+                'u.registro_tipo',
+                'u.registro_numero',
+                'u.registro_uf',
+            ])
+            ->get();
+
+        $triagens = $triagensRaw->map(function ($a) {
+            $registro = null;
+            if ($a->registro_tipo && $a->registro_numero) {
+                $uf = $a->registro_uf ? '-'.strtoupper($a->registro_uf) : '';
+                $registro = $a->registro_tipo.$uf.' '.$a->registro_numero; // ex.: COREN-PI 12345
+            }
+            return [
+                'data'              => $a->created_at ? Carbon::parse($a->created_at)->format('Y-m-d') : null,
+                'profissional'      => $a->profissional_nome,
+                'registro'          => $registro,
+                'origem'            => $a->origem ?: 'enfermeiro',
+                'pressao_arterial'  => $a->pressao_arterial,
+                'anamnese' => array_filter([
+                    'queixa_principal'   => $a->queixa_principal,
+                    'historia_doenca'    => $a->historia_doenca,   // já normalizado pelo select
+                    'historico_medico'   => $a->historico_medico,
+                    'historico_familiar' => $a->historico_familiar,
+                    'habitos_vida'       => $a->habitos_vida,
+                    'revisao_sistemas'   => $a->revisao_sistemas,
+                    'observacoes'        => $a->observacoes,
+                ]),
+            ];
+        });
+
         return Inertia::render('Medico/ProntuarioPaciente', [
-            'paciente'     => $paciente,
-            'prontuarios'  => $prontuarios,
+            'paciente'    => $paciente,
+            'prontuarios' => $prontuarios,
+            'triagens'    => $triagens,
         ]);
     }
 
     public function gerarPdf($id)
     {
-        $paciente = Paciente::findOrFail($id);
-        
-        // Busca os prontuários agrupados por data
-        $prontuariosPorData = Prontuario::where('paciente_id', $id)
+        $paciente = \App\Models\Paciente::findOrFail($id);
+
+        // Prontuários do médico agrupados por data (dd/mm/YYYY)
+        $prontuariosPorData = \App\Models\Prontuario::where('paciente_id', $id)
             ->get()
             ->groupBy(function ($item) {
                 return \Carbon\Carbon::parse($item->data_atendimento)->format('d/m/Y');
             });
 
+        // TRIAGENS/ANAMNESES da enfermagem (mesma query que você usa em visualizar)
+        // (traga nome/registro do profissional e normalize historia_doenca)
+        $triagensRaw = \DB::table('anamneses as a')
+            ->leftJoin('users as u', 'u.id', '=', 'a.user_id')
+            ->where('a.paciente_id', $id)
+            ->orderByDesc('a.created_at')
+            ->select([
+                'a.id', 'a.pressao_arterial', 'a.queixa_principal',
+                \DB::raw('a.historia_doenca as historia_doenca'),
+                'a.historico_medico','a.historico_familiar','a.habitos_vida','a.revisao_sistemas',
+                'a.observacoes','a.origem','a.created_at',
+                'u.name as profissional_nome','u.registro_tipo','u.registro_numero','u.registro_uf',
+            ])
+            ->get();
 
-        $pdf = Pdf::loadView('pdfs.historico-clinico', [
-            'paciente' => $paciente,
-            'prontuariosPorData' => $prontuariosPorData
-        ]);
+        // Fallback se a coluna tiver acento
+        if ($triagensRaw->isEmpty()) {
+            $triagensRaw = \DB::table('anamneses as a')
+                ->leftJoin('users as u', 'u.id', '=', 'a.user_id')
+                ->where('a.paciente_id', $id)
+                ->orderByDesc('a.created_at')
+                ->select([
+                    'a.id','a.pressao_arterial','a.queixa_principal',
+                    \DB::raw('a.`historia_doença` as historia_doenca'),
+                    'a.historico_medico','a.historico_familiar','a.habitos_vida','a.revisao_sistemas',
+                    'a.observacoes','a.origem','a.created_at',
+                    'u.name as profissional_nome','u.registro_tipo','u.registro_numero','u.registro_uf',
+                ])
+                ->get();
+        }
 
+        $triagens = $triagensRaw->map(function ($a) {
+            $reg = null;
+            if ($a->registro_tipo && $a->registro_numero) {
+                $uf  = $a->registro_uf ? '-'.strtoupper($a->registro_uf) : '';
+                $reg = $a->registro_tipo.$uf.' '.$a->registro_numero; // COREN-PI 12345
+            }
+            return [
+                'data'         => $a->created_at ? \Carbon\Carbon::parse($a->created_at)->format('d/m/Y') : null,
+                'prof'         => $a->profissional_nome,
+                'reg'          => $reg,
+                'origem'       => $a->origem ?: 'enfermeiro',
+                'pa'           => $a->pressao_arterial,
+                'anamnese'     => array_filter([
+                    'queixa_principal'   => $a->queixa_principal,
+                    'historia_doenca'    => $a->historia_doenca,
+                    'historico_medico'   => $a->historico_medico,
+                    'historico_familiar' => $a->historico_familiar,
+                    'habitos_vida'       => $a->habitos_vida,
+                    'revisao_sistemas'   => $a->revisao_sistemas,
+                    'observacoes'        => $a->observacoes,
+                ]),
+            ];
+        });
 
-        return $pdf->download('historico_clinico_' . $paciente->nome . '.pdf');
+        $triagensPorData = $triagens->groupBy('data');
+
+        // **Se não há nada para imprimir, retorne 404**
+        if ($prontuariosPorData->isEmpty() && $triagensPorData->isEmpty()) {
+            return response()->json(['message' => 'Paciente sem prontuário no momento'], 404);
+        }
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdfs.historico-clinico', [
+            'paciente'          => $paciente,
+            'prontuariosPorData'=> $prontuariosPorData,
+            'triagensPorData'   => $triagensPorData,
+        ])->setPaper('a4');
+
+        return $pdf->download('historico_clinico_'.$paciente->nome.'.pdf');
     }
+
 
     public function gerarPdfRecepcao($id)
-    {
-        $paciente = Paciente::with('prontuarios')->findOrFail($id);
+{
+    $paciente = \App\Models\Paciente::with('prontuarios')->findOrFail($id);
 
-        // Agrupar prontuários por data
-        $prontuariosPorData = $paciente->prontuarios
-            ->sortByDesc('created_at')
-            ->groupBy(function ($item) {
-                return \Carbon\Carbon::parse($item->created_at)->format('d/m/Y');
-            });
+    $prontuariosPorData = $paciente->prontuarios
+        ->sortByDesc('created_at')
+        ->groupBy(function ($item) {
+            return Carbon::parse($item->created_at)->format('d/m/Y');
+        });
 
-        $pdf = Pdf::loadView('pdfs.historico-clinico', compact('paciente', 'prontuariosPorData'))
-            ->setPaper('a4');
-
-        return $pdf->stream("historico-clinico-{$paciente->nome}.pdf");
+    // (opcional) repetir a lógica do histCol e triagensPorData:
+    $histCol = null;
+    if (Schema::hasColumn('anamneses', 'historia_doenca')) {
+        $histCol = 'a.historia_doenca';
+    } elseif (Schema::hasColumn('anamneses', 'historia_doença')) {
+        $histCol = 'a.`historia_doença`';
     }
+
+    $triagensRaw = DB::table('anamneses as a')
+        ->leftJoin('users as u', 'u.id', '=', 'a.user_id')
+        ->where('a.paciente_id', $id)
+        ->orderByDesc('a.created_at')
+        ->select([
+            'a.id',
+            'a.pressao_arterial',
+            'a.queixa_principal',
+            DB::raw($histCol ? ($histCol.' as historia_doenca') : 'NULL as historia_doenca'),
+            'a.historico_medico',
+            'a.historico_familiar',
+            'a.habitos_vida',
+            'a.revisao_sistemas',
+            'a.observacoes',
+            'a.origem',
+            'a.created_at',
+            'u.name as profissional_nome',
+            'u.registro_tipo',
+            'u.registro_numero',
+            'u.registro_uf',
+        ])
+        ->get()
+        ->map(function ($a) {
+            $registro = null;
+            if ($a->registro_tipo && $a->registro_numero) {
+                $uf = $a->registro_uf ? '-'.strtoupper($a->registro_uf) : '';
+                $registro = $a->registro_tipo.$uf.' '.$a->registro_numero;
+            }
+            return [
+                'data'   => $a->created_at ? Carbon::parse($a->created_at)->format('d/m/Y') : null,
+                'prof'   => $a->profissional_nome,
+                'reg'    => $registro,
+                'origem' => $a->origem ?: 'enfermeiro',
+                'pa'     => $a->pressao_arterial,
+                'anamnese' => array_filter([
+                    'queixa_principal'   => $a->queixa_principal,
+                    'historia_doenca'    => $a->historia_doenca,
+                    'historico_medico'   => $a->historico_medico,
+                    'historico_familiar' => $a->historico_familiar,
+                    'habitos_vida'       => $a->habitos_vida,
+                    'revisao_sistemas'   => $a->revisao_sistemas,
+                    'observacoes'        => $a->observacoes,
+                ]),
+            ];
+        });
+
+    $triagensPorData = $triagensRaw->groupBy('data');
+
+    $pdf = Pdf::loadView('pdfs.historico-clinico', [
+        'paciente'           => $paciente,
+        'prontuariosPorData' => $prontuariosPorData,
+        'triagensPorData'    => $triagensPorData, // também no PDF da recepção
+    ])->setPaper('a4');
+
+    return $pdf->stream("historico-clinico-{$paciente->nome}.pdf");
+}
 
 
 

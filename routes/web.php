@@ -29,8 +29,16 @@ use App\Http\Controllers\Medico\AtendimentoController;
 use App\Http\Controllers\Medico\AnamneseController;
 use App\Http\Controllers\Medico\ProntuarioController;
 use App\Http\Controllers\RetornoController;
-
-
+use App\Http\Controllers\Enfermeiro\DashboardController as EnfermeiroDashboard;
+use App\Http\Controllers\Enfermeiro\AgendaController as EnfermeiroAgenda;
+use App\Http\Controllers\Enfermeiro\AtendimentoController as EnfermeiroAtendimento;
+use App\Http\Controllers\Enfermeiro\AnamneseController as EnfermeiroAnamnese;
+use App\Http\Controllers\Enfermeiro\EncaminhamentoController as EnfermeiroEncaminhamento;
+use App\Http\Controllers\Psicologo\DashboardController as PsicologoDashboard;
+use App\Http\Controllers\Medico\AtendimentoController as MedicoAtendimento;
+use App\Http\Controllers\Medico\ProntuarioController as MedicoProntuario;
+use App\Http\Controllers\Enfermeiro\ReceitaController as EnfermeiroReceita;
+use App\Http\Controllers\ArquivosExamesController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -42,6 +50,9 @@ Route::get('/dashboard', function () {
     if ($user->hasRole('admin')) return redirect()->route('admin.dashboard');
     if ($user->hasRole('receptionist')) return redirect()->route('recepcao.dashboard');
     if ($user->hasRole('doctor')) return redirect()->route('medico.dashboard');
+    if ($user->hasRole('enfermeiro'))   return redirect()->route('enfermeiro.dashboard');
+    if ($user->hasRole('psicologo'))    return redirect()->route('psicologo.dashboard');
+
 
 })->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -164,7 +175,7 @@ Route::middleware(['auth', 'role:doctor'])->prefix('medico')->name('medico.')->g
     Route::get('/prontuario/{paciente}', [\App\Http\Controllers\Medico\ProntuarioController::class, 'visualizar'])->name('visualizar-prontuario');
     Route::post('/finalizar-atendimento', [MedicoController::class, 'finalizarAtendimento']);
     
-    Route::get('/prontuario/{id}/pdf', [ProntuarioController::class, 'gerarPdf']);
+    //Route::get('/prontuario/{id}/pdf', [ProntuarioController::class, 'gerarPdf']);
 
     Route::get('/agendados-hoje', [\App\Http\Controllers\Medico\MedicoController::class, 'agendadosHoje'])
         ->name('agendados-hoje');
@@ -232,6 +243,67 @@ Route::middleware('auth')->group(function () {
 
     //Route::put('/pacientes/{id}', [PacienteController::class, 'update'])->name('pacientes.update');
     Route::put('/pacientes/reagendar/{id}', [PacienteController::class, 'reagendar'])->name('pacientes.reagendar');
+
+    Route::middleware(['auth','role:enfermeiro'])
+    ->prefix('enfermeiro')
+    ->name('enfermeiro.')
+    ->group(function () {
+        Route::get('/dashboard', [EnfermeiroDashboard::class, 'index'])->name('dashboard');
+
+        // Listas do dia (JSON p/ dashboard)
+        Route::get('/agendados-hoje', [EnfermeiroAgenda::class, 'agendadosHoje']);
+        Route::get('/atendidos-hoje', [EnfermeiroAgenda::class, 'atendidosHoje']);
+
+        // Ações rápidas
+        Route::post('/chamar-senha/{paciente}', [EnfermeiroAgenda::class, 'chamarSenha']);
+        Route::get('/atendimento/{paciente}', [EnfermeiroAtendimento::class, 'index'])->name('atendimento');
+
+        // Triagem/Anamnese do enfermeiro
+        Route::post('/anamnese', [EnfermeiroAnamnese::class, 'store'])->name('anamnese.store');
+
+        Route::post('/gerar-receita', [EnfermeiroReceita::class, 'gerarReceita'])
+            ->name('receita.gerar'); // POST /enfermeiro/gerar-receita
+
+        // Encaminhamento para especialista (quando veio para o enfermeiro)
+        Route::post('/encaminhar', [EnfermeiroEncaminhamento::class, 'store'])->name('encaminhar.store');
+    });
+
+    // Rotas compartilhadas: médico **e** enfermeiro
+    Route::middleware(['auth','role:doctor|enfermeiro'])
+        ->prefix('medico')->name('medico.')
+        ->group(function () {
+            Route::get('/atendimento/{paciente}', [AtendimentoController::class, 'atender'])->name('atendimento');
+
+            // Visualizar prontuário (tela)
+            Route::get('/prontuario/{paciente}', [ProntuarioController::class, 'visualizar'])->name('prontuario.visualizar');
+
+            // **BAIXAR PDF do prontuário/histórico**
+            Route::get('/prontuario/{paciente}/pdf', [ProntuarioController::class, 'gerarPdf'])
+                ->name('prontuario.pdf');
+    });
+
+    // Psicólogo
+    Route::middleware(['auth','role:psicologo'])
+        ->prefix('psicologo')->name('psicologo.')
+        ->group(function () {
+            Route::get('/dashboard', [PsicologoDashboard::class, 'index'])->name('dashboard');
+    });
+
+    // Upload: admin ou recepção
+    Route::middleware(['auth','role:admin|receptionist'])->group(function () {
+        Route::post('/arquivos-exames', [ArquivosExamesController::class, 'store'])->name('exames-arquivos.store');
+        Route::delete('/arquivos-exames/{arquivo}', [ArquivosExamesController::class, 'destroy'])->name('exames-arquivos.destroy');
+    });
+
+    // Listar/visualizar: médico e enfermeiro (também admin/recepção podem ver/baixar)
+    Route::middleware(['auth','role:admin|receptionist|doctor|enfermeiro'])->group(function () {
+        Route::get('/arquivos-exames/paciente/{paciente}', [ArquivosExamesController::class, 'indexPaciente'])->name('exames-arquivos.index-paciente');
+        Route::get('/arquivos-exames/{arquivo}/download', [ArquivosExamesController::class, 'download'])->name('exames-arquivos.download');
+        Route::get('/arquivos-exames/{arquivo}/ver', [ArquivosExamesController::class, 'inline'])->name('exames-arquivos.inline');
+    });
+
+
+    
 });
 
 

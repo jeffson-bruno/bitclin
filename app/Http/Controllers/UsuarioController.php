@@ -61,8 +61,12 @@ class UsuarioController extends Controller
                     'id'                    => $user->id,
                     'name'                  => $user->name,
                     'usuario'               => $user->usuario,
-                    'role'                  => $roleKey,
+                    'role'                  => $roleKey, // <- usa a variável
                     'especialidade'         => $user->especialidade->nome ?? null,
+                    'especialidade_id'      => $user->especialidade_id,
+                    'registro_tipo'         => $user->registro_tipo,
+                    'registro_numero'       => $user->registro_numero,
+                    'registro_uf'           => $user->registro_uf,
                     'registro_profissional' => $registro,
                     'created_at'            => $user->created_at,
                 ];
@@ -234,4 +238,4 @@ class UsuarioController extends Controller
     public function create() {}
     public function show(string $id) {}
     public function edit(string $id) {}
-}
+} 

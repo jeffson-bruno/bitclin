@@ -130,37 +130,55 @@
         @endif
 
 
-        @if (!empty($registro->receitas))
+        @php
+    
+        $receitas = is_array($registro->receitas ?? null)
+                ? $registro->receitas
+                : (is_string($registro->receitas ?? null) ? json_decode($registro->receitas, true) : []);
+        @endphp
+
+        @if (!empty($receitas))
             <div class="section">
-                <h3>Receita Médica</h3>
+                <h3>Receitas</h3>
                 <ul>
-                    @foreach ($registro->receitas as $receita)
-                        <li>
-                            @if (is_array($receita))
-                                {{ $receita['nome'] ?? 'Medicamento' }}
-                                ({{ $receita['tipo'] ?? '?' }})
-                                –
-                                {{ $receita['mg'] ?? '' }}
+                    @foreach ($receitas as $r)
+                        @if (is_array($r))
+                            @php $emissor = $r['emissor'] ?? null; @endphp
 
-                                @php
-                                    $detalhes = $receita['detalhes'] ?? [];
-                                    $frequencia = collect($detalhes)->filter()->map(function($valor, $chave) {
-                                        return "$valor $chave";
-                                    })->implode(', ');
-                                @endphp
+                            {{-- Receita vinda da ENFERMAGEM: mostrar posologia --}}
+                            @if ($emissor === 'enfermeiro')
+                                <li>
+                                    <strong>{{ $r['nome'] ?? 'Medicamento' }}</strong>
+                                    @if(!empty($r['posologia'])) — <em>{{ $r['posologia'] }}</em>@endif
+                                    <span style="font-size: 11px; color: #666;">(Origem: Enfermagem)</span>
+                                </li>
 
-                                @if ($frequencia)
-                                    – {{ $frequencia }}
-                                @endif
-
-                                @if (!empty($receita['intervaloHoras']))
-                                    – a cada {{ $receita['intervaloHoras'] }} horas
-                                @endif
-
+                            {{-- Receita do MÉDICO (mantém teu layout atual) --}}
                             @else
-                                {{ $receita }}
+                                <li>
+                                    {{ $r['nome'] ?? 'Medicamento' }}
+                                    @if(!empty($r['tipo'])) ({{ $r['tipo'] }}) @endif
+                                    @if(!empty($r['mg'])) – {{ $r['mg'] }} @endif
+
+                                    @php
+                                        $detalhes  = $r['detalhes'] ?? [];
+                                        $frequencia = collect($detalhes)->filter()->map(fn($v,$k)=>"$v $k")->implode(', ');
+                                    @endphp
+
+                                    @if ($frequencia)
+                                        – {{ $frequencia }}
+                                    @endif
+                                    @if (!empty($r['intervaloHoras']))
+                                        – a cada {{ $r['intervaloHoras'] }} horas
+                                    @endif
+                                    @if (!empty($r['instrucao']))
+                                        – <em>{{ $r['instrucao'] }}</em>
+                                    @endif
+                                </li>
                             @endif
-                        </li>
+                        @else
+                            <li>{{ $r }}</li>
+                        @endif
                     @endforeach
                 </ul>
             </div>
@@ -190,6 +208,53 @@
 
 
     @endforeach
+
+    {{-- TRIAGEM (Enfermagem) para essa mesma data --}}
+    @isset($triagensPorData[$data])
+        @if(count($triagensPorData[$data]))
+            <div class="section">
+                <h3>Triagem (Enfermagem)</h3>
+                @foreach ($triagensPorData[$data] as $t)
+                    <div style="margin-bottom: 8px;">
+                        <p>
+                            <strong>Triagem feita por:</strong>
+                            {{ $t['prof'] ?? '—' }}
+                            @if(!empty($t['reg'])) — {{ $t['reg'] }} @endif
+                        </p>
+                        @if(!empty($t['pa']))
+                            <p><strong>Pressão arterial:</strong> {{ $t['pa'] }}</p>
+                        @endif
+
+                        @php $an = $t['anamnese'] ?? []; @endphp
+                        @if(!empty($an))
+                            @if(!empty($an['queixa_principal']))
+                                <p><strong>Queixa principal:</strong> {{ $an['queixa_principal'] }}</p>
+                            @endif
+                            @if(!empty($an['historia_doenca']))
+                                <p><strong>História da doença:</strong> {{ $an['historia_doenca'] }}</p>
+                            @endif
+                            @if(!empty($an['historico_medico']))
+                                <p><strong>Histórico médico:</strong> {{ $an['historico_medico'] }}</p>
+                            @endif
+                            @if(!empty($an['historico_familiar']))
+                                <p><strong>Histórico familiar:</strong> {{ $an['historico_familiar'] }}</p>
+                            @endif
+                            @if(!empty($an['habitos_vida']))
+                                <p><strong>Hábitos de vida:</strong> {{ $an['habitos_vida'] }}</p>
+                            @endif
+                            @if(!empty($an['revisao_sistemas']))
+                                <p><strong>Revisão de sistemas:</strong> {{ $an['revisao_sistemas'] }}</p>
+                            @endif
+                            @if(!empty($an['observacoes']))
+                                <p><strong>Observações:</strong> {{ $an['observacoes'] }}</p>
+                            @endif
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+        @endif
+    @endisset
+
 @endforeach
 
 </body>

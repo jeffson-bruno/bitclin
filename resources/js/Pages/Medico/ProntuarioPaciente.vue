@@ -40,6 +40,75 @@
 
       </div>
     </div>
+    <!-- === TRIAGEM (ENFERMAGEM) === -->
+    <section v-if="triagens?.length" class="bg-white rounded shadow p-4">
+      <h2 class="text-lg font-semibold mb-3">Triagens (Enfermagem)</h2>
+
+      <div v-for="(t, i) in triagens" :key="i" class="border rounded p-3 mb-3">
+        <div class="text-sm text-gray-600 mb-1">
+          <strong>Data:</strong> {{ t.data || '—' }}
+        </div>
+        <div class="text-sm">
+          <strong>Triagem feita por:</strong>
+          {{ t.profissional || '—' }}
+          <span v-if="t.registro"> — {{ t.registro }}</span>
+        </div>
+
+        <div class="mt-2">
+          <p v-if="t.pressao_arterial"><strong>Pressão arterial:</strong> {{ t.pressao_arterial }}</p>
+        </div>
+
+        <div class="mt-2 space-y-1">
+          <div v-if="t.anamnese?.queixa_principal">
+            <strong>Queixa principal:</strong> {{ t.anamnese.queixa_principal }}
+          </div>
+          <div v-if="t.anamnese?.historia_doenca">
+            <strong>História da doença:</strong> {{ t.anamnese.historia_doenca }}
+          </div>
+          <div v-if="t.anamnese?.historico_medico">
+            <strong>Histórico médico:</strong> {{ t.anamnese.historico_medico }}
+          </div>
+          <div v-if="t.anamnese?.historico_familiar">
+            <strong>Histórico familiar:</strong> {{ t.anamnese.historico_familiar }}
+          </div>
+          <div v-if="t.anamnese?.habitos_vida">
+            <strong>Hábitos de vida:</strong> {{ t.anamnese.habitos_vida }}
+          </div>
+          <div v-if="t.anamnese?.revisao_sistemas">
+            <strong>Revisão de sistemas:</strong> {{ t.anamnese.revisao_sistemas }}
+          </div>
+          <div v-if="t.anamnese?.observacoes">
+            <strong>Observações:</strong> {{ t.anamnese.observacoes }}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- === RECEITAS (Médico + Enfermagem) === -->
+    <section v-if="todasReceitas.length" class="bg-white rounded shadow p-4">
+      <h2 class="text-lg font-semibold mb-3">Receitas</h2>
+
+      <ul class="space-y-2">
+        <li v-for="(r, idx) in todasReceitas" :key="idx" class="border rounded p-3">
+          <!-- Se veio da ENFERMAGEM (tem emissor 'enfermeiro' e posologia) -->
+          <template v-if="r?.emissor === 'enfermeiro'">
+            <div><strong>Medicamento:</strong> {{ r.nome || '—' }}</div>
+            <div v-if="r.posologia"><strong>Posologia:</strong> {{ r.posologia }}</div>
+            <div class="text-xs text-gray-500 mt-1">Origem: Enfermagem</div>
+          </template>
+
+          <!-- Caso contrário, formato do MÉDICO (exibe o que existir) -->
+          <template v-else>
+            <div><strong>Medicamento:</strong> {{ r.nome || '—' }} <span v-if="r.mg">- {{ r.mg }}</span></div>
+            <div v-if="r.dosagem"><strong>Dosagem:</strong> {{ r.dosagem }}</div>
+            <div v-if="r.intervaloHoras"><strong>Intervalo:</strong> {{ r.intervaloHoras }} hs</div>
+            <div v-if="r.instrucao"><strong>Instrução:</strong> {{ r.instrucao }}</div>
+            <!-- Se seu formato do médico usa 'detalhes' / 'tipo' / 'quantidade' / etc., acrescente aqui -->
+          </template>
+        </li>
+      </ul>
+    </section>
+
 
     <div v-else class="text-center text-gray-500 mt-10">
       <p class="italic">Nenhum atendimento registrado ainda.</p>
@@ -62,7 +131,8 @@ import { computed } from 'vue'
 
 const props = defineProps({
   paciente: Object,
-  prontuarios: Array
+  prontuarios: Array,
+  triagens: Array
 })
 
 // devolve true se qualquer campo da anamnese tiver conteúdo
@@ -79,6 +149,13 @@ const temAnamnese = (a = {}) => {
   ]
   return campos.some(k => (a[k] ?? '').toString().trim().length > 0)
 }
+
+const todasReceitas = computed(() => {
+  const lista = Array.isArray(props.prontuarios) ? props.prontuarios : []
+  return lista
+    .flatMap(p => Array.isArray(p.receitas) ? p.receitas : [])
+    .filter(Boolean)
+})
 
 const registrosValidos = computed(() =>
   (props.prontuarios || []).filter(r => r.anamnese && temAnamnese(r.anamnese))

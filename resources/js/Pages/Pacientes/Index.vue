@@ -72,6 +72,20 @@
                                             📝
                                         </button>
 
+                                        <!-- NOVO: Exames -->
+                                        <button
+                                          @click="abrirModalExames(paciente)" 
+                                          class="text-indigo-600 hover:text-indigo-800"
+                                          title="Exames do paciente"
+                                        >
+                                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
+                                              fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                  d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.586-6.586a4 4 0 10-5.656-5.656L5.757 9.172" />
+                                          </svg>
+                                        </button>
+
+
                                         <!-- Botão: Editar Paciente -->
                                             <button @click="editarPaciente(paciente.id)" class="hover:text-blue-700" title="Editar Paciente">
                                                 <!-- Ícone de lápis -->
@@ -157,13 +171,13 @@
     @confirm="deletarPaciente"
   />
 
-  <!-- Modal de Reagendamento -->
+  <!-- Modal de Reagendamento
   <ModalReagendamento
   :show="mostrarModalReagendamento"
   :paciente="pacienteParaReagendar"
   @close="mostrarModalReagendamento = false"
   @reagendado="pacienteAtualizado"
-/>
+/>-->
 
 <ModalAgendarRetorno
   :open="showModalRetorno"
@@ -171,6 +185,14 @@
   :medicos="medicos"
   @close="showModalRetorno = false"
   @saved="onRetornoSalvo"
+/>
+
+<ModalExamesPaciente
+  v-model="showModalExames"
+  :paciente="pacienteSelecionado"
+  :can-upload="canUpload"
+  :can-delete="canDelete"
+  @updated="buscarPacientes"
 />
 
 
@@ -182,9 +204,8 @@
 </template>
 
 <script setup>
-import { Head } from '@inertiajs/vue3'
+import { Head, usePage, router } from '@inertiajs/vue3'
 import { ref, computed } from 'vue'
-import { usePage, router } from '@inertiajs/vue3'
 import axios from 'axios'
 
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
@@ -194,9 +215,8 @@ import ModalEditarPaciente from '@/Components/ModalEditarPaciente.vue'
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal.vue'
 import SearchBar from '@/Components/SearchBar.vue'
 import Toast from '@/Components/Toast.vue'
-import ModalReagendamento from '@/Components/ModalReagendamento.vue'
 import ModalAgendarRetorno from '@/Components/ModalAgendarRetorno.vue'
-
+import ModalExamesPaciente from '@/Components/ModalExamesPaciente.vue'
 
 /* -------- Toast -------- */
 const toastRef  = ref(null)
@@ -206,9 +226,23 @@ const showToast = (msg, type = 'success') => {
   toastRef.value?.showToast(msg)
 }
 
-/* -------- Dados vindos do laravel -------- */
+/* -------- Dados vindos do Laravel (Inertia) -------- */
 const page      = usePage()
+const roles = computed(() => page.props?.auth?.user?.roles ?? [])
 const pacientes = ref(page.props.pacientes)
+
+// Quem pode enviar/excluir arquivos? (admin e recepcionista)
+const canUpload = computed(() =>
+  roles.value.includes('admin') || roles.value.includes('receptionist')
+)
+const canDelete = computed(() =>
+  roles.value.includes('admin') || roles.value.includes('receptionist')
+)
+
+/* (opcional) se essa página também recebe `medicos`/`exames` como props via Inertia: */
+const props = defineProps({
+  medicos: { type: Array, default: () => [] },
+   exames:  { type: Array, default: () => [] }, })
 
 /* -------- Computeds -------- */
 const listaPacientes = computed(() => pacientes.value?.data ?? [])
@@ -220,28 +254,10 @@ const listaPacientesFiltrada = computed(() => {
   if (!searchTerm.value) return listaPacientes.value
   const termo = searchTerm.value.toLowerCase()
   return listaPacientes.value.filter(p =>
-    p.nome.toLowerCase().includes(termo) || p.cpf.includes(termo)
+    (p.nome?.toLowerCase().includes(termo)) ||
+    (p.cpf?.includes(termo))
   )
 })
-
-/*----------Retorno------------*/ 
-const showModalRetorno = ref(false)
-const props = defineProps({
-  pacientes: Object,
-  medicos: { type: Array, default: () => [] }
-})
-
-function abrirModalRetorno(p) {
-  pacienteSelecionado.value = p
-  showModalRetorno.value = true
-}
-
-function onRetornoSalvo(retorno) {
-  window.$toast?.('Retorno agendado com sucesso!')
-  // opcional: atualizar a lista local / refetch
-}
-
-
 
 /* -------- Paginação -------- */
 function goToPage(pageNum) {
@@ -266,14 +282,32 @@ const mascaraTelefone = v => {
 const mostrarModal       = ref(false)      // cadastro
 const mostrarModalSenha  = ref(false)
 const mostrarModalEditar = ref(false)
-const modalAberta        = ref(false)
-const mostrarModalReagendamento = ref(false)
-const pacienteParaReagendar = ref(null)
+const modalAberta        = ref(false)      // confirmação de deleção
 
-/* Paciente selecionado (senha e delete) */
+/* ===== RETORNO (reativado) ===== */
+const showModalRetorno = ref(false)
 const pacienteSelecionado = ref(null)
 
-/* Senha */
+function abrirModalRetorno(p) {
+  pacienteSelecionado.value = p
+  showModalRetorno.value = true
+}
+
+/* handler chamado quando o ModalAgendarRetorno emite o evento de sucesso */
+function onRetornoSalvo() {
+  showModalRetorno.value = false
+  showToast('Retorno agendado com sucesso!', 'success')
+  buscarPacientes()
+}
+
+/* ===== EXAMES ===== */
+const showModalExames = ref(false)
+function abrirModalExames(p) {
+  pacienteSelecionado.value = p
+  showModalExames.value = true
+}
+
+/* ===== Senha de atendimento ===== */
 const tipoSenha = ref('convencional')
 function abrirModalSenha(p) {
   pacienteSelecionado.value = p
@@ -281,7 +315,6 @@ function abrirModalSenha(p) {
   mostrarModalSenha.value   = true
 }
 
-/* Confirmar senha */
 async function confirmarGeracaoSenha(tipo) {
   tipoSenha.value = tipo
   try {
@@ -309,7 +342,7 @@ function editarPaciente(id) {
   }
 }
 
-/* Atualizar listagem */
+/* Atualizar listagem (refetch) */
 async function buscarPacientes() {
   try {
     const { data } = await axios.get('/pacientes', { headers:{Accept:'application/json'} })
@@ -337,12 +370,6 @@ const pacienteCadastrado = () => {
   showToast('Paciente cadastrado com sucesso!', 'success')
 }
 
-/* -------- Reagendamento -------- */
-function abrirReagendamento(paciente) {
-  pacienteParaReagendar.value = paciente
-  mostrarModalReagendamento.value = true
-}
-
 /* -------- Deleção -------- */
 function abrirModal(p) {
   pacienteSelecionado.value = p
@@ -359,11 +386,4 @@ function deletarPaciente(pac) {
     onError: () => showToast('Erro ao excluir paciente.', 'error')
   })
 }
-// Chama a função para buscar pacientes ao carregar o componente
-
-//Abrir modal de confirmação de deleção
-//const modalAberta = ref(false)
-
-
-
 </script>

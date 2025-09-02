@@ -19,6 +19,10 @@ class Anamnese extends Model
         'habitos_vida',
         'revisao_sistemas',
         'observacoes',
+        'conteudo',
+        'origem',
+        'pressao_arterial',
+        'user_id',
     ];
 
     public function paciente()
@@ -34,6 +38,14 @@ class Anamnese extends Model
     public function prontuario()
     {
         return $this->belongsTo(Prontuario::class);
+    }
+
+    public function autor() { 
+        return $this->belongsTo(User::class, 'user_id'); 
+    }
+
+    public function paciente() { 
+        return $this->belongsTo(Paciente::class, 'paciente_id'); 
     }
 
 }

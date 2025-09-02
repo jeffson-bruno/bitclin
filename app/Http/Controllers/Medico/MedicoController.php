@@ -15,6 +15,8 @@ use App\Models\SenhaAtendimento;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Retorno;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 
 class MedicoController extends Controller
@@ -137,16 +139,23 @@ class MedicoController extends Controller
         ]);
     }
 
+    
+
     ////////////////////////////////////////////////////////////////////////////////////////
     public function gerarReceita(Request $request)
     {
+        $user = auth()->user();
+        if (! $user->hasAnyRole(['doctor','enfermeiro'])) {
+            abort(403, 'Sem permissão para gerar receita.');
+        }
+
         $request->validate([
             'paciente_id'           => ['required','exists:pacientes,id'],
             'medicamentos'          => ['required','array','min:1'],
             'medicamentos.*.nome'   => ['required','string'],
         ]);
 
-        $medico   = auth()->user();
+        $medicoOuEnfermeiro = $user;
         $paciente = \App\Models\Paciente::findOrFail($request->paciente_id);
 
         // filtra itens sem nome (por segurança, além da validação)
@@ -155,11 +164,11 @@ class MedicoController extends Controller
             ->values()
             ->all();
 
-        $registro = $this->montaRegistro($medico); // ex: "CRM-PI 12345"
+        $registro = $this->montaRegistro($medicoOuEnfermeiro); // ex: "CRM-PI 12345"
 
         \App\Models\Receita::create([
             'paciente_id'  => $paciente->id,
-            'medico_id'    => $medico->id,
+            'medico_id'    => $medicoOuEnfermeiro->id,
             'crm'          => $registro,   // salva o texto do registro
             'conteudo'     => $itens,      // Model faz cast pra JSON
             'data_receita' => now(),
@@ -167,7 +176,7 @@ class MedicoController extends Controller
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdfs.receita', [
             'paciente'     => $paciente,
-            'medico'       => $medico,
+            'medico'       => $medicoOuEnfermeiro,
             'medicamentos' => $itens,
             'registro'     => $registro,   // <<< PASSANDO 'registro'
             'data'         => now()->format('d/m/Y'),
@@ -178,15 +187,26 @@ class MedicoController extends Controller
 
 
     /** cole isso dentro do mesmo controller, igual ao do Atestado */
-    private function montaRegistro($medico): ?string
+    private function montaRegistro($user): ?string
     {
-        $tipo = $medico->registro_tipo;
-        $num  = $medico->registro_numero;
-        $uf   = $medico->registro_uf ? strtoupper($medico->registro_uf) : null;
+        
+        $tipo   = $user->registro_tipo;   // ex.: 'CRM', 'COREN', 'CRP'
+        $uf     = $user->registro_uf ? strtoupper($user->registro_uf) : null;
+        $numero = $user->registro_numero;
 
-        if (!$tipo || !$num) return null;
-        return $uf ? "{$tipo}-{$uf} {$num}" : "{$tipo} {$num}";
+        if ($tipo && $numero) {
+            return $tipo . ($uf ? "-{$uf}" : '') . " {$numero}";
+        }
+
+        // Fallback por role (se não houver nada cadastrado):
+        if (method_exists($user, 'hasRole')) {
+            if ($user->hasRole('doctor'))     return null; // sem CRM cadastrado
+            if ($user->hasRole('enfermeiro')) return null; // sem COREN cadastrado
+        }
+
+        return null;
     }
+    
 
     public function finalizarAtendimento(Request $request)
 {

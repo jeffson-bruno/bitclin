@@ -45,6 +45,14 @@ class AuthenticatedSessionController extends Controller
         return redirect()->route('recepcao.dashboard');
     }
 
+    if ($user->hasRole('enfermeiro')){
+        return redirect()->intended(route('enfermeiro.dashboard'));
+    }   
+
+    if ($user->hasRole('psicologo')) {
+        return redirect()->intended(route('psicologo.dashboard'));
+    }  
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 
