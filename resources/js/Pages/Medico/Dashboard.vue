@@ -5,7 +5,7 @@
       <!-- Logo + título -->
       <div class="flex items-center gap-3">
         <!-- ajuste o caminho do logo se necessário -->
-        <img src="/images/marca-dagua.png" alt="Logo da clínica" class="h-28 w-auto" />
+        <img src="/images/logo.png" alt="Logo da clínica" class="h-36 w-auto" />
         <span class="hidden sm:inline text-sm text-gray-600">
           Bem-vindo, {{ medicoUsuario }}
         </span>

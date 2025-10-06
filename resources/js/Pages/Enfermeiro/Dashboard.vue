@@ -2,7 +2,7 @@
   <div class="p-6 space-y-6">
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <img src="/images/marca-dagua.png" alt="Logo da clínica" class="h-28 w-auto" />
+        <img src="/images/logo.png" alt="Logo da clínica" class="h-36 w-auto" />
         <span class="hidden sm:inline text-sm text-gray-600">
           Bem-vindo(a), {{ usuarioNome }}
         </span>
